@@ -25,6 +25,10 @@ class DataStructureTypeOptions(Enum):
 class DataStructureType:
     def __init__(self, datastructure_type:DataStructureTypeOptions, items_type:AnyType, count:int = 0) -> None:
         #set value
+        if items_type == ScalarType.c8:
+                # add to count for null terminator if it is a string
+                count = count + 1
+        
         self.type = items_type
         if datastructure_type == DataStructureTypeOptions.array:
             self.value = ir.ArrayType(items_type.value, count)
@@ -36,6 +40,10 @@ class DataStructureType:
 AnyType = Union[ScalarType, DataStructureType]
 
 def is_ptr(_type) -> bool:
-    return _type in\
-        [ScalarType.c8_ptr, ScalarType.d64_ptr, ScalarType.f32_ptr, ScalarType.i32_ptr, ScalarType.i64_ptr]\
-        or isinstance(_type, DataStructureType)
+    return (_type in\
+        {ScalarType.c8_ptr, ScalarType.d64_ptr, ScalarType.f32_ptr, ScalarType.i32_ptr, ScalarType.i64_ptr}\
+        if (isinstance(_type, ScalarType)) else isinstance(_type, DataStructureType))
+
+def ir_is_ptr(_type) -> bool:
+    print(type(_type))
+    return issubclass(type(_type), ir.PointerType)

@@ -2,9 +2,9 @@ from enum import Enum
 from typing import List, Tuple, Union
 from llvmlite import ir
 
-from llvmcompiler.compiler_types.type import ScalarType, AnyType
+from llvmcompiler.compiler_types.type import ScalarType, AnyType, ir_is_ptr, is_ptr
 from .builder_data import BuilderData
-from .variable import Value, Variable, is_ptr
+from .variable import Value, Variable
 
 class OperationType(Enum):
     define = 0
@@ -42,10 +42,18 @@ class Operation:
             else:
                 # if type of function does not match argument[0].type then throw error
                 # self.arguments: 0 = type
-                if is_ptr(self.builder.function.return_value.type):
-                    self.builder.cursor.ret(self.arguments[0])
+                if ir_is_ptr(self.builder.function.return_value.type):
+                    if self.arguments[0].is_ptr():
+                        self.builder.cursor.ret(self.arguments[0])
+                    else:
+                        # throw error because function was expected to return a pointer
+                        print(f"Error: Function expected to return a pointer, not {self.arguments[0].type}.")
                 else:
-                    self.builder.cursor.ret(self.arguments[0].load())
+                    # function does not return a pointer
+                    if self.arguments[0].is_ptr():
+                        self.builder.cursor.ret(self.arguments[0])
+                    else:
+                         self.builder.cursor.ret(self.arguments[0].load())
 
         elif self.operation == OperationType.call:
             # cast the arguments
@@ -59,12 +67,16 @@ class Operation:
                 elif isinstance(argument, Value):
                     arg = argument.write()
                 
-                if a_n < len(self.builder.functions[self.arguments[0][0]].args) and\
-                    (argument.is_ptr() if isinstance(argument, Variable) else False):
+                if a_n < len(self.builder.functions[self.arguments[0][0]].args):
                     #cast to the right type
                     arg = self.builder.cursor.bitcast(arg, self.builder.functions[self.arguments[0][0]].args[a_n].type)
-                
-                cast_arguments.append(arg)
+
+                if is_ptr(argument.type):
+                    cast_arguments.append(arg)
+                else:
+                    # non pointers must be loaded before using
+                    arg = self.builder.cursor.load(arg)
+                    cast_arguments.append(arg)
                     
             if len(self.arguments[0]) > 1:
                 self.arguments[0][1].set(self.builder.cursor.call(self.builder.functions[self.arguments[0][0]], cast_arguments))

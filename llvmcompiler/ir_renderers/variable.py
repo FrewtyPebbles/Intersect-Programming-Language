@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 from llvmlite import ir
+
+from llvmcompiler.compiler_types.type import is_ptr
 from ..compiler_types import ScalarType, AnyType, DataStructureType
 from typing import TYPE_CHECKING, Union
 if TYPE_CHECKING:
@@ -39,8 +41,12 @@ class Value:
         self.builder = builder
         self.type = value_type
         self.value = raw_value
+        if isinstance(self.value, str):
+            # add a null terminator if it is a string
+            self.value = f"{self.value}\00"
         # TODO: process raw_value into python value then set self.value = to the processed value
-    
+
+
     def get_value(self):
         if isinstance(self.type, DataStructureType):
             if self.type.type == ScalarType.c8:
@@ -48,8 +54,9 @@ class Value:
         return self.type.value(self.value)
     
     def write(self) -> ir.AllocaInstr:
-        ret_val = self.builder.cursor.alloca(self.type.value)
-        self.builder.cursor.store(ret_val.type.pointee(self.value), ret_val)
+        const = self.get_value()
+        ret_val = self.builder.cursor.alloca(const.type)
+        self.builder.cursor.store(const, ret_val)
         return ret_val
     
     def dbg_print(self):
