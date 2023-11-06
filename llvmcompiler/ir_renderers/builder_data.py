@@ -58,9 +58,10 @@ class BuilderData:
             print(f"(heap):setting value of:{variable.name}:to:{value.value}")
             if isinstance(value, Value):
                 self.variables_stack[len(self.variables_stack)-1][variable.name].value = value
-                temp_value = self.cursor.alloca(value.type.value)
-                self.cursor.store(value.get_value(), temp_value)
-                self.cursor.store(temp_value, variable.variable)
+                #temp_value = self.cursor.alloca(value.type.value)
+                #self.cursor.store(value.get_value(), temp_value)
+                
+                self.cursor.store(value.get_value(), variable.variable)
             elif isinstance(value, Variable):
                 self.variables_stack[len(self.variables_stack)-1][variable.name].value = value
                 self.cursor.store(value.load(), variable.variable)

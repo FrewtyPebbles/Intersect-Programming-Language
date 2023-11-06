@@ -3,6 +3,7 @@ from __future__ import annotations
 from llvmlite import ir
 
 from llvmcompiler.compiler_types.type import is_ptr
+import llvmcompiler.ir_renderers.operation as op
 from ..compiler_types import ScalarType, AnyType, DataStructureType
 from typing import TYPE_CHECKING, Union
 if TYPE_CHECKING:
@@ -20,10 +21,11 @@ class Variable:
         # declare the variable
         if self.heap:
             malloc_call = self.builder.cursor.call(self.builder.functions["allocate"], [bd.SIZE_T(self.value.type.size)])
+
             bc = self.builder.cursor.bitcast(malloc_call, self.type.value)
-            ptr = self.builder.cursor.gep(bc, [ir.IntType(32)(0)], inbounds=True)
-            self.variable = self.builder.cursor.alloca(self.type.value, name = self.name)
-            self.builder.cursor.store(ptr, self.variable)
+
+            self.variable = self.builder.cursor.gep(bc, [ir.IntType(32)(0)], inbounds=True, name = self.name)
+            
         else:
             self.variable = self.builder.cursor.alloca(self.type.value, name = self.name)
 
@@ -38,12 +40,6 @@ class Variable:
     def load(self):
         return self.builder.cursor.load(self.variable)
     
-    def load_heap(self):
-        if self.heap:
-            return self.builder.cursor.load(self.builder.cursor.load(self.variable))
-        print(f"Warning: Dereference heap pointer called on non heap variable: {self.name}\n  Defaulting to stack dereference.")
-        return self.builder.cursor.load(self.variable)
-    
     @property
     def is_pointer(self):
         return self.type.value.is_pointer
@@ -53,9 +49,6 @@ class Value:
         self.builder = builder
         self.type = value_type
         self.value = raw_value
-        if isinstance(self.value, str):
-            # add a null terminator if it is a string
-            self.value = f"{self.value}\00"
         # TODO: process raw_value into python value then set self.value = to the processed value
 
 

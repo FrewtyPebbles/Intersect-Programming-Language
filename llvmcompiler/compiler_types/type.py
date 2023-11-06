@@ -60,10 +60,8 @@ class DataStructureTypeOptions(Enum):
 class DataStructureType:
     def __init__(self, datastructure_type:DataStructureTypeOptions, items_type:AnyType, count:int = 0) -> None:
         #set value
+        print(count)
         self.count = count
-        if items_type == ScalarType.c8:
-                # add to count for null terminator if it is a string
-                self.count = count + 1
         
         self._size = self.count * items_type.size
 
