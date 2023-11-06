@@ -45,10 +45,11 @@ class Variable:
         return self.type.value.is_pointer
     
 class Value:
-    def __init__(self, builder:BuilderData, value_type:AnyType, raw_value:Union[str, any] = None) -> None:
+    def __init__(self, builder:BuilderData, value_type:AnyType, raw_value:Union[str, any] = None, is_instruction = False) -> None:
         self.builder = builder
         self.type = value_type
         self.value = raw_value
+        self.is_instruction = is_instruction
         # TODO: process raw_value into python value then set self.value = to the processed value
 
 

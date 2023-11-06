@@ -60,7 +60,6 @@ class DataStructureTypeOptions(Enum):
 class DataStructureType:
     def __init__(self, datastructure_type:DataStructureTypeOptions, items_type:AnyType, count:int = 0) -> None:
         #set value
-        print(count)
         self.count = count
         
         self._size = self.count * items_type.size
@@ -126,7 +125,6 @@ def is_ptr(_type) -> bool:
         if (isinstance(_type, ScalarType)) else isinstance(_type, DataStructureType))
 
 def ir_is_ptr(_type) -> bool:
-    print(type(_type))
     return issubclass(type(_type), ir.PointerType)
 
 def create_type(ir_type:ir.Type):

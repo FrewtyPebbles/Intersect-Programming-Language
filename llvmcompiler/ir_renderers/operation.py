@@ -37,31 +37,41 @@ class Operation:
         # process the arguments and run any operation arguments
         for r_a_n, raw_arg in enumerate(self.raw_arguments):
             if isinstance(raw_arg, Operation):
-                inner_op = self.builder.scope.write_operation(raw_arg)
-                self.arguments[r_a_n] = vari.Value(self.builder, create_type(inner_op.type), inner_op)
+                value = self.builder.scope.write_operation(raw_arg)
+                self.arguments[r_a_n] = value
             else:
                 self.arguments[r_a_n] = raw_arg
 
         # renders the operation to IR
         if self.operation == OperationType.define:
+
+            self.builder.cursor.comment("OP::define(stack) START")
             # self.arguments: 0 = name, 1 = type, 2 = value
             self.builder.declare_variable(vari.Variable(self.builder, *self.arguments))
+            self.builder.cursor.comment("OP::define(stack) END")
 
         elif self.operation == OperationType.define_heap:
+            self.builder.cursor.comment(" OP::define(heap) START")
             self.builder.declare_variable(vari.Variable(self.builder, *self.arguments, heap=True))
+            self.builder.cursor.comment(" OP::define(heap) END")
 
         elif self.operation == OperationType.free_heap:
+            self.builder.cursor.comment(" OP::free(heap) START")
             voidptr_ty = ir.IntType(8).as_pointer()
             ptr = self.builder.cursor.gep(self.arguments[0].variable, [ir.IntType(8)(0)], inbounds=True)
             # dbg_llvm_print(self.builder, ptr)
             bc = self.builder.cursor.bitcast(ptr, voidptr_ty)
             self.builder.cursor.call(self.builder.functions["deallocate"], [bc])
+            self.builder.cursor.comment(" OP::free(heap) END")
 
         elif self.operation == OperationType.assign:
             # self.arguments: 0 = variable, 1 = value
+            self.builder.cursor.comment("OP::assign START")
             self.builder.set_variable(self.arguments[0], self.arguments[1])
+            self.builder.cursor.comment("OP::assign END")
 
         elif self.operation == OperationType.function_return:
+            self.builder.cursor.comment("OP::return START")
             self.builder.pop_variables()
             if len(self.arguments) == 0:
                 # if type of function is not void then throw an error
@@ -81,8 +91,10 @@ class Operation:
                         self.builder.cursor.ret(self.arguments[0].load())
                     else:
                          self.builder.cursor.ret(self.arguments[0].load())
+            self.builder.cursor.comment("OP::return END")
 
         elif self.operation == OperationType.call:
+            self.builder.cursor.comment("OP::call START")
             # cast the arguments
             # self.arguments: 0 = (name, ?return_variable), 1+ = n number of args
             cast_arguments:List[Union[ir.AllocaInstr, ir.Constant, ir.CallInstr.CallInstr, any]] = []
@@ -92,17 +104,17 @@ class Operation:
                 if isinstance(argument, vari.Variable):
                     arg = argument.variable
                 elif isinstance(argument, vari.Value):
-                    arg = argument.write()
+                    arg = argument.get_value()
                 
                 
 
-                if a_n < len(self.builder.functions[self.arguments[0][0]].args):
+                if a_n < len(self.builder.functions[self.arguments[0]].args):
                     #cast to the right type
-                    arg = self.builder.cursor.bitcast(arg, self.builder.functions[self.arguments[0][0]].args[a_n].type)
+                    arg = self.builder.cursor.bitcast(arg, self.builder.functions[self.arguments[0]].args[a_n].type)
 
                     # we auto cast pointers for non variable_arg arguments
                     if arg.type.is_pointer:
-                        if not self.builder.functions[self.arguments[0][0]].args[a_n].type.is_pointer:
+                        if not self.builder.functions[self.arguments[0]].args[a_n].type.is_pointer:
                             while (arg.type.is_pointer):
                                 arg = self.builder.cursor.load(arg)
                         cast_arguments.append(arg)
@@ -113,13 +125,16 @@ class Operation:
                 else:
                     cast_arguments.append(arg)
                     
-            if len(self.arguments[0]) > 1:
-                self.arguments[0][1].set(self.builder.cursor.call(self.builder.functions[self.arguments[0][0]], cast_arguments))
-            else:
-                return self.builder.cursor.call(self.builder.functions[self.arguments[0][0]], cast_arguments)
+            func_call = self.builder.cursor.call(self.builder.functions[self.arguments[0]], cast_arguments)
+
+            self.builder.cursor.comment("OP::call end")
+
+            return vari.Value(self.builder, create_type(func_call.type), func_call.get_reference())
             
         elif self.operation == OperationType.cast:
             arg1, arg2 = None, None
+            
+            self.builder.cursor.comment("OP::cast START")
 
             #process arg1
             if isinstance(self.arguments[0], vari.Variable):
@@ -127,12 +142,26 @@ class Operation:
             elif isinstance(self.arguments[0], vari.Value):
                 arg1 = self.arguments[0].write()
             
-            arg2 = self.arguments[1].type.value
+            if isinstance(self.arguments[1], vari.Variable):
+                # if variable is passed
+                arg2 = self.arguments[1].type
+            elif isinstance(self.arguments[1], vari.Value):
+                # if value is passed
+                arg2 = self.arguments[1].type
+            else:
+                # if type is passed
+                arg2 = self.arguments[1]
 
-            return self.builder.cursor.bitcast(arg1, arg2)
+            bitcast = self.builder.cursor.bitcast(arg1, arg2.value)
+
+            self.builder.cursor.comment("OP::cast END")
+
+            return vari.Value(self.builder, arg2, bitcast)
         
         elif self.operation == OperationType.add:
             arg1, arg2 = None, None
+            
+            self.builder.cursor.comment("OP::add START")
 
             #process arg1
             if isinstance(self.arguments[0], vari.Variable):
@@ -146,12 +175,16 @@ class Operation:
             elif isinstance(self.arguments[1], vari.Value):
                 arg2 = self.arguments[1].get_value()
 
-            res = self.builder.cursor.add(arg1, arg2)
-            return res
+            res:ir.Instruction = self.builder.cursor.add(arg1, ir.IntType(32)(7))
+
+            self.builder.cursor.comment("OP::add END")
+
+            return vari.Value(self.builder, self.arguments[0].type, res.get_reference())
         
         elif self.operation == OperationType.subtract:
             arg1, arg2 = None, None
 
+            self.builder.cursor.comment("OP::subtract START")
             #process arg1
             if isinstance(self.arguments[0], vari.Variable):
                 arg1 = self.arguments[0].load()
@@ -164,11 +197,15 @@ class Operation:
             elif isinstance(self.arguments[1], vari.Value):
                 arg2 = self.arguments[1].get_value()
 
-            return self.builder.cursor.sub(arg1, arg2)
+            res:ir.Instruction = self.builder.cursor.sub(arg1, arg2)
+            self.builder.cursor.comment("OP::subtract END")
+
+            return vari.Value(self.builder, self.arguments[0].type, res.get_reference())
         
         elif self.operation == OperationType.multiply:
             arg1, arg2 = None, None
 
+            self.builder.cursor.comment("OP::multiply START")
             #process arg1
             if isinstance(self.arguments[0], vari.Variable):
                 arg1 = self.arguments[0].load()
@@ -181,11 +218,15 @@ class Operation:
             elif isinstance(self.arguments[1], vari.Value):
                 arg2 = self.arguments[1].get_value()
 
-            return self.builder.cursor.mul(arg1, arg2)
+            res:ir.Instruction = self.builder.cursor.mul(arg1, arg2)
+            self.builder.cursor.comment("OP::multiply END")
+
+            return vari.Value(self.builder, self.arguments[0].type, res.get_reference())
         
         elif self.operation == OperationType.divide:
             arg1, arg2 = None, None
 
+            self.builder.cursor.comment("OP::divide START")
             #process arg1
             if isinstance(self.arguments[0], vari.Variable):
                 arg1 = self.arguments[0].load()
@@ -198,17 +239,20 @@ class Operation:
             elif isinstance(self.arguments[1], vari.Value):
                 arg2 = self.arguments[1].get_value()
 
-            return self.builder.cursor.sdiv(arg1, arg2)
+            res:ir.Instruction = self.builder.cursor.sdiv(arg1, arg2)
+            self.builder.cursor.comment("OP::divide END")
+
+            return vari.Value(self.builder, self.arguments[0].type, res.get_reference())
         
         elif self.operation == OperationType.dereference:
-
+            self.builder.cursor.comment("OP::dereference START")
             #process arg1
             if not isinstance(self.arguments[0], vari.Variable):
                 # throw error because the supplied token/item is not dereferenceable
                 print(f"Error: {self.arguments[0]} cannot be dereferenced.")
-            
+            self.builder.cursor.comment("OP::dereference END")
 
-            return self.arguments[0].load()
+            return vari.Value(self.builder, self.arguments[0].type, self.arguments[0].load().get_reference())
 
         
 

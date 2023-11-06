@@ -21,10 +21,8 @@ tf.write_operation(Operation(OperationType.assign, [
 test_str = "Hello, your return value is: %i!\n\0"
 tf.write_operation(Operation(OperationType.define_heap, ["test_str", Value(tf.builder, DataStructureType(DataStructureTypeOptions.array, ScalarType.c8, len(test_str)), test_str)]))
 
-tf.dbg_print()
-
 tf.write_operation(Operation(OperationType.call, [
-    ("print",), 
+    "print", 
     tf.get_variable("test_str"),
     Operation(OperationType.dereference, [tf.get_variable("ret_val")])
 ]))
@@ -35,6 +33,7 @@ tf.dbg_print_module()
 
 import llvmlite.binding as llvm
 from ctypes import CFUNCTYPE, c_int, POINTER
+
 
 llvm.initialize()
 llvm.initialize_native_target()
