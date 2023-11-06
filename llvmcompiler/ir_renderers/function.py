@@ -26,7 +26,7 @@ class Function:
             self.function.args[arg_num].name = arg
         
         # get a ir cursor for writing ir to different things in the function
-        self.builder = BuilderData(self.module, self.function, ir.IRBuilder(self.function.append_basic_block("entry")), self.variables)
+        self.builder = BuilderData(self, ir.IRBuilder(self.function.append_basic_block("entry")), self.variables)
         # This cursor needs to be passed to any ir building classes that are used
         # within this function.
 
@@ -36,9 +36,10 @@ class Function:
         operation.builder = self.builder
         return operation.write()
 
-    def write_call(self, name:str, arguments:List[Union[var.Variable, var.Value]]):
-        return self.builder.call_function(name, arguments)
 
     # functions used for debugging are prefixed with dbg
     def dbg_print(self):
         print(self.function)
+
+    def dbg_print_module(self):
+        print(self.module)
