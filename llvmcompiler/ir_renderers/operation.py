@@ -111,7 +111,7 @@ class Operation:
                 if a_n < len(self.builder.functions[self.arguments[0]].args):
                     #cast to the right type
                     arg = self.builder.cursor.bitcast(arg, self.builder.functions[self.arguments[0]].args[a_n].type)
-
+                    
                     # we auto cast pointers for non variable_arg arguments
                     if arg.type.is_pointer:
                         if not self.builder.functions[self.arguments[0]].args[a_n].type.is_pointer:
@@ -123,13 +123,16 @@ class Operation:
                         arg = self.builder.cursor.load(arg)
                         cast_arguments.append(arg)
                 else:
+                    if isinstance(argument, vari.Variable):
+                        if not argument.is_pointer:
+                            arg = self.builder.cursor.load(arg)
                     cast_arguments.append(arg)
                     
             func_call = self.builder.cursor.call(self.builder.functions[self.arguments[0]], cast_arguments)
 
             self.builder.cursor.comment("OP::call end")
 
-            return vari.Value(self.builder, create_type(func_call.type), func_call.get_reference())
+            return vari.Value(self.builder, create_type(func_call.type), func_call.get_reference(), True)
             
         elif self.operation == OperationType.cast:
             arg1, arg2 = None, None
@@ -156,7 +159,7 @@ class Operation:
 
             self.builder.cursor.comment("OP::cast END")
 
-            return vari.Value(self.builder, arg2, bitcast)
+            return vari.Value(self.builder, arg2, bitcast, True)
         
         elif self.operation == OperationType.add:
             arg1, arg2 = None, None
@@ -179,7 +182,7 @@ class Operation:
 
             self.builder.cursor.comment("OP::add END")
 
-            return vari.Value(self.builder, self.arguments[0].type, res.get_reference())
+            return vari.Value(self.builder, create_type(arg1.type), res.get_reference(), True)
         
         elif self.operation == OperationType.subtract:
             arg1, arg2 = None, None
@@ -200,7 +203,7 @@ class Operation:
             res:ir.Instruction = self.builder.cursor.sub(arg1, arg2)
             self.builder.cursor.comment("OP::subtract END")
 
-            return vari.Value(self.builder, self.arguments[0].type, res.get_reference())
+            return vari.Value(self.builder, self.arguments[0].type, res.get_reference(), True)
         
         elif self.operation == OperationType.multiply:
             arg1, arg2 = None, None
@@ -221,7 +224,7 @@ class Operation:
             res:ir.Instruction = self.builder.cursor.mul(arg1, arg2)
             self.builder.cursor.comment("OP::multiply END")
 
-            return vari.Value(self.builder, self.arguments[0].type, res.get_reference())
+            return vari.Value(self.builder, self.arguments[0].type, res.get_reference(), True)
         
         elif self.operation == OperationType.divide:
             arg1, arg2 = None, None
@@ -242,7 +245,7 @@ class Operation:
             res:ir.Instruction = self.builder.cursor.sdiv(arg1, arg2)
             self.builder.cursor.comment("OP::divide END")
 
-            return vari.Value(self.builder, self.arguments[0].type, res.get_reference())
+            return vari.Value(self.builder, self.arguments[0].type, res.get_reference(), True)
         
         elif self.operation == OperationType.dereference:
             self.builder.cursor.comment("OP::dereference START")
@@ -252,12 +255,12 @@ class Operation:
                 print(f"Error: {self.arguments[0]} cannot be dereferenced.")
             self.builder.cursor.comment("OP::dereference END")
 
-            return vari.Value(self.builder, self.arguments[0].type, self.arguments[0].load().get_reference())
+            return vari.Value(self.builder, self.arguments[0].type, self.arguments[0].load().get_reference(), True)
 
         
 
 def dbg_llvm_print(builder:BuilderData, var):
     srcstr = "%i\n\00"
-    string = builder.cursor.alloca(ir.ArrayType(ir.IntType(8), len(srcstr)))
+    string = builder.alloca(ir.ArrayType(ir.IntType(8), len(srcstr)))
     builder.cursor.store(ir.Constant(ir.ArrayType(ir.IntType(8), len(srcstr)), bytearray(srcstr.encode("utf8"))), string)
     builder.cursor.call(builder.functions["print"], [builder.cursor.bitcast(string, ScalarType.c8.value.as_pointer()), var])
