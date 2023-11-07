@@ -25,6 +25,12 @@ class OperationType(Enum):
     free_heap = 12
     cast = 13
     dereference = 14
+    less_than = 15
+    greater_than = 16
+    equal_to = 17
+    not_equal_to = 18
+    less_than_or_equal_to = 19
+    greater_than_or_equal_to = 19
 
 class Operation:
     def __init__(self, operation:OperationType, arguments:List[Union[Operation, vari.Variable, AnyType, vari.Value, any, Tuple[str, vari.Variable]]] = []) -> None:
@@ -32,6 +38,33 @@ class Operation:
         self.operation = operation
         self.raw_arguments = arguments
         self.arguments = arguments
+
+    def process_lhs_rhs_args(self):
+        arg1, arg2 = None, None
+
+        #process arg1
+        if isinstance(self.arguments[0], vari.Variable):
+            if not self.arguments[0].function_argument:
+                arg1 = self.arguments[0].load()
+            else:
+                arg1 = self.arguments[0].value.value
+        elif isinstance(self.arguments[0], vari.Value):
+            arg1 = self.arguments[0].get_value()
+        else:
+            arg1 = self.arguments[0]
+        
+        #process arg2
+        if isinstance(self.arguments[1], vari.Variable):
+            if not self.arguments[1].function_argument:
+                arg2 = self.arguments[1].load()
+            else:
+                arg2 = self.arguments[1].value.value
+        elif isinstance(self.arguments[1], vari.Value):
+            arg2 = self.arguments[1].get_value()
+        else:
+            arg2 = self.arguments[1]
+
+        return arg1, arg2
 
     def write(self):
         # process the arguments and run any operation arguments
@@ -162,43 +195,25 @@ class Operation:
             return vari.Value(self.builder, arg2, bitcast, True)
         
         elif self.operation == OperationType.add:
-            arg1, arg2 = None, None
+            
             
             self.builder.cursor.comment("OP::add START")
 
-            #process arg1
-            if isinstance(self.arguments[0], vari.Variable):
-                arg1 = self.arguments[0].load()
-            elif isinstance(self.arguments[0], vari.Value):
-                arg1 = self.arguments[0].get_value()
-            
-            #process arg1
-            if isinstance(self.arguments[1], vari.Variable):
-                arg2 = self.arguments[1].load()
-            elif isinstance(self.arguments[1], vari.Value):
-                arg2 = self.arguments[1].get_value()
+            #process args
+            arg1, arg2 = self.process_lhs_rhs_args()
 
-            res:ir.Instruction = self.builder.cursor.add(arg1, ir.IntType(32)(7))
+            res:ir.Instruction = self.builder.cursor.add(arg1, arg2)
 
             self.builder.cursor.comment("OP::add END")
 
             return vari.Value(self.builder, create_type(arg1.type), res.get_reference(), True)
         
         elif self.operation == OperationType.subtract:
-            arg1, arg2 = None, None
 
             self.builder.cursor.comment("OP::subtract START")
-            #process arg1
-            if isinstance(self.arguments[0], vari.Variable):
-                arg1 = self.arguments[0].load()
-            elif isinstance(self.arguments[0], vari.Value):
-                arg1 = self.arguments[0].get_value()
             
-            #process arg1
-            if isinstance(self.arguments[1], vari.Variable):
-                arg2 = self.arguments[1].load()
-            elif isinstance(self.arguments[1], vari.Value):
-                arg2 = self.arguments[1].get_value()
+            #process args
+            arg1, arg2 = self.process_lhs_rhs_args()
 
             res:ir.Instruction = self.builder.cursor.sub(arg1, arg2)
             self.builder.cursor.comment("OP::subtract END")
@@ -206,20 +221,11 @@ class Operation:
             return vari.Value(self.builder, self.arguments[0].type, res.get_reference(), True)
         
         elif self.operation == OperationType.multiply:
-            arg1, arg2 = None, None
 
             self.builder.cursor.comment("OP::multiply START")
-            #process arg1
-            if isinstance(self.arguments[0], vari.Variable):
-                arg1 = self.arguments[0].load()
-            elif isinstance(self.arguments[0], vari.Value):
-                arg1 = self.arguments[0].get_value()
             
-            #process arg1
-            if isinstance(self.arguments[1], vari.Variable):
-                arg2 = self.arguments[1].load()
-            elif isinstance(self.arguments[1], vari.Value):
-                arg2 = self.arguments[1].get_value()
+            #process args
+            arg1, arg2 = self.process_lhs_rhs_args()
 
             res:ir.Instruction = self.builder.cursor.mul(arg1, arg2)
             self.builder.cursor.comment("OP::multiply END")
@@ -227,20 +233,11 @@ class Operation:
             return vari.Value(self.builder, self.arguments[0].type, res.get_reference(), True)
         
         elif self.operation == OperationType.divide:
-            arg1, arg2 = None, None
 
             self.builder.cursor.comment("OP::divide START")
-            #process arg1
-            if isinstance(self.arguments[0], vari.Variable):
-                arg1 = self.arguments[0].load()
-            elif isinstance(self.arguments[0], vari.Value):
-                arg1 = self.arguments[0].get_value()
             
-            #process arg1
-            if isinstance(self.arguments[1], vari.Variable):
-                arg2 = self.arguments[1].load()
-            elif isinstance(self.arguments[1], vari.Value):
-                arg2 = self.arguments[1].get_value()
+            #process args
+            arg1, arg2 = self.process_lhs_rhs_args()
 
             res:ir.Instruction = self.builder.cursor.sdiv(arg1, arg2)
             self.builder.cursor.comment("OP::divide END")
@@ -256,6 +253,80 @@ class Operation:
             self.builder.cursor.comment("OP::dereference END")
 
             return vari.Value(self.builder, self.arguments[0].type, self.arguments[0].load().get_reference(), True)
+        
+        elif self.operation == OperationType.less_than:
+
+            self.builder.cursor.comment("OP::less_than START")
+            
+            #process args
+            arg1, arg2 = self.process_lhs_rhs_args()
+            
+            
+            res:ir.Instruction = self.builder.cursor.icmp_signed('<', arg1, arg2)
+            
+            self.builder.cursor.comment("OP::less_than END")
+
+            return vari.Value(self.builder, create_type(res.type), res.get_reference(), True)
+        
+        elif self.operation == OperationType.greater_than:
+
+            self.builder.cursor.comment("OP::greater_than START")
+            
+            #process args
+            arg1, arg2 = self.process_lhs_rhs_args()
+
+            res:ir.Instruction = self.builder.cursor.icmp_signed('>', arg1, arg2)
+            self.builder.cursor.comment("OP::greater_than END")
+
+            return vari.Value(self.builder, create_type(res.type), res.get_reference(), True)
+        
+        elif self.operation == OperationType.equal_to:
+
+            self.builder.cursor.comment("OP::equal_to START")
+            
+            #process args
+            arg1, arg2 = self.process_lhs_rhs_args()
+
+            res:ir.Instruction = self.builder.cursor.icmp_signed('==', arg1, arg2)
+            self.builder.cursor.comment("OP::equal_to END")
+
+            return vari.Value(self.builder, create_type(res.type), res.get_reference(), True)
+        
+        elif self.operation == OperationType.not_equal_to:
+
+            self.builder.cursor.comment("OP::not_equal_to START")
+            
+            #process args
+            arg1, arg2 = self.process_lhs_rhs_args()
+
+            res:ir.Instruction = self.builder.cursor.icmp_signed('!=', arg1, arg2)
+            self.builder.cursor.comment("OP::not_equal_to END")
+
+            return vari.Value(self.builder, create_type(res.type), res.get_reference(), True)
+        
+        elif self.operation == OperationType.greater_than_or_equal_to:
+
+            self.builder.cursor.comment("OP::greater_than_or_equal_to START")
+            
+            #process args
+            arg1, arg2 = self.process_lhs_rhs_args()
+
+            res:ir.Instruction = self.builder.cursor.icmp_signed('>=', arg1, arg2)
+            self.builder.cursor.comment("OP::greater_than_or_equal_to END")
+
+            return vari.Value(self.builder, create_type(res.type), res.get_reference(), True)
+        
+        elif self.operation == OperationType.less_than_or_equal_to:
+
+            self.builder.cursor.comment("OP::less_than_or_equal_to START")
+            
+            #process args
+            arg1, arg2 = self.process_lhs_rhs_args()
+
+            res:ir.Instruction = self.builder.cursor.icmp_signed('<=', arg1, arg2)
+            self.builder.cursor.comment("OP::less_than_or_equal_to END")
+
+            return vari.Value(self.builder, create_type(res.type), res.get_reference(), True)
 
         
 

@@ -4,6 +4,8 @@ from llvmcompiler.compiler_types.type import ScalarType, DataStructureType, Data
 from llvmlite import ir
 from llvmcompiler.ir_renderers.builder_data import BuilderData
 from llvmcompiler.ir_renderers.operation import Operation
+from llvmcompiler.ir_renderers.scope.forloop import ForLoop
+from llvmcompiler.ir_renderers.scope.scope import Scope
 
 import llvmcompiler.ir_renderers.variable as var
 
@@ -35,12 +37,15 @@ class Function:
         # This cursor needs to be passed to any ir building classes that are used
         # within this function.
 
-        self.get_variable = lambda var_name: self.builder._get_variable(var_name)
+        self.get_variable = self.builder.get_variable
     
     def write_operation(self, operation:Operation):
         operation.builder = self.builder
         return operation.write()
-
+    
+    def create_scope(self, scope_type = "", name = ""):
+        return self.builder.create_scope(scope_type, name)
+        
 
     # functions used for debugging are prefixed with dbg
     def dbg_print(self):

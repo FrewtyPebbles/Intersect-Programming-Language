@@ -11,28 +11,34 @@ if TYPE_CHECKING:
 import llvmcompiler.ir_renderers.builder_data as bd
 
 class Variable:
-    def __init__(self, builder:BuilderData, name:str, value:Union[Variable, Value, any], heap = False):
+    def __init__(self, builder:BuilderData, name:str, value:Union[Variable, Value, any], heap = False, function_argument = False):
         self.builder = builder
         self.name = name
         self.value = value
-        self.heap = heap #wether a variable is stored on the heap or not
+        self.heap = heap # wether a variable is stored on the heap or not
+        self.function_argument = function_argument # wether or not the variable represents a function argument
         self.type = self.value.type.cast_ptr() if self.heap else self.value.type
 
         # declare the variable
-        if self.heap:
-            malloc_call = self.builder.cursor.call(self.builder.functions["allocate"], [bd.SIZE_T(self.value.type.size)])
+        if not function_argument:
+            if self.heap:
+                malloc_call = self.builder.cursor.call(self.builder.functions["allocate"], [bd.SIZE_T(self.value.type.size)])
 
-            bc = self.builder.cursor.bitcast(malloc_call, self.type.value)
+                bc = self.builder.cursor.bitcast(malloc_call, self.type.value)
 
-            self.variable = self.builder.cursor.gep(bc, [ir.IntType(32)(0)], inbounds=True, name = self.name)
-            
+                self.variable = self.builder.cursor.gep(bc, [ir.IntType(32)(0)], inbounds=True, name = self.name)
+                
+            else:
+                self.variable = self.builder.alloca(self.type.value, name = self.name)
         else:
-            self.variable = self.builder.alloca(self.type.value, name = self.name)
+            self.variable = self.value.value
 
         self.builder.declare_variable(self)
-
-        if self.value.value != None:
-            self.set(self.value)
+        print(f"variable:{self.variable}")
+        if not self.function_argument:
+            if self.value.value != None:
+                self.set(self.value)
+        
             
     def set(self, value:Union[Variable, Value, any]):
         self.builder.set_variable(self, value)

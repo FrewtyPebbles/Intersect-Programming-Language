@@ -1,9 +1,11 @@
-import llvmcompiler.ir_renderers.builder_data as bd
-from typing import Dict, List
+from __future__ import annotations
+from typing import Dict, List, Union, TYPE_CHECKING
 from llvmlite import ir
 
-from llvmcompiler.ir_renderers.operation import Operation
-from llvmcompiler.ir_renderers.variable import Variable, Value
+if TYPE_CHECKING:
+    from llvmcompiler.ir_renderers.builder_data import BuilderData
+    from llvmcompiler.ir_renderers.operation import Operation
+    from llvmcompiler.ir_renderers.variable import Variable, Value
 
 class Scope:
     """
@@ -22,10 +24,13 @@ class Scope:
     ```
     """
 
-    def __init__(self, builder:bd.BuilderData, arguments:List[Operation, Variable, Value] = [], name = "") -> None:
+    def __init__(self, builder:BuilderData, name = "") -> None:
+        """
+        This creates the scope.
+        """
         self.builder = builder
         self.name = name
-        self.arguments = arguments
+        self.arguments:List[Union[Operation, Variable, Value]] = []
         self._define_scope_blocks()
         self.builder.push_scope(self.scope_blocks)
         self.builder.push_variable_stack()
@@ -43,6 +48,9 @@ class Scope:
         self.builder.cursor.position_at_end(self.scope_blocks["start"])
         
     def exit_scope(self):
+        """
+        This should be called at the end of the scope.
+        """
         self._exit_scope()
         self.builder.pop_variables()
         self.builder.pop_scope()
