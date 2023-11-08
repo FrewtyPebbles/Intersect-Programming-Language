@@ -12,6 +12,7 @@ tf = module.create_function("test", {
 builder = tf.builder
 
 builder.write_operation(DefineOperation(["ret_val", Value(tf.builder, I32Type(), 10)]))
+builder.write_operation(DefineOperation(["test_md_array", Value(tf.builder, ArrayType(ArrayType(I32Type(), 3), 5), [[0,1,2],[0,1,2],[0,1,2],[0,1,2],[0,1,2]])]))
 
 for_loop = builder.create_scope("for")
 
@@ -53,7 +54,6 @@ for_loop.exit_scope()
 
 tf.write_operation(FunctionReturnOperation([tf.get_variable("ret_val")]))
 
-module.dbg_print()
 
 #Pseudocode:
 
@@ -94,7 +94,7 @@ pmb.populate(pm)
 # optimize
 pm.run(llvm_module)
 
-# print(llvm_module)
+print(llvm_module)
 
 
 tm = llvm.Target.from_default_triple().create_target_machine()
