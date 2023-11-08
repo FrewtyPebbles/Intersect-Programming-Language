@@ -1,0 +1,12 @@
+from llvmlite import ir
+from typing import TYPE_CHECKING
+import llvmcompiler.compiler_types.type as ct
+
+class VoidType(ct.CompilerType):
+    def __init__(self) -> None:
+        self._size = 0
+        self.value = ir.VoidType()
+
+
+    def cast_ptr(self):
+        print("Error: cannot create a void pointer.")

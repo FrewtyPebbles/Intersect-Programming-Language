@@ -1,5 +1,5 @@
 from typing import List, Union
-from llvmcompiler.ir_renderers.operation import Operation
+from llvmcompiler.ir_renderers.operations import Operation
 from llvmcompiler.ir_renderers.variable import Value, Variable
 from .scope import Scope
 
@@ -23,9 +23,12 @@ class ForLoop(Scope):
     def append_condition(self, argument:Union[Operation, Variable, Value]):
         processed_arg = None
         if isinstance(argument, Operation):
-            value = self.write_operation(argument)
-            if value != None:
-                processed_arg = value.get_value()
+            ret_value = self.write_operation(argument)
+            if ret_value != None:
+                if isinstance(ret_value, Value):
+                    processed_arg = ret_value.get_value()
+                elif isinstance(ret_value, Variable):
+                    processed_arg = ret_value.variable
         elif isinstance(argument, Variable):
             processed_arg = argument.load()
         elif isinstance(argument, Value):

@@ -1,55 +1,57 @@
 import sys
 import time
-from llvmcompiler import Function, ScalarType, Operation, OperationType, Value, DataStructureType, DataStructureTypeOptions, Module
-
+from llvmcompiler import Function, Value, Module, I32Type, C8Type, ArrayType, I32PointerType
+from llvmcompiler.ir_renderers.operations import *
 
 module = Module()
 
 tf = module.create_function("test", {
-        "num":ScalarType.i32
-    }, ScalarType.i32)
+        "num":I32Type()
+    }, I32Type())
 
 builder = tf.builder
 
-builder.write_operation(Operation(OperationType.define, ["ret_val", Value(tf.builder, ScalarType.i32, 10)]))
+builder.write_operation(DefineOperation(["ret_val", Value(tf.builder, I32Type(), 10)]))
 
 for_loop = builder.create_scope("for")
 
-for_loop.append_condition(Operation(OperationType.define_heap, ["i", Value(tf.builder, ScalarType.i32, 0)]))
-for_loop.append_condition(Operation(OperationType.less_than, [builder.get_variable("i"), Value(tf.builder, ScalarType.i32, 5)]))
-for_loop.append_condition(Operation(OperationType.assign, [
+for_loop.append_condition(DefineOperation(["i", Value(tf.builder, I32Type(), 0)]))
+for_loop.append_condition(LessThanOperation([builder.get_variable("i"), Value(tf.builder, I32Type(), 5)]))
+for_loop.append_condition(AssignOperation([
         builder.get_variable("i"),
-        Operation(OperationType.add, [builder.get_variable("i"), Value(tf.builder, ScalarType.i32, 1)])
+        AddOperation([builder.get_variable("i"), Value(tf.builder, I32Type(), 1)])
     ]))
 
 for_loop.start_scope()
 
 test_str = "Hello, your return value is: %i!\n\0"
-for_loop.write_operation(Operation(OperationType.define, [
+for_loop.write_operation(DefineOperation([
     "test_str",
-    Value(tf.builder, DataStructureType(DataStructureTypeOptions.array, ScalarType.c8, len(test_str)), test_str)
+    Value(tf.builder, ArrayType(C8Type(), len(test_str)), test_str)
 ]))
 
-for_loop.write_operation(Operation(OperationType.call, [
+
+for_loop.write_operation(CallOperation([
     "print", 
     tf.get_variable("test_str"),
     tf.get_variable("ret_val")
 ]))
 
-for_loop.write_operation(Operation(OperationType.assign, [
+for_loop.write_operation(AssignOperation([
     tf.get_variable("ret_val"), 
-    Operation(OperationType.add, [
+    AddOperation([
             tf.get_variable("ret_val"), tf.get_variable("num")
         ]
     )
 ]))
 
+
 for_loop.exit_scope()
 
 
-tf.write_operation(Operation(OperationType.function_return, [tf.get_variable("ret_val")]))
+tf.write_operation(FunctionReturnOperation([tf.get_variable("ret_val")]))
 
-tf.dbg_print_module()
+module.dbg_print()
 
 #Pseudocode:
 
@@ -88,7 +90,7 @@ pmb.populate(pm)
 # optimize
 pm.run(llvm_module)
 
-print(llvm_module)
+# print(llvm_module)
 
 
 tm = llvm.Target.from_default_triple().create_target_machine()

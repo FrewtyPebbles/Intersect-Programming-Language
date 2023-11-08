@@ -2,16 +2,14 @@ from __future__ import annotations
 
 from llvmlite import ir
 
-from llvmcompiler.compiler_types.type import is_ptr
-import llvmcompiler.ir_renderers.operation as op
-from ..compiler_types import ScalarType, AnyType, DataStructureType
+from ..compiler_types import CompilerType, C8Type, ArrayType
 from typing import TYPE_CHECKING, Union
 if TYPE_CHECKING:
     from .builder_data import BuilderData
 import llvmcompiler.ir_renderers.builder_data as bd
 
 class Variable:
-    def __init__(self, builder:BuilderData, name:str, value:Union[Variable, Value, any], heap = False, function_argument = False):
+    def __init__(self, builder:BuilderData, name:str, value:Value, heap = False, function_argument = False):
         self.builder = builder
         self.name = name
         self.value = value
@@ -20,7 +18,7 @@ class Variable:
         self.type = self.value.type.cast_ptr() if self.heap else self.value.type
 
         # declare the variable
-        if not function_argument:
+        if not self.function_argument:
             if self.heap:
                 malloc_call = self.builder.cursor.call(self.builder.functions["allocate"], [bd.SIZE_T(self.value.type.size)])
 
@@ -34,7 +32,7 @@ class Variable:
             self.variable = self.value.value
 
         self.builder.declare_variable(self)
-        print(f"variable:{self.variable}")
+
         if not self.function_argument:
             if self.value.value != None:
                 self.set(self.value)
@@ -46,12 +44,15 @@ class Variable:
     def load(self):
         return self.builder.cursor.load(self.variable)
     
+    def __repr__(self) -> str:
+        return f"(Variable:[name:\"{self.name}\"|value:{self.value.value}])"
+    
     @property
     def is_pointer(self):
         return self.type.value.is_pointer
     
 class Value:
-    def __init__(self, builder:BuilderData, value_type:AnyType, raw_value:Union[str, any] = None, is_instruction = False) -> None:
+    def __init__(self, builder:BuilderData, value_type:CompilerType, raw_value:Union[str, any] = None, is_instruction = False) -> None:
         self.builder = builder
         self.type = value_type
         self.value = raw_value
@@ -60,9 +61,10 @@ class Value:
 
 
     def get_value(self):
-        if isinstance(self.type, DataStructureType):
-            if self.type.type == ScalarType.c8:
+        if isinstance(self.type, ArrayType):
+            if isinstance(self.type.type, C8Type):
                 return ir.Constant(self.type.value, bytearray(self.value.encode()))
+            print(f"array:{self.type.type}")
         return self.type.value(self.value)
     
     def write(self) -> ir.AllocaInstr:
@@ -80,6 +82,10 @@ class Value:
     
     def dbg_print(self):
         print(self.type.value)
+
+    def __repr__(self) -> str:
+        print(self.value)
+        return f"(Value:[type:\"{self.type.value}\"|value:{self.value}])"
 
     @property
     def is_pointer(self):

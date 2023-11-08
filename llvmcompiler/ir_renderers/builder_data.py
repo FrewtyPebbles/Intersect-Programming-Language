@@ -3,13 +3,13 @@ from __future__ import annotations
 from typing import Dict, List, Union
 from llvmlite import ir
 from typing import TYPE_CHECKING
-from llvmcompiler.ir_renderers.scope.forloop import ForLoop
+from llvmcompiler.ir_renderers.scopes.forloop import ForLoop
 
-from llvmcompiler.ir_renderers.scope.scope import Scope
+from llvmcompiler.ir_renderers.scopes.scope import Scope
 from .variable import Variable, Value
 if TYPE_CHECKING:
     from .function import Function
-import llvmcompiler.ir_renderers.operation as op
+import llvmcompiler.ir_renderers.operations as op
 import sys
 
 IS_64BIT = sys.maxsize > 2**32
@@ -49,6 +49,7 @@ class BuilderData:
 
     def declare_variable(self, variable:Variable):
         self.variables_stack[len(self.variables_stack)-1][variable.name] = variable
+        return variable
 
     def create_scope(self, scope_type = "", name = ""):
         if scope_type == "":
@@ -70,7 +71,7 @@ class BuilderData:
         free_list:List[str] = []
         for name, var in top.items():
             if var.heap:
-                self.scope.write_operation(op.Operation(op.OperationType.free_heap, [var]))
+                self.scope.write_operation(op.FreeOperation([var]))
                 free_list.append(name)
         self.variables_stack.pop()
         return free_list
@@ -85,7 +86,7 @@ class BuilderData:
         free_list:List[str] = []
         for name, var in top.items():
             if var.heap:
-                self.scope.write_operation(op.Operation(op.OperationType.free_heap, [var]))
+                self.scope.write_operation(op.FreeOperation([var]))
                 free_list.append(name)
                 del top[name]
         return free_list
@@ -94,20 +95,22 @@ class BuilderData:
 
     def set_variable(self, variable:Variable, value:Union[Variable, Value, any]):
         if variable.heap:
-            print(f"(heap):setting value of:{variable.name}:to:{value.value}")
+            print(f" - [(heap)] : setting value of : [{variable.name}] : to : [{value.value}]")
             if isinstance(value, Value):
                 variable.value = value
-                
+
                 self.cursor.store(value.get_value(), variable.variable)
             elif isinstance(value, Variable):
                 variable.value = value
+
                 self.cursor.store(value, variable.variable)
             else:
                 # This is for inline operations,  ir ordering is handled by LLVM
                 variable.value = value
+
                 self.cursor.store(value, variable.variable)
         else:
-            print(f"(stack):setting value of:{variable.name}:to:{value.value}")
+            print(f" - [(stack)] : setting value of : [{variable.name}] : to : [{value.value}]")
             if isinstance(value, Value):
                 variable.value = value
                 
@@ -119,7 +122,7 @@ class BuilderData:
                 # This is for inline operations,  ir ordering is handled by LLVM
                 variable.value = value
                 self.cursor.store(value, variable.variable)
-        #print(str(self.cursor.module))
+        return variable
 
     def get_variable(self, name:str) -> Variable:
 

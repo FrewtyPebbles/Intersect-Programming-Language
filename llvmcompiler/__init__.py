@@ -1,3 +1,3 @@
-from .ir_renderers import Function, BuilderData, Operation, Variable, OperationType, Value, ForLoop
-from .compiler_types import ScalarType, DataStructureTypeOptions, DataStructureType, AnyType
+from .ir_renderers import Function, BuilderData, Operation, Variable, Value, ForLoop
 from .modules import Module
+from .compiler_types import *

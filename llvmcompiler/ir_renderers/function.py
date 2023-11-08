@@ -1,11 +1,11 @@
 from __future__ import annotations
 from typing import Dict, List, Union, TYPE_CHECKING
-from llvmcompiler.compiler_types.type import ScalarType, DataStructureType, DataStructureTypeOptions, AnyType
+from llvmcompiler.compiler_types.type import CompilerType
 from llvmlite import ir
 from llvmcompiler.ir_renderers.builder_data import BuilderData
-from llvmcompiler.ir_renderers.operation import Operation
-from llvmcompiler.ir_renderers.scope.forloop import ForLoop
-from llvmcompiler.ir_renderers.scope.scope import Scope
+from llvmcompiler.ir_renderers.operations import Operation
+from llvmcompiler.ir_renderers.scopes.forloop import ForLoop
+from llvmcompiler.ir_renderers.scopes.scope import Scope
 
 import llvmcompiler.ir_renderers.variable as var
 
@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 
 
 class Function:
-    def __init__(self, module:Module, name:str, arguments:Dict[str, AnyType], return_type:AnyType, variable_arguments:bool = False) -> None:
+    def __init__(self, module:Module, name:str, arguments:Dict[str, CompilerType], return_type:CompilerType, variable_arguments:bool = False) -> None:
         self.module = module
         self.name = name
         self.arguments = arguments

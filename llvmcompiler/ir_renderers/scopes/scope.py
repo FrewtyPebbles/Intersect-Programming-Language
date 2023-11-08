@@ -4,7 +4,7 @@ from llvmlite import ir
 
 if TYPE_CHECKING:
     from llvmcompiler.ir_renderers.builder_data import BuilderData
-    from llvmcompiler.ir_renderers.operation import Operation
+    from llvmcompiler.ir_renderers.operations import Operation
     from llvmcompiler.ir_renderers.variable import Variable, Value
 
 class Scope:

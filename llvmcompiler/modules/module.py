@@ -1,6 +1,6 @@
 from llvmcompiler.ir_renderers.function import Function
 from llvmlite import ir
-import llvmcompiler.compiler_types.type as ty
+import llvmcompiler.compiler_types as ty
 import llvmcompiler.ir_renderers.builder_data as bd
 from typing import Dict, List, Union
 
@@ -18,10 +18,16 @@ class Module:
             #"input":"input" # will be getting input function from c dll/so file via this method https://stackoverflow.com/questions/36658726/link-c-in-llvmlite
         }
 
-    def create_function(self, name:str, arguments:Dict[str, ty.AnyType], return_type:ty.AnyType, variable_arguments = False) -> Function:
+    def create_function(self, name:str, arguments:Dict[str, ty.CompilerType], return_type:ty.CompilerType, variable_arguments = False) -> Function:
         func = Function(self, name, arguments, return_type, variable_arguments)
         self.functions[name] = func.function
         return func
+    
+    def dbg_print(self):
+        """
+        Prints the current state of the rendered IR for the module.
+        """
+        print(self.module)
 
     def __repr__(self) -> str:
         return f"{self.module}"
