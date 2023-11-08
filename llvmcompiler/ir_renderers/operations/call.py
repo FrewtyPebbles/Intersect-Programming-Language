@@ -26,9 +26,7 @@ class CallOperation(Operation):
                 # we auto cast pointers for non variable_arg arguments
                 cast_arguments.append(arg)
             else:
-                if isinstance(argument, vari.Variable):
-                    if not argument.is_pointer:
-                        arg = self.builder.cursor.load(arg)
+                arg = self.process_arg(argument)
                 cast_arguments.append(arg)
                 
         func_call = self.builder.cursor.call(self.builder.functions[self.arguments[0]], cast_arguments)

@@ -20,30 +20,23 @@ class Operation:
         self.raw_arguments = arguments
         self.arguments = arguments
 
-    def process_lhs_rhs_args(self):
-        arg1, arg2 = None, None
-
-        #process arg1
-        if isinstance(self.arguments[0], vari.Variable):
-            if not self.arguments[0].heap and not self.arguments[0].function_argument:
-                arg1 = self.arguments[0].load()
+    def process_arg(self, arg):
+        if isinstance(arg, vari.Variable):
+            if not arg.heap and not arg.function_argument:
+                return arg.load()
             else:
-                arg1 = self.arguments[0].variable
-        elif isinstance(self.arguments[0], vari.Value):
-            arg1 = self.arguments[0].get_value()
+                return arg.variable
+        elif isinstance(arg, vari.Value):
+            return arg.get_value()
         else:
-            arg1 = self.arguments[0]
+            return arg
+        
+    def process_lhs_rhs_args(self):
+        #process arg1
+        arg1 = self.process_arg(self.arguments[0])
         
         #process arg2
-        if isinstance(self.arguments[1], vari.Variable):
-            if not self.arguments[1].heap and not self.arguments[1].function_argument:
-                arg2 = self.arguments[1].load()
-            else:
-                arg2 = self.arguments[1].variable
-        elif isinstance(self.arguments[1], vari.Value):
-            arg2 = self.arguments[1].get_value()
-        else:
-            arg2 = self.arguments[1]
+        arg2 = self.process_arg(self.arguments[1])
 
         return arg1, arg2
 

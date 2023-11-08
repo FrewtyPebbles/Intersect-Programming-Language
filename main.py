@@ -24,7 +24,7 @@ for_loop.append_condition(AssignOperation([
 
 for_loop.start_scope()
 
-test_str = "Hello, your return value is: %i!\n\0"
+test_str = "%i + %i = %i\n\0"
 for_loop.write_operation(DefineOperation([
     "test_str",
     Value(tf.builder, ArrayType(C8Type(), len(test_str)), test_str)
@@ -34,6 +34,8 @@ for_loop.write_operation(DefineOperation([
 for_loop.write_operation(CallOperation([
     "print", 
     tf.get_variable("test_str"),
+    tf.get_variable("ret_val"),
+    tf.get_variable("num"),
     tf.get_variable("ret_val")
 ]))
 
@@ -59,12 +61,14 @@ module.dbg_print()
 fn test(num: i32) -> i32 {
     ret_val: i32 = 7;    
 
+    {}
     ret_val = ret_val + 10;
 
     test_str: str = "Hello, your return value is: %i!\n";
 
     print(test_str, ret_val);
 
+    
     return ret_val;
 }
 

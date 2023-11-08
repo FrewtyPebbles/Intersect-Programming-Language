@@ -13,6 +13,7 @@ class CastOperation(Operation):
         if isinstance(self.arguments[0], vari.Variable):
             arg1 = self.arguments[0].variable
         elif isinstance(self.arguments[0], vari.Value):
+            # If casting a literal, just cast at compile time and return a constant of the type
             arg1 = self.arguments[0].write()
         
         if isinstance(self.arguments[1], vari.Variable):
