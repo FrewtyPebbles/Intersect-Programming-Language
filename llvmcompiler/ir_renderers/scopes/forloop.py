@@ -21,18 +21,7 @@ class ForLoop(Scope):
         self.processed_args:List[Union[Operation, Variable, Value]] = []
         
     def append_condition(self, argument:Union[Operation, Variable, Value]):
-        processed_arg = None
-        if isinstance(argument, Operation):
-            ret_value = self.write_operation(argument)
-            if ret_value != None:
-                if isinstance(ret_value, Value):
-                    processed_arg = ret_value.get_value()
-                elif isinstance(ret_value, Variable):
-                    processed_arg = ret_value.variable
-        elif isinstance(argument, Variable):
-            processed_arg = argument.load()
-        elif isinstance(argument, Value):
-            processed_arg = argument.get_value()
+        processed_arg = self.process_arg(argument)
         self.processed_args.append(processed_arg)
         if len(self.processed_args) == 1:
             self.builder.cursor.branch(self.scope_blocks["condition"])

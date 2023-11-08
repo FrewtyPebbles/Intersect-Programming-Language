@@ -15,7 +15,7 @@ class CallOperation(Operation):
             if isinstance(argument, vari.Variable):
                 arg = argument.variable
             elif isinstance(argument, vari.Value):
-                arg = argument.get_value()
+                arg = argument.write()
             
             
 
@@ -33,4 +33,4 @@ class CallOperation(Operation):
 
         self.builder.cursor.comment("OP::call end")
 
-        return vari.Value(self.builder, CompilerType.create_from(func_call.type), func_call.get_reference(), True)
+        return vari.Value(CompilerType.create_from(func_call.type), func_call.get_reference(), True)

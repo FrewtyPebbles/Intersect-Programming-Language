@@ -1,44 +1,70 @@
 from typing import List, Union
 from llvmcompiler.ir_renderers.operations import Operation
 from llvmcompiler.ir_renderers.variable import Value, Variable
-from .scope import Scope
+import llvmcompiler.ir_renderers.scopes as scps
 from llvmlite import ir
 
-class IfBlock(Scope):
+class IfBlock(scps.Scope):
     def _define_scope_blocks(self):
-        self.builder.cursor.comment("SCOPE::for START")
-
-        self.scope_blocks = {
+        if_start = self.builder.cursor.comment("SCOPE::if START")
+        
+        self.scope_blocks:dict[str, ir.Block] = {
             # make it so you can for loop without a declaration
-            "condition": self.builder.cursor.append_basic_block(),
-            "start": self.builder.cursor.append_basic_block(),
-            "end": self.builder.cursor.append_basic_block()
+            "true": self.builder.cursor.append_basic_block(),
+            "exit": self.builder.cursor.append_basic_block()
         }
-        self.builder.cursor.branch(self.scope_blocks["condition"])
-        self.builder.cursor.position_at_end(self.scope_blocks["condition"])
+        self.exit = self.scope_blocks["exit"]
+        self.builder.cursor.position_after(if_start)
         # Then run define condition when the condition is parsed
         self.processed_arg = None
+        self.else_if = False
         
     def insert_condition(self, argument:Union[Operation, Variable, Value]):
-        if isinstance(argument, Operation):
-            value = self.write_operation(argument)
-            if value != None:
-                self.processed_arg = value.get_value()
-        elif isinstance(argument, Variable):
-            self.processed_arg = argument.load()
-        elif isinstance(argument, Value):
-            self.processed_arg = argument.get_value()
+        self.processed_arg = self.process_arg(argument)
+        self.cbr_pos = self.builder.cursor.comment("internal::cbranch_position")
+        
 
+    def render_br(self, dest:ir.Block):
+        self.builder.cursor.position_after(self.cbr_pos)
+        self.builder.cursor.cbranch(self.processed_arg, self.scope_blocks["true"], dest)
+        self.builder.cursor.position_at_end(self.exit)
 
     def start_scope(self):
-        # define the condition
-        # branch to the start of the loop
-        self.builder.push_variable_stack()
-        self.builder.cursor.position_at_end(self.scope_blocks["start"])
+        """"
+        Should be called on "{" token.
+        """
+        self.builder.cursor.position_at_end(self.scope_blocks["true"])
+
+    def insert_else_if(self):
+        """
+        For this to work, the syntax tree must maintain a stack of both the previous scope,
+        along with a stack of the current scope
+        """
+        self.else_if = True
+        return scps.ElseIfBlock(self.builder, self)
+
+    def insert_else(self):
+        """
+        For this to work, the syntax tree must maintain a stack of both the previous scope,
+        along with a stack of the current scope
+        """
+        self.else_if = True
+        return scps.ElseBlock(self.builder, self)
 
     def _exit_scope(self):
         # pop the variables
-        self.builder.pop_variables()
-        self.builder.cursor.branch(self.scope_blocks["increment"])
-        self.builder.cursor.position_at_end(self.scope_blocks["end"])
-        self.builder.cursor.comment("SCOPE::for END")
+        self.builder.cursor.position_at_end(self.scope_blocks["true"])
+        self.builder.cursor.branch(self.scope_blocks["exit"])
+        self.builder.cursor.position_at_end(self.scope_blocks["exit"])
+        self.scope_end_comment()
+
+    def render(self):
+        """
+        Call once if the previous instruction in the previous instruction stack is either an if, else if,
+        or an else and the current instruction in the current instruction stack is none of those.
+        """
+        if not self.else_if:
+            self.render_br(self.exit)
+
+    def scope_end_comment(self):
+        self.builder.cursor.comment("SCOPE::if END")

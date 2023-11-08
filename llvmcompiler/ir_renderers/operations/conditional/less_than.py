@@ -14,4 +14,4 @@ class LessThanOperation(Operation):
         
         self.builder.cursor.comment("OP::less_than END")
 
-        return vari.Value(self.builder, CompilerType.create_from(res.type), res.get_reference(), True)
+        return vari.Value(CompilerType.create_from(res.type), res.get_reference(), True)

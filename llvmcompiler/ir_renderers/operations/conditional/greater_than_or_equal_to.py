@@ -13,4 +13,4 @@ class GreaterThanOrEqualToOperation(Operation):
         res:ir.Instruction = self.builder.cursor.icmp_signed('>=', arg1, arg2)
         self.builder.cursor.comment("OP::greater_than_or_equal_to END")
 
-        return vari.Value(self.builder, CompilerType.create_from(res.type), res.get_reference(), True)
+        return vari.Value(CompilerType.create_from(res.type), res.get_reference(), True)

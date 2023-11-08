@@ -13,4 +13,4 @@ class MultiplyOperation(Operation):
         res:ir.Instruction = self.builder.cursor.mul(arg1, arg2)
         self.builder.cursor.comment("OP::multiply END")
 
-        return vari.Value(self.builder, self.arguments[0].type, res.get_reference(), True)
+        return vari.Value(self.arguments[0].type, res.get_reference(), True)

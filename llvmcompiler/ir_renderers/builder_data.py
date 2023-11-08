@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Dict, List, Union
 from llvmlite import ir
 from typing import TYPE_CHECKING
-from llvmcompiler.ir_renderers.scopes.forloop import ForLoop
+from llvmcompiler.ir_renderers.scopes import *
 
 from llvmcompiler.ir_renderers.scopes.scope import Scope
 from .variable import Variable, Value
@@ -36,8 +36,7 @@ class BuilderData:
 
         # declare the function arguments as variables
         for a_n, (arg_name, arg) in enumerate(self.scope.arguments.items()):
-            print(self.function.args[a_n])
-            self.declare_variable(Variable(self, arg_name, Value(self, arg, self.function.args[a_n], True), function_argument = True))
+            self.declare_variable(Variable(self, arg_name, Value(arg, self.function.args[a_n], True), function_argument = True))
 
     def get_scope_block(self, name:str) -> Variable:
         for layer_number, layer in enumerate(self.scope_block_stack):
@@ -56,6 +55,8 @@ class BuilderData:
             return Scope(self, name)
         elif scope_type == "for":
             return ForLoop(self, name)
+        elif scope_type == "if":
+            return IfBlock(self, name)
         else:
             print("Error: Invalid scope type!")
 

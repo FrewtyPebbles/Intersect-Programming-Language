@@ -52,8 +52,8 @@ class Variable:
         return self.type.value.is_pointer
     
 class Value:
-    def __init__(self, builder:BuilderData, value_type:CompilerType, raw_value:Union[str, any] = None, is_instruction = False) -> None:
-        self.builder = builder
+    def __init__(self, value_type:CompilerType, raw_value:Union[str, any] = None, is_instruction = False) -> None:
+        self.builder:BuilderData = None
         self.type = value_type
         self.value = raw_value
         self.is_instruction = is_instruction
@@ -64,7 +64,6 @@ class Value:
         if isinstance(self.type, ArrayType):
             if isinstance(self.type.type, C8Type):
                 return ir.Constant(self.type.value, bytearray(self.value.encode()))
-            print(f"array:{self.type.type}")
         return self.type.value(self.value)
     
     def write(self) -> ir.AllocaInstr:
@@ -84,7 +83,6 @@ class Value:
         print(self.type.value)
 
     def __repr__(self) -> str:
-        print(self.value)
         return f"(Value:[type:\"{self.type.value}\"|value:{self.value}])"
 
     @property

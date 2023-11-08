@@ -1,6 +1,6 @@
 import sys
 import time
-from llvmcompiler import Function, Value, Module, I32Type, C8Type, ArrayType, I32PointerType
+from llvmcompiler import Function, Value, Module, I32Type, C8Type, ArrayType, I32PointerType, ArrayPointerType
 from llvmcompiler.ir_renderers.operations import *
 
 module = Module()
@@ -11,62 +11,73 @@ tf = module.create_function("test", {
 
 builder = tf.builder
 
-builder.write_operation(DefineOperation(["ret_val", Value(tf.builder, I32Type(), 10)]))
-builder.write_operation(DefineOperation(["test_md_array", Value(tf.builder, ArrayType(ArrayType(I32Type(), 3), 5), [[0,1,2],[0,1,2],[0,1,2],[0,1,2],[0,1,2]])]))
+if_scope = builder.create_scope("if")
 
-for_loop = builder.create_scope("for")
+if_scope.insert_condition(GreaterThanOperation([tf.get_variable("num"), Value(I32Type(), 10)]))
+if_scope.start_scope()
 
-for_loop.append_condition(DefineOperation(["i", Value(tf.builder, I32Type(), 0)]))
-for_loop.append_condition(LessThanOperation([builder.get_variable("i"), Value(tf.builder, I32Type(), 5)]))
-for_loop.append_condition(AssignOperation([
-        builder.get_variable("i"),
-        AddOperation([builder.get_variable("i"), Value(tf.builder, I32Type(), 1)])
-    ]))
+gts = "Value is greater than 10\n\0"
+builder.write_operation(CallOperation(["print", Value(ArrayType(C8Type(), len(gts)), gts)]))
 
-for_loop.start_scope()
+if_scope.exit_scope()
+else_if_scope = if_scope.insert_else_if()
+else_if_scope.insert_condition(EqualToOperation([tf.get_variable("num"), Value(I32Type(), 5)]))
+else_if_scope.start_scope()
 
-test_str = "%i + %i = %i\n\0"
-for_loop.write_operation(DefineOperation([
-    "test_str",
-    Value(tf.builder, ArrayType(C8Type(), len(test_str)), test_str)
-]))
+lts = "Value is 5.\n\0"
+builder.write_operation(CallOperation(["print", Value(ArrayType(C8Type(), len(lts)), lts)]))
 
+else_if_scope.exit_scope()
 
-for_loop.write_operation(CallOperation([
-    "print", 
-    tf.get_variable("test_str"),
-    tf.get_variable("ret_val"),
-    tf.get_variable("num"),
-    tf.get_variable("ret_val")
-]))
+else_if_scope2 = else_if_scope.insert_else_if()
+else_if_scope2.insert_condition(EqualToOperation([tf.get_variable("num"), Value(I32Type(), 3)]))
+else_if_scope2.start_scope()
 
-for_loop.write_operation(AssignOperation([
-    tf.get_variable("ret_val"), 
-    AddOperation([
-            tf.get_variable("ret_val"), tf.get_variable("num")
-        ]
-    )
-]))
+lts = "Value is 3.\n\0"
+builder.write_operation(CallOperation(["print", Value(ArrayType(C8Type(), len(lts)), lts)]))
 
+else_if_scope2.exit_scope()
 
-for_loop.exit_scope()
+else_scope = else_if_scope2.insert_else()
 
+else_scope.start_scope()
 
-tf.write_operation(FunctionReturnOperation([tf.get_variable("ret_val")]))
+eqs = "Value is none of the above.\n\0"
+builder.write_operation(CallOperation(["print", Value(ArrayType(C8Type(), len(eqs)), eqs)]))
 
+else_scope.exit_scope()
+
+else_scope.render()
+
+closemsg = "Program End msg.\n\0"
+builder.write_operation(CallOperation(["print", Value(ArrayType(C8Type(), len(closemsg)), closemsg)]))
+
+builder.write_operation(FunctionReturnOperation([tf.get_variable("num")]))
+
+tf.dbg_print()
 
 #Pseudocode:
 
 """
 fn test(num: i32) -> i32 {
-    ret_val: i32 = 7;    
+    let heap ret_val:i32 = 10;
 
-    {}
-    ret_val = ret_val + 10;
+    let test_md_array:[[i32 * 3] * 5] = [
+        [0,1,2],
+        [0,1,2],
+        [0,1,2],
+        [0,1,2],
+        [0,1,2]
+    ];
 
-    test_str: str = "Hello, your return value is: %i!\n";
+    
+    for (let i:i32 = 0; i < 5; i++){
+        test_str:str = "%i + (10 * %i) = %i!\n";
 
-    print(test_str, ret_val);
+        print(test_str, num, i, *ret_val);
+        
+        *ret_val = *ret_val + 10;
+    }
 
     
     return ret_val;
@@ -94,27 +105,27 @@ pmb.populate(pm)
 # optimize
 pm.run(llvm_module)
 
-print(llvm_module)
+# print(llvm_module)
 
 
 tm = llvm.Target.from_default_triple().create_target_machine()
 
 def test(num:int)->int:
     ret_val = 10
-    test_str = "Hello, your return value is: {i}!\n"
-    for _ in range(5):
-        sys.stdout.write(test_str.format(i = ret_val))
+    test_str = "{a} + (10 * {b}) = {c}\n"
+    for i in range(5):
+        sys.stdout.write(test_str.format(a=num, b=i, c=ret_val))
         ret_val = ret_val + num
     return ret_val
 
 # use this https://github.com/numba/llvmlite/issues/181 to figure out how to compile
-
+print("PROGRAM RUNNING:")
 with llvm.create_mcjit_compiler(llvm_module, tm) as ee:
     ee.finalize_object()
     fptr = ee.get_function_address("test")
     py_func = CFUNCTYPE(c_int, c_int)(fptr)
     import time
-    parameter = 10
+    parameter = 11
 
     t0 = time.time()
     ret_ = py_func(parameter)

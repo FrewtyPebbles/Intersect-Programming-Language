@@ -12,6 +12,5 @@ class DereferenceOperation(Operation):
             print(f"Error: {self.arguments[0]} cannot be dereferenced.")
         res = self.arguments[0].load()
         self.builder.cursor.comment("OP::dereference END")
-        print(f"dereferenced: {res}")
 
-        return vari.Value(self.builder, CompilerType.create_from(res.type), res.get_reference(), True)
+        return vari.Value(CompilerType.create_from(res.type), res.get_reference(), True)

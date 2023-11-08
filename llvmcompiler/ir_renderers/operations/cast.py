@@ -30,4 +30,4 @@ class CastOperation(Operation):
 
         self.builder.cursor.comment("OP::cast END")
 
-        return vari.Value(self.builder, arg2, bitcast, True)
+        return vari.Value(arg2, bitcast, True)

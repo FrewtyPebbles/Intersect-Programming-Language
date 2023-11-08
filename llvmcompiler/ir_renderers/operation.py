@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Self
 from enum import Enum
 from typing import List, Tuple, Union
 from llvmlite import ir
@@ -10,17 +10,18 @@ if TYPE_CHECKING:
     from .builder_data import BuilderData
 import llvmcompiler.ir_renderers.variable as vari
 
+arg_type = Self | vari.Variable | CompilerType | vari.Value | Tuple[str, vari.Variable]
 
 class Operation:
     """
     All operations inherit from this operation
     """
-    def __init__(self, arguments:List[Union[Operation, vari.Variable, CompilerType, vari.Value, any, Tuple[str, vari.Variable]]] = []) -> None:
+    def __init__(self, arguments:List[arg_type] = []) -> None:
         self.builder:BuilderData = None
         self.raw_arguments = arguments
         self.arguments = arguments
 
-    def process_arg(self, arg):
+    def process_arg(self, arg:arg_type):
         if isinstance(arg, vari.Variable):
             if not arg.heap and not arg.function_argument:
                 return arg.load()
@@ -48,10 +49,15 @@ class Operation:
         for r_a_n, raw_arg in enumerate(self.raw_arguments):
             if isinstance(raw_arg, Operation):
                 value = self.builder.scope.write_operation(raw_arg)
+                value.builder = self.builder
                 self.arguments[r_a_n] = value
+            elif isinstance(raw_arg, vari.Value):
+                raw_arg.builder = self.builder
+                self.arguments[r_a_n] = raw_arg
             else:
                 self.arguments[r_a_n] = raw_arg
-        print(self)
+
+        
 
     def _write(self) -> vari.Value | vari.Variable:
         """

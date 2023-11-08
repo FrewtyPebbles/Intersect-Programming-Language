@@ -4,8 +4,8 @@ from llvmlite import ir
 
 if TYPE_CHECKING:
     from llvmcompiler.ir_renderers.builder_data import BuilderData
-    from llvmcompiler.ir_renderers.operations import Operation
-    from llvmcompiler.ir_renderers.variable import Variable, Value
+import llvmcompiler.ir_renderers.operations as op
+import llvmcompiler.ir_renderers.variable as vari
 
 class Scope:
     """
@@ -30,10 +30,11 @@ class Scope:
         """
         self.builder = builder
         self.name = name
-        self.arguments:List[Union[Operation, Variable, Value]] = []
+        self.arguments:List[Union[op.Operation, vari.Variable, vari.Value]] = []
         self._define_scope_blocks()
         self.builder.push_scope(self.scope_blocks)
         self.builder.push_variable_stack()
+        
 
     def _define_scope_blocks(self):
         """
@@ -65,6 +66,22 @@ class Scope:
         self.builder.cursor.branch(self.scope_blocks["end"])
         self.builder.cursor.position_at_end(self.scope_blocks["end"])
 
-    def write_operation(self, operation:Operation):
+    def process_arg(self, argument:Union[op.Operation, vari.Variable, vari.Value]):
+        processed_arg = None
+        if isinstance(argument, op.Operation):
+            ret_value = self.write_operation(argument)
+            if ret_value != None:
+                if isinstance(ret_value, vari.Value):
+                    processed_arg = ret_value.get_value()
+                elif isinstance(ret_value, vari.Variable):
+                    processed_arg = ret_value.variable
+        elif isinstance(argument, vari.Variable):
+            processed_arg = argument.load()
+        elif isinstance(argument, vari.Value):
+            processed_arg = argument.get_value()
+        
+        return processed_arg
+
+    def write_operation(self, operation:op.Operation):
         operation.builder = self.builder
         return operation.write()
