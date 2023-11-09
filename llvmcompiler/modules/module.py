@@ -18,6 +18,7 @@ class Module:
             #"input":"input" # will be getting input function from c dll/so file via this method https://stackoverflow.com/questions/36658726/link-c-in-llvmlite
         }
 
+
     def create_function(self, name:str, arguments:Dict[str, ty.CompilerType], return_type:ty.CompilerType, variable_arguments = False) -> Function:
         func = Function(self, name, arguments, return_type, variable_arguments)
         self.functions[name] = func.function
