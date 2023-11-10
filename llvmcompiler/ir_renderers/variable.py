@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from llvmlite import ir
 
-from ..compiler_types import CompilerType, C8Type, ArrayType
+import llvmcompiler.compiler_types as ct
 from typing import TYPE_CHECKING, Union
 if TYPE_CHECKING:
     from .builder_data import BuilderData
@@ -52,18 +52,19 @@ class Variable:
         return self.type.value.is_pointer
     
 class Value:
-    def __init__(self, value_type:CompilerType, raw_value:Union[str, any] = None, is_instruction = False) -> None:
+    def __init__(self, value_type:ct.CompilerType, raw_value:Union[str, any] = None, is_instruction = False, heap = False) -> None:
         self.builder:BuilderData = None
         self.type = value_type
         self.value = raw_value
         self.is_instruction = is_instruction
-        # TODO: process raw_value into python value then set self.value = to the processed value
+        self.heap = heap
 
 
     def get_value(self):
-        if isinstance(self.type, ArrayType):
-            if isinstance(self.type.type, C8Type):
+        if isinstance(self.type, ct.ArrayType) or isinstance(self.type, ct.VectorType):
+            if isinstance(self.type.type, ct.C8Type):
                 return ir.Constant(self.type.value, bytearray(self.value.encode()))
+            
         return self.type.value(self.value)
     
     def write(self) -> ir.AllocaInstr:

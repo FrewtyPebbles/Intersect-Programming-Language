@@ -4,11 +4,13 @@ from enum import Enum
 from typing import List, Tuple, Union
 from llvmlite import ir
 
+import llvmcompiler.ir_renderers.variable as vari
+
+
 from llvmcompiler.compiler_types import CompilerType
 from llvmcompiler.compiler_types.types.char import C8PointerType
 if TYPE_CHECKING:
     from .builder_data import BuilderData
-import llvmcompiler.ir_renderers.variable as vari
 
 arg_type = Self | vari.Variable | CompilerType | vari.Value | Tuple[str, vari.Variable]
 

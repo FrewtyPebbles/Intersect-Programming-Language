@@ -2,6 +2,7 @@ from llvmcompiler.ir_renderers.function import Function
 from llvmlite import ir
 import llvmcompiler.compiler_types as ty
 import llvmcompiler.ir_renderers.builder_data as bd
+import llvmcompiler.compiler_types.types.datastructures.struct as st
 from typing import Dict, List, Union
 
 
@@ -17,6 +18,24 @@ class Module:
             "deallocate": self._std_free()
             #"input":"input" # will be getting input function from c dll/so file via this method https://stackoverflow.com/questions/36658726/link-c-in-llvmlite
         }
+        self.structs:dict[str, st.Struct] = {}
+
+
+    def get_struct(self, name:str):
+        """
+        When checking "label" type names in the syntax tree builder, this is the function you should call.
+        If the function returns None, then the struct does not exist so throw an error.
+        """
+        if name in self.structs.keys():
+            return self.structs[name]
+        else:
+            return None
+
+    def create_struct(self, name:str, attributes:dict[str, ty.CompilerType], packed = False):
+        struct = st.Struct(self, name, attributes, packed)
+        self.structs[name] = struct
+        struct.write()
+        return struct
 
 
     def create_function(self, name:str, arguments:Dict[str, ty.CompilerType], return_type:ty.CompilerType, variable_arguments = False) -> Function:
@@ -64,3 +83,4 @@ class Module:
         printf_ty = ir.FunctionType(voidptr_ty, [voidptr_ty, bd.SIZE_T], var_arg=False)
         realloc = ir.Function(self.module, printf_ty, name="realloc")
         return realloc
+    

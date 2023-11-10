@@ -1,6 +1,5 @@
 from __future__ import annotations
 from typing import Dict, List, Union, TYPE_CHECKING
-from llvmcompiler.compiler_types.type import CompilerType
 from llvmlite import ir
 from llvmcompiler.ir_renderers.builder_data import BuilderData
 from llvmcompiler.ir_renderers.operations import Operation
@@ -11,11 +10,13 @@ import llvmcompiler.ir_renderers.variable as var
 
 if TYPE_CHECKING:
     from llvmcompiler.modules.module import Module
+    import llvmcompiler.compiler_types as ct
+
 
 
 
 class Function:
-    def __init__(self, module:Module, name:str, arguments:Dict[str, CompilerType], return_type:CompilerType, variable_arguments:bool = False) -> None:
+    def __init__(self, module:Module, name:str, arguments:Dict[str, ct.CompilerType], return_type:ct.CompilerType, variable_arguments:bool = False) -> None:
         self.module = module
         self.name = name
         self.arguments = arguments

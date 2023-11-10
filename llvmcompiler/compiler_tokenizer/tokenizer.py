@@ -37,142 +37,52 @@ class Tokenizer:
         self.keyword = ""
         last_char = ""
         for char in self.src:
-            match regex_in(char):
-                case r"\"":
-                    self.parse_keystring()
-                    self.parse_string(char)
-                    last_char = char
-                    continue
-                case r"\'":
-                    self.parse_keystring()
-                    self.parse_string(char)
-                    last_char = char
-                    continue
-                case r"[{]":
-                    self.parse_keystring_and_append_token(SyntaxToken.scope_start)
-                    last_char = char
-                    continue
-                case r"[}]":
-                    self.parse_keystring_and_append_token(SyntaxToken.scope_end)
-                    last_char = char
-                    continue
-                case r"[(]":
-                    self.parse_keystring_and_append_token(SyntaxToken.parentheses_start)
-                    last_char = char
-                    continue
-                case r"[)]":
-                    self.parse_keystring_and_append_token(SyntaxToken.parentheses_end)
-                    last_char = char
-                    continue
-                case r"[:]":
-                    self.parse_keystring_and_append_token(SyntaxToken.specifier_op)
-                    last_char = char
-                    continue
-                case r"[:]":
-                    self.parse_keystring_and_append_token(SyntaxToken.specifier_op)
-                    last_char = char
-                    continue
-                case r"[;]":
-                    self.parse_keystring_and_append_token(SyntaxToken.line_end)
-                    last_char = char
-                    continue
-                case r"[,]":
-                    self.parse_keystring_and_append_token(SyntaxToken.delimiter)
-                    last_char = char
-                    continue
-                case r"[[]":
-                    self.parse_keystring_and_append_token(SyntaxToken.array_start)
-                    last_char = char
-                    continue
-                case r"[]]":
-                    self.parse_keystring_and_append_token(SyntaxToken.array_end)
-                    last_char = char
-                    continue
-                case r"[+]":
-                    self.parse_keystring_and_append_token(SyntaxToken.add_op)
-                    last_char = char
-                    continue
-                case r"[-]":
-                    self.parse_keystring_and_append_token(SyntaxToken.subtract_op)
-                    last_char = char
-                    continue
-                case r"[*]":
-                    self.parse_keystring_and_append_token(SyntaxToken.multiply_op)
-                    last_char = char
-                    continue
-                case r"[$]":
-                    self.parse_keystring_and_append_token(SyntaxToken.dereference_op)
-                    last_char = char
-                    continue
-                case r"[/]":
-                    self.parse_keystring_and_append_token(SyntaxToken.divide_op)
-                    last_char = char
-                    continue
-                case r"[.]":
-                    if not last_char.isnumeric():
-                        self.parse_keystring_and_append_token(SyntaxToken.access_op)
-                    else:
-                        self.keyword += char
-                    last_char = char
-                    continue
-                case r"[#]":
-                    self.parse_keystring()
-                    self.parse_comment()
-                    continue
-                case r"[=~<>]":
-                    
-                    if regex_in(last_char) == r"[=~<>]":
-                        if not last_char in {"~"}:
-                            self.token_list.pop()
-                        self.append_token_only(SyntaxToken(last_char + char))
-                    elif char != "~":
-                        self.parse_keystring_and_append_token(SyntaxToken(char))
-                    last_char = char
-                    continue
-                case r"[\s\n\t]":
-                    self.parse_keystring()
-                    last_char = char
-                    continue
-                case _:
-                    if not last_char.isalnum() and last_char != "_":
-                        self.parse_keystring()
-                    self.keyword += char
-                    last_char = char
-                    continue
-            
-                     
+            self.parse_char(char)
 
         return self.token_list
+    
+    def parse_char(self, char:str):
+        match regex_in(char):
+            case r"[~<>=*\-/+]":
+                self.keyword += char
+                self.operator_context()
+                last_char = char
+                return
+                
+            case r"[0-9.]":
+                self.keyword += char
+                self.number_context()
+                last_char = char
+                return
+                
+            case r"[A-Za-z_]":
+                self.keyword += char
+                self.label_context()
+                last_char = char
+                return
+            case r"[\"\']":
+                self.string_context(char)
+                last_char = char
+                return
+            case r"\s":
+                return
+            case r"[#]":
+                self.comment_context()
+                return
+            case r"[{}():;,\[\]$.]":
+                self.parse_keystring_and_append_token(SyntaxToken(char))
+                last_char = char
+                return
+            
+            case _:
+                # if not last_char.isalnum() and last_char != "_":
+                #     self.parse_keystring()
+                # self.keyword += char
+                last_char = char
+                return
 
-    
-    def previous_is(self, token:SyntaxToken):
-        return self.token_list[len(self.token_list)-1].value == token
-    
-    def parse_keystring_and_append_token(self, token:SyntaxToken):
+    def string_context(self, tok:str):
         self.parse_keystring()
-        self.append_token_only(token)
-
-    def parse_keystring(self):
-        """
-        This parsing context parses keyword into the correct syntax token type.
-        """
-        if self.keyword in {e.value for e in SyntaxToken}:
-            self.append_token_only(SyntaxToken(self.keyword))
-        elif self.keyword == "":
-            pass
-        elif self.keyword in {"true", "false"}:
-            self.append_token(SyntaxToken.bool_literal, self.keyword)
-        elif self.keyword.strip(".").isnumeric():
-            self.parse_literal()
-        else:
-            self.append_token(SyntaxToken.label, self.keyword)
-
-        self.keyword = ""
-
-    def parse_literal(self):
-        self.token_list.append(Token.new(self.keyword))
-
-    def parse_string(self, tok:str):
         escape = False
         string = ""
         for char in self.src:
@@ -186,11 +96,72 @@ class Tokenizer:
                 match char:
                     case "n":
                         pass
+
+    def operator_context(self):
+        for char in self.src:
+            if regex_in(char) == r"[~<>=*-/+_]":
+                self.keyword += char
+            else:
+                self.parse_keystring()
+                self.parse_char(char)
+                return
+
+    def label_context(self):
+        for char in self.src:
+            if regex_in(char) == r"[A-Za-z0-9_]":
+                self.keyword += char
+            else:
+                self.parse_keystring()
+                self.parse_char(char)
+                return
     
-    def parse_comment(self):
+    def number_context(self):
+        for char in self.src:
+            if regex_in(char) == r"[0-9.]":
+                self.keyword += char
+            else:
+                if "." in self.keyword:
+                    self.append_token(SyntaxToken.precision_literal, float(self.keyword))
+                else:
+                    self.append_token(SyntaxToken.integer_literal, int(self.keyword))
+                self.keyword = ""
+                self.parse_char(char)
+                return
+
+    
+    def comment_context(self):
+        self.parse_keystring()
         for char in self.src:
             if char == "\n":
                 return
+    
+    def previous_is(self, token:SyntaxToken):
+        return self.token_list[len(self.token_list)-1].value == token
+    
+    def parse_keystring_and_append_token(self, token:SyntaxToken):
+        self.parse_keystring()
+        self.append_token_only(token)
+
+    def parse_keystring(self):
+        """
+        This parsing context parses keyword into the correct syntax token type.
+        """
+        if self.keyword == "":
+            return
+        elif self.keyword in {e.value for e in SyntaxToken}:
+            self.append_token_only(SyntaxToken(self.keyword))
+        elif self.keyword in {"true", "false"}:
+            self.append_token(SyntaxToken.bool_literal, self.keyword)
+        elif self.keyword.strip(".").isnumeric():
+            self.parse_literal()
+        else:
+            self.append_token(SyntaxToken.label, self.keyword)
+
+        self.keyword = ""
+
+    def parse_literal(self):
+        self.token_list.append(Token.new(self.keyword))
+
                 
     def append_token(self, token:SyntaxToken, value = ""):
         self.token_list.append(Token(value, token))

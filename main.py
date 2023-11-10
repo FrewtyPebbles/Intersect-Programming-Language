@@ -1,6 +1,6 @@
 import sys
 import time
-from llvmcompiler import Function, Value, Module, I32Type, C8Type, ArrayType, I32PointerType, ArrayPointerType
+from llvmcompiler import Function, Value, Module, I32Type, C8Type, ArrayType, I32PointerType, ArrayPointerType, VectorType, BoolType, I8Type
 from llvmcompiler.ir_renderers.operations import *
 
 module = Module()
@@ -10,6 +10,52 @@ tf = module.create_function("test", {
     }, I32Type())
 
 builder = tf.builder
+
+# struct test
+
+module.create_struct("Apple", {
+    "red": BoolType()
+})
+
+builder.write_operation(DefineOperation(["test_struct", Value(module.get_struct("Apple"))]))
+
+# end struct test
+
+# index/for test
+
+ia_str = "This is str 3!\n\0"
+builder.write_operation(DefineOperation(["index_array", Value(ArrayType(ArrayType(C8Type(), len(ia_str)), 3))]))
+builder.write_operation(AssignOperation([
+    IndexOperation([tf.get_variable("index_array"), Value(I32Type(), 0)]),
+    Value(ArrayType(C8Type(), len(ia_str)), ia_str)
+]))
+
+ia_str = "This is str 2!\n\0"
+builder.write_operation(AssignOperation([
+    IndexOperation([tf.get_variable("index_array"), Value(I32Type(), 1)]),
+    Value(ArrayType(C8Type(), len(ia_str)), ia_str)
+]))
+
+ia_str = "This is str 1!\n\0"
+builder.write_operation(AssignOperation([
+    IndexOperation([tf.get_variable("index_array"), Value(I32Type(), 2)]),
+    Value(ArrayType(C8Type(), len(ia_str)), ia_str)
+]))
+
+for_loop = builder.create_scope("for")
+for_loop.append_condition(DefineOperation(["i", Value(I8Type(), 0)]))
+for_loop.append_condition(LessThanOperation([tf.get_variable("i"), Value(I8Type(), 3)]))
+for_loop.append_condition(AssignOperation([
+    tf.get_variable("i"),
+    AddOperation([tf.get_variable("i"), Value(I8Type(), 1)])
+]))
+for_loop.start_scope()
+
+builder.write_operation(CallOperation(["print", IndexOperation([tf.get_variable("index_array"), tf.get_variable("i")])]))
+
+for_loop.exit_scope()
+
+# end index test
 
 if_scope = builder.create_scope("if")
 

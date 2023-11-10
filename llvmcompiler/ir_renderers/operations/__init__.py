@@ -11,3 +11,5 @@ from .free import *
 from .function_return import *
 from .multiply import *
 from .subtract import *
+from .index import *
+from .access import *

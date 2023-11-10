@@ -2,7 +2,7 @@ from llvmlite import ir
 from typing import TYPE_CHECKING
 import llvmcompiler.compiler_types.type as ct
 
-# I32
+# Array
 class ArrayType(ct.CompilerType):
     def __init__(self, item_type:ct.CompilerType, count:int) -> None:
         self.count = count

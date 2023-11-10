@@ -52,6 +52,8 @@ class SyntaxToken(Enum):
     access_op = "."
     post_increment_op = "++"
     post_decrement_op = "--"
+    struct_keyword = "struct"
+    
 
 class Token:
     value:any

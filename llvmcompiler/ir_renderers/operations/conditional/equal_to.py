@@ -1,9 +1,9 @@
 from llvmcompiler.compiler_types.type import CompilerType
-from ...operation import Operation
+import llvmcompiler.ir_renderers.operation as op
 from llvmlite import ir
 import llvmcompiler.ir_renderers.variable as vari
 
-class EqualToOperation(Operation):
+class EqualToOperation(op.Operation):
     def _write(self):
         self.builder.cursor.comment("OP::equal_to START")
         

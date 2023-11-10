@@ -1,6 +1,7 @@
+from __future__ import annotations
 from typing import List, Union
-from llvmcompiler.ir_renderers.operations import Operation
-from llvmcompiler.ir_renderers.variable import Value, Variable
+import llvmcompiler.ir_renderers.operations as op
+import llvmcompiler.ir_renderers.variable as vari
 from .scope import Scope
 
 class ForLoop(Scope):
@@ -18,9 +19,9 @@ class ForLoop(Scope):
         self.builder.cursor.branch(self.scope_blocks["declaration"])
         self.builder.cursor.position_at_end(self.scope_blocks["declaration"])
         # Then run define condition when the condition is parsed
-        self.processed_args:List[Union[Operation, Variable, Value]] = []
+        self.processed_args:List[Union[op.Operation, vari.Variable, vari.Value]] = []
         
-    def append_condition(self, argument:Union[Operation, Variable, Value]):
+    def append_condition(self, argument:Union[op.Operation, vari.Variable, vari.Value]):
         processed_arg = self.process_arg(argument)
         self.processed_args.append(processed_arg)
         if len(self.processed_args) == 1:

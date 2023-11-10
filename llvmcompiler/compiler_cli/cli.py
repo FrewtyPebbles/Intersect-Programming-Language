@@ -1,5 +1,5 @@
 import sys
-from llvmcompiler.compiler_tokenizer.tokenizer import Tokenizer
+from llvmcompiler.compiler_tokenizer.tokenizer import Tokenizer, SyntaxToken
 
 class CLI:
     def __init__(self) -> None:
@@ -31,4 +31,7 @@ class CLI:
     def run(self):
         token_list = self.tokenizer.tokenize()
         for token in token_list:
-            sys.stdout.write(f"{token.value} ||||| {token.type.name}\n")
+            tw = ""
+            if token.type == SyntaxToken.string_literal:
+                tw = "\""
+            sys.stdout.write(f"{tw}{token.value}{tw}{' ' * (30 - len(str(token.value)))}{token.type.name}\n")

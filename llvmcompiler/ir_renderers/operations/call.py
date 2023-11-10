@@ -29,7 +29,17 @@ class CallOperation(Operation):
                 arg = self.process_arg(argument)
                 cast_arguments.append(arg)
                 
-        func_call = self.builder.cursor.call(self.builder.functions[self.arguments[0]], cast_arguments)
+        f_to_c = None
+
+        if isinstance(self.arguments[0], tuple):
+            #if function is being called on a struct it returns a tuple containing (function, *self)
+            
+            f_to_c, struct_self = self.arguments[0]
+            cast_arguments = [struct_self, *cast_arguments]
+        else:
+            f_to_c = self.builder.functions[self.arguments[0]]
+
+        func_call = self.builder.cursor.call(f_to_c, cast_arguments)
 
         self.builder.cursor.comment("OP::call end")
 

@@ -99,22 +99,18 @@ class BuilderData:
             print(f" - [(heap)] : setting value of : [{variable.name}] : to : [{value.value}]")
             if isinstance(value, Value):
                 variable.value = value
-
                 self.cursor.store(value.get_value(), variable.variable)
             elif isinstance(value, Variable):
                 variable.value = value
-
                 self.cursor.store(value, variable.variable)
             else:
                 # This is for inline operations,  ir ordering is handled by LLVM
                 variable.value = value
-
                 self.cursor.store(value, variable.variable)
         else:
             print(f" - [(stack)] : setting value of : [{variable.name}] : to : [{value.value}]")
             if isinstance(value, Value):
                 variable.value = value
-                
                 self.cursor.store(value.get_value(), variable.variable)
             elif isinstance(value, Variable):
                 variable.value = value
