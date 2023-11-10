@@ -1,12 +1,50 @@
-struct Vector<type_template> {
-    data:[type_template];
-    len:i64;
+
+struct Array<ItemType>(ParentStruct) {
+    # <> wrap a type template for the struct,
+    # () wrap any Struct types this struct inherits methods, operators, and attributes from.
+
+    data:[ItemType];
+    length:i64;
+    last:i64;
     
     func new(length:i32) ~> Array {
-        return Vector {
-            data:length;
-            data:[];
+        # new is the name of the constructor function,
+        # and therefore does not implement self.
+        return Array {
+            length:length;
+            data:[ItemType * length];
+            last:0;
         };
+    }
+    
+    func push(self, item:ItemType) ~> Array {
+        # You can call the self parameter whatever you want.
+        if self.last != self.length {
+            self.data[self.last] = item;
+            self.last += 1;
+        }
+        else {
+            
+            #   This is extra pseudo-ey pseudocode because
+            # runtime errors have not been implemented yet.
+            #
+            # Throw will force exit the program and throw the
+            # error that follows.
+            #
+            # Syntax might be something like:
+            
+            throw ERROR {
+                
+                #   Dictionary like errors where you can put
+                # different fields that will stdout separately 
+                # when the error is thrown.
+                
+                "Cause": "Push call caused array overflow.",
+                "Item Pushed": item,
+                "Length When Pushed": self.length
+            };
+        }
+        return self;
     }
 }
 
@@ -17,8 +55,10 @@ func test(num: i32) ~> i32{
     
     for (let i:i32 = 0; i <= 5; i++) {
         let test_str:str = "%i + (10 * %i) = %i!\n";
+        
         print(test_str, num, i, $ret_val);
-        $ret_val=$ret_val+10;
+        
+        $ret_val = $ret_val + 10;
     }
     
     return ret_val;
