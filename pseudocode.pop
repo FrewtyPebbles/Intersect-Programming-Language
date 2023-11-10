@@ -1,8 +1,8 @@
-struct Vector {
-    data:array;
+struct Vector<type_template> {
+    data:[type_template];
     len:i64;
     
-    fn new<array_type>(length:i32) ~> Array {
+    func new(length:i32) ~> Array {
         return Vector {
             data:length;
             data:[];
@@ -10,10 +10,10 @@ struct Vector {
     }
 }
 
-fn test(num: i32) ~> i32{
-    let ret_val:heap i32 = 120.2;
+func test(num: i32) ~> i32{
+    let heap ret_val: i32 = 120.2;
     let boolean:bool = true;
-    let test_md_array: [[i32 * 3] * 5] = [[0,1,2],[0,1,2],[0,1,2],[0,1,2],[0,1,2]];
+    let test_md_array: [[i32]] = [[0,1,2],[0,1,2],[0,1,2],[0,1,2],[0,1,2]];
     
     for (let i:i32 = 0; i <= 5; i++) {
         let test_str:str = "%i + (10 * %i) = %i!\n";
