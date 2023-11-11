@@ -22,8 +22,8 @@ class IfBlock(scps.Scope):
         
         self.scope_blocks:dict[str, ir.Block] = {
             # make it so you can for loop without a declaration
-            "start": self.builder.cursor.append_basic_block("IF TRUE"),
-            "exit": self.builder.cursor.append_basic_block("IF FALSE")
+            "start": self.builder.cursor.append_basic_block(),
+            "exit": self.builder.cursor.append_basic_block()
         }
         self.exit = self.scope_blocks["exit"]
         self.builder.cursor.position_after(if_start)

@@ -96,7 +96,7 @@ pmb.populate(pm)
 # optimize
 pm.run(llvm_module)
 
-# print(llvm_module)
+print(llvm_module)
 
 
 tm = llvm.Target.from_default_triple().create_target_machine()

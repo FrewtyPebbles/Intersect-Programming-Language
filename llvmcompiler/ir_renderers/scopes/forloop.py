@@ -26,11 +26,11 @@ class ForLoop(Scope):
         self.builder.cursor.comment("SCOPE::for START")
         self.scope_blocks = {
             # make it so you can for loop without a declaration
-            "declaration": self.builder.cursor.append_basic_block("FOR DEC"),
-            "condition": self.builder.cursor.append_basic_block("FOR COND"),
-            "increment": self.builder.cursor.append_basic_block("FOR INC"),
-            "start": self.builder.cursor.append_basic_block("FOR START"),
-            "end": self.builder.cursor.append_basic_block("FOR END")
+            "declaration": self.builder.cursor.append_basic_block(),
+            "condition": self.builder.cursor.append_basic_block(),
+            "increment": self.builder.cursor.append_basic_block(),
+            "start": self.builder.cursor.append_basic_block(),
+            "end": self.builder.cursor.append_basic_block()
         }
         self.builder.cursor.branch(self.scope_blocks["declaration"])
         self.builder.cursor.position_at_end(self.scope_blocks["declaration"])
