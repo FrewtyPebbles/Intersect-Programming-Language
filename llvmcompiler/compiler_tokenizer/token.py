@@ -6,7 +6,7 @@ class SyntaxToken(Enum):
     if_keyword = "if"
     elif_keyword = "elif"
     else_keyword = "else"
-    fn_keyword = "fn"
+    func_keyword = "func"
     for_keyword = "for"
     let_keyword = "let"
     heap_keyword = "heap"

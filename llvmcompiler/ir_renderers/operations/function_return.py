@@ -5,6 +5,7 @@ import llvmcompiler.ir_renderers.variable as vari
 class FunctionReturnOperation(Operation):
     def _write(self):
         self.builder.cursor.comment("OP::return START")
+        self.arguments = self.get_variables()
         self.builder.pop_variables()
         if len(self.arguments) == 0:
             # if type of function is not void then throw an error

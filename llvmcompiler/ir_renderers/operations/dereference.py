@@ -6,6 +6,7 @@ import llvmcompiler.ir_renderers.variable as vari
 class DereferenceOperation(Operation):
     def _write(self):
         self.builder.cursor.comment("OP::dereference START")
+        self.arguments = self.get_variables()
         #process arg1
         if not isinstance(self.arguments[0], vari.Variable):
             # throw error because the supplied token/item is not dereferenceable

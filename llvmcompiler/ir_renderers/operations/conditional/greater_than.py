@@ -6,6 +6,7 @@ import llvmcompiler.ir_renderers.variable as vari
 class GreaterThanOperation(Operation):
     def _write(self):
         self.builder.cursor.comment("OP::greater_than START")
+        self.arguments = self.get_variables()
             
         #process args
         arg1, arg2 = self.process_lhs_rhs_args()

@@ -7,23 +7,37 @@ from llvmlite import ir
 import llvmcompiler.ir_renderers.variable as vari
 
 
-from llvmcompiler.compiler_types import CompilerType
+import llvmcompiler.compiler_types as ct
 from llvmcompiler.compiler_types.types.char import C8PointerType
 if TYPE_CHECKING:
     from .builder_data import BuilderData
 
-arg_type = Self | vari.Variable | CompilerType | vari.Value | Tuple[str, vari.Variable]
+arg_type = Self | vari.Variable | ct.CompilerType | vari.Value | Tuple[str, vari.Variable]
 
 class Operation:
     """
     All operations inherit from this operation
     """
-    def __init__(self, arguments:List[arg_type] = []) -> None:
+    def __init__(self, arguments:list[arg_type] = []) -> None:
         self.builder:BuilderData = None
         self.raw_arguments = arguments
         self.arguments = arguments
 
+    def get_variables(self, arguments: list[arg_type] = [], no_default_action = False):
+        if len(arguments) == 0 and not no_default_action:
+            arguments = self.arguments
+        new_args = [*arguments]
+        for a_n, a in enumerate(arguments):
+            if isinstance(a, str):
+                new_args[a_n] = self.builder.get_variable(a)
+            else:
+                new_args[a_n].builder = self.builder
+
+        return new_args
+
     def process_arg(self, arg:arg_type):
+        if isinstance(arg, str):
+            arg = self.builder.get_variable(arg)
         if isinstance(arg, vari.Variable):
             if not arg.heap and not arg.function_argument:
                 return arg.load()
@@ -50,7 +64,7 @@ class Operation:
         # process the arguments and run any operation arguments
         for r_a_n, raw_arg in enumerate(self.raw_arguments):
             if isinstance(raw_arg, Operation):
-                value = self.builder.scope.write_operation(raw_arg)
+                value = self.builder.scope.append_operation(raw_arg).write()
                 value.builder = self.builder
                 self.arguments[r_a_n] = value
             elif isinstance(raw_arg, vari.Value):

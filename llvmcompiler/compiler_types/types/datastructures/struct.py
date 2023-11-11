@@ -5,6 +5,7 @@ from llvmlite import ir
 
 
 from typing import TYPE_CHECKING
+
 if TYPE_CHECKING:
     import llvmcompiler.modules as md
     
@@ -15,8 +16,8 @@ class Struct(ct.CompilerType):
     """
     _size:int
     value:ir.IdentifiedStructType
-    def __init__(self, module:md.Module, name:str, attributes:dict[str, ct.CompilerType] = {}, packed = False) -> None:
-        self.module = module
+    module: md.Module
+    def __init__(self, name:str, attributes:dict[str, ct.CompilerType] = {}, packed = False) -> None:
         self.name = name
         self.raw_attributes = attributes
         # the attributes are key value pairs that contain the attribute indexes
@@ -26,6 +27,7 @@ class Struct(ct.CompilerType):
         }
         self.packed = packed
         self._size = 0
+        self.module = None
 
     def get_attribute(self, attribute:str):
         return self.attributes[attribute]

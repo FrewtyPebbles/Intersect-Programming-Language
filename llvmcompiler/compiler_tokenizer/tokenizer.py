@@ -19,11 +19,11 @@ from .token import SyntaxToken, Token
 #                                                                                                                         |
 #    - A string parsing context. [WIP]                                                                                    |
 #                                                                                                                         |
-#    - An operator parsing context. [Not Started]                                                                         |
+#    - An operator parsing context. [Done]                                                                                |
 #                                                                                                                         |
-#    - A label/keyword parsing context. [Needs Refactoring so as not to interfere with number parsing.]                   |
+#    - A label/keyword parsing context. [Done]                                                                            |
 #                                                                                                                         |
-#    - A number parsing context. [Not Started]                                                                            |
+#    - A number parsing context. [Done]                                                                                   |
 #_________________________________________________________________________________________________________________________|
 
 class Tokenizer:
@@ -43,6 +43,10 @@ class Tokenizer:
     
     def parse_char(self, char:str):
         match regex_in(char):
+            case r"[{}():;,\[\]$.]":
+                self.parse_keystring_and_append_token(SyntaxToken(char))
+                last_char = char
+                return
             case r"[~<>=*\-/+]":
                 self.keyword += char
                 self.operator_context()
@@ -69,11 +73,6 @@ class Tokenizer:
             case r"[#]":
                 self.comment_context()
                 return
-            case r"[{}():;,\[\]$.]":
-                self.parse_keystring_and_append_token(SyntaxToken(char))
-                last_char = char
-                return
-            
             case _:
                 # if not last_char.isalnum() and last_char != "_":
                 #     self.parse_keystring()

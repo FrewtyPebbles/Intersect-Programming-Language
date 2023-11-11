@@ -6,6 +6,7 @@ import llvmcompiler.ir_renderers.variable as vari
 class NotOperation(Operation):
     def _write(self):
         self.builder.cursor.comment("OP::and START")
+        self.arguments = self.get_variables()
         
         #process args
         arg = self.process_arg(self.arguments[0])

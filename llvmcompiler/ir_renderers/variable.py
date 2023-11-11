@@ -53,12 +53,26 @@ class Variable:
     
 class Value:
     def __init__(self, value_type:ct.CompilerType, raw_value:Union[str, any] = None, is_instruction = False, heap = False) -> None:
-        self.builder:BuilderData = None
+        self._builder:BuilderData = None
         self.type = value_type
         self.value = raw_value
         self.is_instruction = is_instruction
         self.heap = heap
 
+    
+    @property
+    def builder(self):
+        return self._builder
+    
+    @builder.getter
+    def builder(self):
+        return self._builder
+
+    @builder.setter
+    def builder(self, value:BuilderData):
+        self._builder = value
+        if isinstance(self.type, ct.Template):
+            self.type.parent = self._builder.scope
 
     def get_value(self):
         if isinstance(self.type, ct.ArrayType) or isinstance(self.type, ct.VectorType):

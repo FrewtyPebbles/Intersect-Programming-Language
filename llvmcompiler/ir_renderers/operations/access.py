@@ -13,10 +13,11 @@ class AccessOperation(Operation):
     """
 
     def _write(self) -> tuple[ir.Function, ct.Struct] | ir.GEPInstr:
+        
         self.is_function = False
         self.final_item_heap = False
         self.builder.cursor.comment("OP::index START")
-
+        self.arguments = self.get_variables()
         
         res = None
         self.builder.cursor.comment("OP::index END")

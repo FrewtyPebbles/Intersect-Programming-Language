@@ -6,6 +6,8 @@ class AssignOperation(Operation):
     def _write(self):
         # self.arguments: 0 = variable, 1 = value
         self.builder.cursor.comment("OP::assign START")
+        self.arguments = self.get_variables()
+
         var = None
         if isinstance(self.arguments[0], vari.Variable):
             var = self.builder.set_variable(self.arguments[0], self.arguments[1])

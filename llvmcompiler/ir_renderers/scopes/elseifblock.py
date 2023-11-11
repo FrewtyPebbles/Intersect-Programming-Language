@@ -8,18 +8,17 @@ from llvmlite import ir
 
 
 class ElseIfBlock(scps.IfBlock):
-    def __init__(self, builder: bd.BuilderData, prev_if:scps.IfBlock | scps.ElseIfBlock, name="") -> None:
-        self.prev_if = prev_if
-        super().__init__(builder, name)
+    prev_if:scps.IfBlock | scps.ElseIfBlock
+    
 
     def _define_scope_blocks(self):
         self.exit = self.prev_if.exit
-        self.builder.cursor.position_at_end(self.prev_if.scope_blocks["true"])
+        self.builder.cursor.position_at_end(self.prev_if.scope_blocks["start"])
         self.builder.cursor.comment("SCOPE::else_if START")
         self.scope_blocks:dict[str, ir.Block] = {
             # make it so you can for loop without a declaration
             "cond": self.builder.cursor.append_basic_block(),
-            "true": self.builder.cursor.append_basic_block()
+            "start": self.builder.cursor.append_basic_block()
         }
         self.prev_if.render_br(self.scope_blocks["cond"])
         self.builder.cursor.position_at_end(self.scope_blocks["cond"])
@@ -29,9 +28,9 @@ class ElseIfBlock(scps.IfBlock):
 
     def _exit_scope(self):
         # pop the variables
-        self.builder.cursor.position_at_end(self.scope_blocks["true"])
-        self.builder.module.dbg_print()
-        print(f"prev_IFEXIT:{self.prev_if.exit}")
+        self.builder.cursor.position_at_end(self.scope_blocks["start"])
+        # self.builder.module.dbg_print()
+        # print(f"prev_IFEXIT:{self.prev_if.exit}")
         self.builder.cursor.branch(self.prev_if.exit)
         self.builder.cursor.position_at_end(self.prev_if.exit)
         self.scope_end_comment()

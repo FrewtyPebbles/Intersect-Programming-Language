@@ -6,6 +6,7 @@ import llvmcompiler.ir_renderers.variable as vari
 class NotEqualToOperation(Operation):
     def _write(self):
         self.builder.cursor.comment("OP::not_equal_to START")
+        self.arguments = self.get_variables()
             
         #process args
         arg1, arg2 = self.process_lhs_rhs_args()

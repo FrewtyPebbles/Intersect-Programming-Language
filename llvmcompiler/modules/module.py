@@ -7,9 +7,9 @@ from typing import Dict, List, Union
 
 
 class Module:
-    def __init__(self, name:str = '') -> None:
+    def __init__(self, name:str = '', scope:list[Function | st.Struct] = [], mangle_salt = "MMAANNGGLLEE") -> None:
         self.module = ir.Module(name=name)
-        self.functions:Dict[str, ir.Function] = {
+        self.functions:Dict[str, ir.Function | Function] = {
             # The key is the name that is parsed from source code,
             # the value is the llvm function.
             "print": self._std_printf(),
@@ -19,6 +19,18 @@ class Module:
             #"input":"input" # will be getting input function from c dll/so file via this method https://stackoverflow.com/questions/36658726/link-c-in-llvmlite
         }
         self.structs:dict[str, st.Struct] = {}
+        self.scope = scope
+        self.mangle_salt = mangle_salt
+        self.existing_mangled_names:list[str] = []
+
+    def write(self):
+        for scope_line in self.scope:
+            if isinstance(scope_line, Function):
+                self.append_function(scope_line)
+                scope_line.write(initial_render=True)
+            elif isinstance(scope_line, st.Struct):
+                self.append_struct(scope_line)
+                scope_line.write()
 
 
     def get_struct(self, name:str):
@@ -31,17 +43,16 @@ class Module:
         else:
             return None
 
-    def create_struct(self, name:str, attributes:dict[str, ty.CompilerType], packed = False):
-        struct = st.Struct(self, name, attributes, packed)
-        self.structs[name] = struct
-        struct.write()
+    def append_struct(self, struct:st.Struct):
+        struct.module = self
+        self.structs[struct.name] = struct
         return struct
 
 
-    def create_function(self, name:str, arguments:Dict[str, ty.CompilerType], return_type:ty.CompilerType, variable_arguments = False) -> Function:
-        func = Function(self, name, arguments, return_type, variable_arguments)
-        self.functions[name] = func.function
-        return func
+    def append_function(self, function:Function) -> Function:
+        function.module = self
+        self.functions[function.name] = function
+        return function
     
     def dbg_print(self):
         """

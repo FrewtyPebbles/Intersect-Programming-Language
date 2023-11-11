@@ -6,7 +6,7 @@ import llvmcompiler.ir_renderers.variable as vari
 class AddOperation(Operation):
     def _write(self):
         self.builder.cursor.comment("OP::add START")
-
+        self.arguments = self.get_variables()
         #process args
         arg1, arg2 = self.process_lhs_rhs_args()
 

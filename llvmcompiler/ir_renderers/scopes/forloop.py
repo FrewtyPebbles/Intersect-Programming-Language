@@ -1,20 +1,36 @@
 from __future__ import annotations
-from typing import List, Union
-import llvmcompiler.ir_renderers.operations as op
-import llvmcompiler.ir_renderers.variable as vari
+from typing import List, Union, TYPE_CHECKING
 from .scope import Scope
 
+if TYPE_CHECKING:
+    import llvmcompiler.ir_renderers.operations as op
+    import llvmcompiler.ir_renderers.variable as vari
+
+
 class ForLoop(Scope):
+    def __init__(self, name="", scope: list[Scope | op.Operation] = [], condition: list[op.Operation] = []) -> None:
+        super().__init__(name, scope, condition)
+        self.inside = scope
+        self.conditions = condition
+
+    def write(self):
+        super().write()
+        for condition in self.conditions:
+            self.append_condition(condition)
+        self.start_scope()
+        self.write_inner(self.scope_blocks["start"])
+        self.exit_scope()
+
+
     def _define_scope_blocks(self):
         self.builder.cursor.comment("SCOPE::for START")
-
         self.scope_blocks = {
             # make it so you can for loop without a declaration
-            "declaration": self.builder.cursor.append_basic_block(),
-            "condition": self.builder.cursor.append_basic_block(),
-            "increment": self.builder.cursor.append_basic_block(),
-            "start": self.builder.cursor.append_basic_block(),
-            "end": self.builder.cursor.append_basic_block()
+            "declaration": self.builder.cursor.append_basic_block("FOR DEC"),
+            "condition": self.builder.cursor.append_basic_block("FOR COND"),
+            "increment": self.builder.cursor.append_basic_block("FOR INC"),
+            "start": self.builder.cursor.append_basic_block("FOR START"),
+            "end": self.builder.cursor.append_basic_block("FOR END")
         }
         self.builder.cursor.branch(self.scope_blocks["declaration"])
         self.builder.cursor.position_at_end(self.scope_blocks["declaration"])
@@ -37,13 +53,13 @@ class ForLoop(Scope):
         # define the condition
         # branch to the start of the loop
         
-
         self.builder.push_variable_stack()
         self.builder.cursor.position_at_end(self.scope_blocks["start"])
 
     def _exit_scope(self):
         # pop the variables
         self.builder.pop_variables()
+        # self.builder.module.dbg_print()
         self.builder.cursor.branch(self.scope_blocks["increment"])
         self.builder.cursor.position_at_end(self.scope_blocks["end"])
         self.builder.cursor.comment("SCOPE::for END")

@@ -8,6 +8,7 @@ indexes_type = list[ir.LoadInstr | ir.GEPInstr | ir.AllocaInstr | str | ir.Const
 class IndexOperation(Operation):
     def _write(self):
         self.builder.cursor.comment("OP::index START")
+        self.arguments = self.get_variables()
         indexes:indexes_type = []
         # process all arguments to get indexes
         for argument in self.arguments[1:]:

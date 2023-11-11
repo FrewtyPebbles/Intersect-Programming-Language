@@ -3,14 +3,14 @@ from __future__ import annotations
 from typing import Dict, List, Union
 from llvmlite import ir
 from typing import TYPE_CHECKING
-from llvmcompiler.ir_renderers.scopes import *
+import llvmcompiler.ir_renderers.scopes as scps
 
-from llvmcompiler.ir_renderers.scopes.scope import Scope
 from .variable import Variable, Value
 if TYPE_CHECKING:
     from .function import Function
 import llvmcompiler.ir_renderers.operations as op
 import sys
+from copy import deepcopy
 
 IS_64BIT = sys.maxsize > 2**32
 
@@ -34,9 +34,17 @@ class BuilderData:
         # this is where all function names/labels are defined
         self.functions = self.module.functions
 
+    def declare_arguments(self):
         # declare the function arguments as variables
         for a_n, (arg_name, arg) in enumerate(self.scope.arguments.items()):
-            self.declare_variable(Variable(self, arg_name, Value(arg, self.function.args[a_n], True), function_argument = True))
+            self.declare_variable(Variable(self, arg_name, Value(arg, self.function[self.scope.name].args[a_n], True), function_argument = True))
+
+    def clone_into_context(self, context:ir.Block):
+        cpy = BuilderData(self.scope, ir.IRBuilder(context), [])
+        cpy.variables_stack = self.variables_stack
+        cpy.scope_block_stack = self.scope_block_stack
+        cpy.debug = self.debug
+        return cpy
 
     def get_scope_block(self, name:str) -> Variable:
         for layer_number, layer in enumerate(self.scope_block_stack):
@@ -50,15 +58,9 @@ class BuilderData:
         self.variables_stack[len(self.variables_stack)-1][variable.name] = variable
         return variable
 
-    def create_scope(self, scope_type = "", name = ""):
-        if scope_type == "":
-            return Scope(self, name)
-        elif scope_type == "for":
-            return ForLoop(self, name)
-        elif scope_type == "if":
-            return IfBlock(self, name)
-        else:
-            print("Error: Invalid scope type!")
+    def append_scope(self, scope:scps.Scope):
+        scope.builder = self
+        return scope
 
     def push_scope(self, scope_blocks:Dict[str, ir.Block]):
         self.scope_block_stack.append(scope_blocks)
@@ -126,7 +128,7 @@ class BuilderData:
         for layer_number, layer in enumerate(self.variables_stack):
             if name in layer.keys():
                 return self.variables_stack[layer_number][name]
-        print(f"Error: Variable not in reference stack:\n{self.variables_stack}")
+        print(f"Error: Variable \"{name}\" not in reference stack:\n{self.variables_stack}")
     
     def alloca(self, ir_type:ir.Type, size:int = None, name = ""):
         entry_block = self.scope.entry

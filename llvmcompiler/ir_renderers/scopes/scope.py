@@ -6,6 +6,7 @@ if TYPE_CHECKING:
     from llvmcompiler.ir_renderers.builder_data import BuilderData
 import llvmcompiler.ir_renderers.operations as op
 import llvmcompiler.ir_renderers.variable as vari
+import llvmcompiler.ir_renderers.scopes as scps
 
 class Scope:
     """
@@ -23,14 +24,20 @@ class Scope:
     }
     ```
     """
-
-    def __init__(self, builder:BuilderData, name = "") -> None:
+    builder:BuilderData
+    def __init__(self, name = "", inside:list[Scope | op.Operation] = [], condition:list[op.Operation] = []) -> None:
         """
         This creates the scope.
         """
-        self.builder = builder
         self.name = name
         self.arguments:List[Union[op.Operation, vari.Variable, vari.Value]] = []
+        self.inside = inside
+        self.builder = None
+
+    def write(self):
+        """
+        This is used to write the scope to ir
+        """
         self._define_scope_blocks()
         self.builder.push_scope(self.scope_blocks)
         self.builder.push_variable_stack()
@@ -65,6 +72,21 @@ class Scope:
         self.builder.pop_heap()
         self.builder.cursor.branch(self.scope_blocks["end"])
         self.builder.cursor.position_at_end(self.scope_blocks["end"])
+
+    def write_inner(self, context: ir.IRBuilder):
+        last_obj = None
+        for inner_obj in self.inside:
+            inner_obj.builder = self.builder
+            
+            if any([isinstance(last_obj, iftype1) for iftype1 in [scps.IfBlock, scps.ElseIfBlock]])\
+            and any([isinstance(inner_obj, iftype2) for iftype2 in [scps.ElseIfBlock, scps.ElseBlock]]):
+                inner_obj.prev_if = last_obj
+            elif any([isinstance(last_obj, iftype1) for iftype1 in [scps.IfBlock, scps.ElseIfBlock, scps.ElseBlock]])\
+            and not any([isinstance(inner_obj, iftype2) for iftype2 in [scps.ElseIfBlock, scps.ElseBlock]]):
+                last_obj.render()
+            
+            inner_obj.write()
+            last_obj = inner_obj
 
     def process_arg(self, argument:Union[op.Operation, vari.Variable, vari.Value]):
         processed_arg = None
