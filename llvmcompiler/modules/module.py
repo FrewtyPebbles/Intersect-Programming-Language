@@ -1,4 +1,5 @@
-from llvmcompiler.ir_renderers.function import Function
+from __future__ import annotations
+import llvmcompiler.ir_renderers.function as fn
 from llvmlite import ir
 import llvmcompiler.compiler_types as ty
 import llvmcompiler.ir_renderers.builder_data as bd
@@ -7,27 +8,28 @@ from typing import Dict, List, Union
 
 
 class Module:
-    def __init__(self, name:str = '', scope:list[Function | st.Struct] = [], mangle_salt = "MMAANNGGLLEE") -> None:
+    def __init__(self, name:str = '', scope:list[fn.FunctionDefinition | st.Struct] = [], mangle_salt = "MMAANNGGLLEE") -> None:
         self.module = ir.Module(name=name)
-        self.functions:Dict[str, ir.Function | Function] = {
+        self.functions:Dict[str, ir.Function | fn.FunctionDefinition] = {
             # The key is the name that is parsed from source code,
             # the value is the llvm function.
-            "print": self._std_printf(),
-            "allocate": self._std_malloc(),
-            "reallocate": self._std_realloc(),
-            "deallocate": self._std_free()
+            "print": fn.CFunctionDefinition(self._std_printf()),
+            "allocate": fn.CFunctionDefinition(self._std_malloc()),
+            "reallocate": fn.CFunctionDefinition(self._std_realloc()),
+            "deallocate": fn.CFunctionDefinition(self._std_free())
             #"input":"input" # will be getting input function from c dll/so file via this method https://stackoverflow.com/questions/36658726/link-c-in-llvmlite
         }
         self.structs:dict[str, st.Struct] = {}
         self.scope = scope
         self.mangle_salt = mangle_salt
-        self.existing_mangled_names:list[str] = []
-
+        
+    
     def write(self):
         for scope_line in self.scope:
-            if isinstance(scope_line, Function):
+            if isinstance(scope_line, fn.FunctionDefinition):
                 self.append_function(scope_line)
-                scope_line.write(initial_render=True)
+                if scope_line.name == "main" or scope_line.extern:
+                    scope_line.get_function()
             elif isinstance(scope_line, st.Struct):
                 self.append_struct(scope_line)
                 scope_line.write()
@@ -49,7 +51,7 @@ class Module:
         return struct
 
 
-    def append_function(self, function:Function) -> Function:
+    def append_function(self, function:fn.FunctionDefinition) -> fn.FunctionDefinition:
         function.module = self
         self.functions[function.name] = function
         return function

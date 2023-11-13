@@ -7,7 +7,7 @@ struct Array<ItemType>(ParentStruct) {
     length:i64;
     last:i64;
     
-    func new(length:i32) ~> Array {
+    func new(length:i32) ~> Array<ItemType> {
         # new is the name of the constructor function,
         # and therefore does not implement self.
         return Array {
@@ -17,7 +17,7 @@ struct Array<ItemType>(ParentStruct) {
         };
     }
     
-    func push(self, item:ItemType) ~> Array {
+    func push(self, item:ItemType) ~> Array<ItemType> {
         # You can call the self parameter whatever you want.
         if self.last != self.length {
             self.data[self.last] = item;

@@ -39,11 +39,13 @@ class Operation:
         if isinstance(arg, str):
             arg = self.builder.get_variable(arg)
         if isinstance(arg, vari.Variable):
+            arg.type.render_template()
             if not arg.heap and not arg.function_argument:
                 return arg.load()
             else:
                 return arg.variable
         elif isinstance(arg, vari.Value):
+            arg.type.render_template()
             return arg.get_value()
         else:
             return arg
@@ -61,13 +63,20 @@ class Operation:
         """
         This function processes the arguments of the operation and runs any operation arguments.
         """
+
         # process the arguments and run any operation arguments
         for r_a_n, raw_arg in enumerate(self.raw_arguments):
             if isinstance(raw_arg, Operation):
-                value = self.builder.scope.append_operation(raw_arg).write()
+                value = self.builder.function.create_operation(raw_arg).write()
+
+                value.parent = self.builder.function
+                value.type.render_template()
+
                 value.builder = self.builder
                 self.arguments[r_a_n] = value
             elif isinstance(raw_arg, vari.Value):
+                raw_arg.parent = self.builder.function
+                raw_arg.type.render_template()
                 raw_arg.builder = self.builder
                 self.arguments[r_a_n] = raw_arg
             else:
@@ -87,7 +96,7 @@ class Operation:
         return self._write()
 
     def __repr__(self) -> str:
-        return f"({self.__class__.__name__}:[arguments:{self.arguments}])"
+        return f"\n({self.__class__.__name__}:[arguments:{self.arguments}])"
 
         
 
@@ -97,4 +106,4 @@ def dbg_llvm_print(builder:BuilderData, var):
     srcstr = "%i\n\00"
     string = builder.alloca(ir.ArrayType(ir.IntType(8), len(srcstr)))
     builder.cursor.store(ir.Constant(ir.ArrayType(ir.IntType(8), len(srcstr)), bytearray(srcstr.encode("utf8"))), string)
-    builder.cursor.call(builder.functions["print"], [builder.cursor.bitcast(string, C8PointerType().value), var])
+    builder.cursor.call(builder.functions["print"].get_function().function, [builder.cursor.bitcast(string, C8PointerType().value), var])

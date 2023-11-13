@@ -22,12 +22,12 @@ else:
 
 
 class BuilderData:
-    def __init__(self, scope:Function, builder:ir.IRBuilder, variables:List[Dict[str, Variable]]) -> None:
-        self.scope = scope
-        self.module = self.scope.module
+    def __init__(self, function:Function, builder:ir.IRBuilder, variables:List[Dict[str, Variable]]) -> None:
+        self.function = function
+        self.module = self.function.module
         self.cursor = builder
         self.variables_stack = variables
-        self.function = self.scope.function
+        self.llvm_function = self.function.function
         self.debug = False
         self.scope_block_stack:List[Dict[str, ir.Block]] = []
 
@@ -36,11 +36,11 @@ class BuilderData:
 
     def declare_arguments(self):
         # declare the function arguments as variables
-        for a_n, (arg_name, arg) in enumerate(self.scope.arguments.items()):
-            self.declare_variable(Variable(self, arg_name, Value(arg, self.function[self.scope.name].args[a_n], True), function_argument = True))
+        for a_n, (arg_name, arg) in enumerate(self.function.arguments.items()):
+            self.declare_variable(Variable(self, arg_name, Value(arg, self.function.function.args[a_n], is_instruction=True), function_argument = True))
 
     def clone_into_context(self, context:ir.Block):
-        cpy = BuilderData(self.scope, ir.IRBuilder(context), [])
+        cpy = BuilderData(self.function, ir.IRBuilder(context), [])
         cpy.variables_stack = self.variables_stack
         cpy.scope_block_stack = self.scope_block_stack
         cpy.debug = self.debug
@@ -74,7 +74,8 @@ class BuilderData:
         free_list:List[str] = []
         for name, var in top.items():
             if var.heap:
-                self.scope.write_operation(op.FreeOperation([var]))
+                free_op = self.function.create_operation(op.FreeOperation([var]))
+                free_op.write()
                 free_list.append(name)
         self.variables_stack.pop()
         return free_list
@@ -89,7 +90,7 @@ class BuilderData:
         free_list:List[str] = []
         for name, var in top.items():
             if var.heap:
-                self.scope.write_operation(op.FreeOperation([var]))
+                self.function.create_operation(op.FreeOperation([var]))
                 free_list.append(name)
                 del top[name]
         return free_list
@@ -131,7 +132,7 @@ class BuilderData:
         print(f"Error: Variable \"{name}\" not in reference stack:\n{self.variables_stack}")
     
     def alloca(self, ir_type:ir.Type, size:int = None, name = ""):
-        entry_block = self.scope.entry
+        entry_block = self.function.entry
         curr_block = self.cursor.block
         self.cursor.position_at_start(entry_block)
         alloca_instr = self.cursor.alloca(ir_type, size, name)

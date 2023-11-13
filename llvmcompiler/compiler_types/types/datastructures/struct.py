@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     import llvmcompiler.modules as md
     
+# When refactoring, remember to set the parent attribute of values
 
 class Struct(ct.CompilerType):
     """

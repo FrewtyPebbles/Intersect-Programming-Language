@@ -48,6 +48,8 @@ class CompilerType:
         elif ir_type == ir.DoubleType().as_pointer():
             return D64PointerType()
 
+    def render_template(self):
+        pass
 
     @property
     def is_pointer(self):
@@ -61,4 +63,6 @@ class CompilerType:
         """
         Check type and return pointer version of that type
         """
+    def __repr__(self) -> str:
+        return self.value
     

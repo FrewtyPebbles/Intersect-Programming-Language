@@ -7,19 +7,29 @@ import llvmcompiler.ir_renderers.function as fn
 # I32
 class Template(ct.CompilerType):
     
-    def __init__(self, name = "") -> None:
-        self.count = 1
-        self._size = 8
+    def __init__(self, name = "", parent: fn.Function | ct.Struct = None) -> None:
         self.name = name
-        self.parent: fn.Function | ct.Struct = None
+        self._value = None
+        self.parent: fn.Function | ct.Struct = parent
+
+    def get_template_type(self):
+        return self.parent.get_template_type(self.name)
 
     @property
     def value(self):
-        return self.parent.get_template_type(self.name)
+        return self.parent.get_template_type(self.name).value
+    
+    @property
+    def size(self):
+        return self.parent.get_template_type(self.name).size
+    
+    @property
+    def count(self):
+        return self.parent.get_template_type(self.name).count
 
 
     def __eq__(self, __value: Template | str) -> bool:
         if isinstance(__value, Template):
-            return self.value == __value.value
+            return self._value == __value.value
         else:
-            return self.value == __value
+            return self._value == __value

@@ -1,46 +1,54 @@
 import sys
 import time
 from llvmcompiler import Function, Value, Module, I32Type, C8Type, ArrayType, I32PointerType,\
-     ArrayPointerType, VectorType, BoolType, I8Type, ForLoop, VoidType, IfBlock, ElseBlock, ElseIfBlock
+     ArrayPointerType, VectorType, BoolType, I8Type, ForLoop, VoidType, IfBlock, ElseBlock,\
+    ElseIfBlock, FunctionDefinition, Template
 from llvmcompiler.ir_renderers.operations import *
 
 
 module = Module("testmod.pop",scope=[
-    Function("print_something", {}, VoidType(), scope=[
+    FunctionDefinition("print_something", {}, Template("A"), scope=[
+        DefineOperation(["number", Value(Template("A"), 5)]),
 
-        CallOperation(["print", [Value(ArrayType(C8Type(), len("less than 5\n\0")), "less than 5\n\0")]]),
+        CallOperation("print", [Value(ArrayType(Template("B"), len("Heres a number: %i\n\0")), "Heres a number: %i\n\0"), "number"]),
         
-        FunctionReturnOperation([])
-    ]),
+        FunctionReturnOperation(["number"])
+    ], template_args=["A","B"]),
 
-    Function("test", {"num":I32Type()}, I32Type(), scope=[
-        IfBlock(condition=[LessThanOperation(["num", Value(I32Type(), 5)])], scope=[
+    FunctionDefinition("print_something_inbetween", {}, Template("B"), scope=[
+        FunctionReturnOperation([
+            CallOperation("print_something", [], [Template("B"), Template("A")])
+        ])
+    ], template_args=["A", "B"]),
+
+    FunctionDefinition("test", {"num":I32Type()}, I32Type(), scope=[
+        IfBlock(condition=[LessThanOperation(["num", Value(I32Type(), 10000)])], scope=[
             
             ForLoop(condition=[
-                DefineOperation(["i", Value(I32Type(), 0)]),
-                LessThanOperation(["i", "num"]),
-                AssignOperation(["i", AddOperation(["i", Value(I32Type(), 1)])])
+                DefineHeapOperation(["i", Value(I32Type(), 0)]),
+                LessThanOperation([DereferenceOperation(["i"]), "num"]),
+                AssignOperation(["i", AddOperation([DereferenceOperation(["i"]), Value(I32Type(), 1)])])
             ],scope=[
 
-                CallOperation(["print_something", []])
+                CallOperation("print_something_inbetween", [], [C8Type(), I32Type()])
 
             ]),
             
         ]),
         ElseIfBlock(condition=[
-            GreaterThanOperation(["num", Value(I32Type(), 6)])
+            GreaterThanOperation(["num", Value(I32Type(), 10000)])
         ],scope=[
-            CallOperation(["print", [Value(ArrayType(C8Type(), len("greater than 6\n\0")), "greater than 6\n\0")]]),
+            CallOperation("print", [Value(ArrayType(C8Type(), len("greater than 300\n\0")), "greater than 300\n\0")]),
         ]),
         ElseBlock(scope=[
-            CallOperation(["print", [Value(ArrayType(C8Type(), len("else\n\0")), "else\n\0")]]),
+            CallOperation("print", [Value(ArrayType(C8Type(), len("else\n\0")), "else\n\0")]),
         ]),
         
-        CallOperation(["print", [Value(ArrayType(C8Type(), len("after\n\0")), "after\n\0")]]),
+        CallOperation("print", [Value(ArrayType(C8Type(), len("after\n\0")), "after\n\0")]),
 
         FunctionReturnOperation(["num"])
 
-    ])
+    ], extern=True)
 ])
 
 module.write()
@@ -96,7 +104,7 @@ pmb.populate(pm)
 # optimize
 pm.run(llvm_module)
 
-print(llvm_module)
+# print(llvm_module)
 
 
 tm = llvm.Target.from_default_triple().create_target_machine()
@@ -118,6 +126,7 @@ with llvm.create_mcjit_compiler(llvm_module, tm) as ee:
     runtime = t1-t0
     print(ret_)
     print(f"compiled runtime:{runtime*1000}ms")
+
 
 
 
