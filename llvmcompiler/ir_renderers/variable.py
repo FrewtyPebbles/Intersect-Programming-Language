@@ -65,14 +65,12 @@ class Value:
     @property
     def parent(self):
         self.type.parent = self._parent
-        self.type.render_template()
         return self._parent
     
     @parent.setter
     def parent(self, par):
         self._parent = par
         self.type.parent = par
-        self.type.render_template()
 
     @property
     def builder(self):
@@ -82,7 +80,6 @@ class Value:
     def builder(self, value:BuilderData):
         self._builder = value
         self.type.parent = self._builder.function
-        self.type.render_template()
         
 
     def get_value(self):
@@ -95,7 +92,6 @@ class Value:
         return self.type.value(self.value)
     
     def write(self) -> ir.AllocaInstr:
-        self.type.render_template()
         if isinstance(self.value, ir.Instruction):
             return self.value
         else:

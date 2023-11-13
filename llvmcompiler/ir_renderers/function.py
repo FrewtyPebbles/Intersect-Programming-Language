@@ -89,7 +89,6 @@ class Function:
         self.arguments = {**self.function_definition.arguments}
         for key in self.arguments.keys():
             self.arguments[key].parent = self
-            self.arguments[key].render_template()
                 
 
 
@@ -137,7 +136,6 @@ class Function:
         func_ret = self.function_definition.return_type
         if isinstance(self.function_definition.return_type, ct.Template):
             self.function_definition.return_type.parent = self
-            self.function_definition.return_type.render_template()
             func_ret = self.function_definition.return_type
         
         return func_args, func_ret
@@ -156,7 +154,6 @@ class Function:
 
             scope_line.write()
             last_scope_line = scope_line
-            self.module.dbg_print()
 
 
     def create_operation(self, operation:Operation):

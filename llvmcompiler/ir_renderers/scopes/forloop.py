@@ -59,7 +59,6 @@ class ForLoop(Scope):
     def _exit_scope(self):
         # pop the variables
         self.builder.pop_variables()
-        # self.builder.module.dbg_print()
         self.builder.cursor.branch(self.scope_blocks["increment"])
         self.builder.cursor.position_at_end(self.scope_blocks["end"])
         self.builder.cursor.comment("SCOPE::for END")

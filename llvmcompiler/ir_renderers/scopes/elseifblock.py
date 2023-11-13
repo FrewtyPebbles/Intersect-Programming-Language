@@ -29,8 +29,6 @@ class ElseIfBlock(scps.IfBlock):
     def _exit_scope(self):
         # pop the variables
         self.builder.cursor.position_at_end(self.scope_blocks["start"])
-        # self.builder.module.dbg_print()
-        # print(f"prev_IFEXIT:{self.prev_if.exit}")
         self.builder.cursor.branch(self.prev_if.exit)
         self.builder.cursor.position_at_end(self.prev_if.exit)
         self.scope_end_comment()

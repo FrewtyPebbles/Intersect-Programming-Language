@@ -66,7 +66,6 @@ class IfBlock(scps.Scope):
     def _exit_scope(self):
         # pop the variables
         # self.builder.cursor.position_at_end(self.scope_blocks["start"])
-        self.builder.module.dbg_print()
 
         self.builder.cursor.branch(self.scope_blocks["exit"])
         self.builder.cursor.position_at_end(self.scope_blocks["exit"])

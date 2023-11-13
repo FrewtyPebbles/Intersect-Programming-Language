@@ -14,11 +14,9 @@ class CallOperation(Operation):
         # link all templates to their functions.
         for t_a in range(len(self.template_arguments)):
             self.template_arguments[t_a].parent = self.builder.function
-            self.template_arguments[t_a].render_template()
         
         f_to_c = None
         function_obj = self.builder.module.functions[self.function_name].get_function(self.template_arguments)
-        print(f"call func {function_obj.name}")
 
         f_to_c = function_obj.function
         return f_to_c
