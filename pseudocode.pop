@@ -56,6 +56,8 @@ func test(num: i32) ~> i32{
     for (let i:i32 = 0; i <= 5; i++) {
         let test_str:str = "%i + (10 * %i) = %i!\n";
         
+        let t_val:i32 = -10;
+
         print(test_str, num, i, $ret_val);
         
         $ret_val = $ret_val + 10;

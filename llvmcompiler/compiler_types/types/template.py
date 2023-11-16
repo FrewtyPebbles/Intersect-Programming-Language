@@ -2,8 +2,9 @@ from __future__ import annotations
 from llvmlite import ir
 from typing import TYPE_CHECKING
 import llvmcompiler.compiler_types as ct
-import llvmcompiler.ir_renderers.struct as st
-import llvmcompiler.ir_renderers.function as fn
+if TYPE_CHECKING:
+    import llvmcompiler.ir_renderers.struct as st
+    import llvmcompiler.ir_renderers.function as fn
 
 # I32
 class Template(ct.CompilerType):

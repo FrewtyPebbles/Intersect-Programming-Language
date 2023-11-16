@@ -1,25 +1,27 @@
 from __future__ import annotations
 from typing import Dict, List, Union, TYPE_CHECKING
 from llvmlite import ir
-import llvmcompiler.ir_renderers.builder_data as bd
-import llvmcompiler.ir_renderers.struct as st
-from llvmcompiler.ir_renderers.operations import Operation
-from llvmcompiler.ir_renderers.scopes.forloop import ForLoop
-import llvmcompiler.ir_renderers.scopes as scps
 
-import llvmcompiler.ir_renderers.variable as var
-from llvmcompiler.modules.module import Module
 
 if TYPE_CHECKING:
+    import llvmcompiler.ir_renderers.operations as op
     from llvmcompiler.modules.module import Module
+    import llvmcompiler.ir_renderers.struct as st
+    from llvmcompiler.ir_renderers.variable import Variable, Value
+    from llvmcompiler.modules.module import Module
+
 import llvmcompiler.compiler_types as ct
+from llvmcompiler.ir_renderers.builder_data import BuilderData
+from llvmcompiler.ir_renderers.scopes import IfBlock, ElseIfBlock, ElseBlock, Scope
+
+
 
 
 
 class FunctionDefinition:
     def __init__(self, name:str, arguments:Dict[str, ct.CompilerType],
             return_type:ct.CompilerType, variable_arguments:bool = False, template_args:list[str] = [],
-            scope:list[scps.Scope | Operation] = [], struct:st.Struct = None, module:Module = None, extern = False):
+            scope:list[Scope | op.Operation] = [], struct:st.Struct = None, module:Module = None, extern = False):
         self.name = name
         self.arguments = arguments
         self.return_type = return_type
@@ -87,7 +89,7 @@ class Function:
         self.name = self.function_definition.get_mangled_name(template_types)
         "Name is mangled."
 
-        self.variables:Dict[str, var.Variable] = [{}]
+        self.variables:Dict[str, Variable] = [{}]
         "This is all variables within the function scope."
 
         self.arguments = {**self.function_definition.arguments}
@@ -129,7 +131,7 @@ class Function:
         
         # get a ir cursor for writing ir to different things in the function
         self.entry = self.function.append_basic_block("entry")
-        self.builder = bd.BuilderData(self, ir.IRBuilder(self.entry), self.variables)
+        self.builder = BuilderData(self, ir.IRBuilder(self.entry), self.variables)
         self.builder.declare_arguments()
         # This cursor needs to be passed to any ir building classes that are used
         # within this function.
@@ -164,18 +166,18 @@ class Function:
         for scope_line in self.function_definition.scope:
             scope_line.builder = self.builder
 
-            if any([isinstance(last_scope_line, iftype1) for iftype1 in [scps.IfBlock, scps.ElseIfBlock]])\
-            and any([isinstance(scope_line, iftype2) for iftype2 in [scps.ElseIfBlock, scps.ElseBlock]]):
+            if any([isinstance(last_scope_line, iftype1) for iftype1 in [IfBlock, ElseIfBlock]])\
+            and any([isinstance(scope_line, iftype2) for iftype2 in [ElseIfBlock, ElseBlock]]):
                 scope_line.prev_if = last_scope_line
-            elif any([isinstance(last_scope_line, iftype1) for iftype1 in [scps.IfBlock, scps.ElseIfBlock, scps.ElseBlock]])\
-            and not any([isinstance(scope_line, iftype2) for iftype2 in [scps.ElseIfBlock, scps.ElseBlock]]):
+            elif any([isinstance(last_scope_line, iftype1) for iftype1 in [IfBlock, ElseIfBlock, ElseBlock]])\
+            and not any([isinstance(scope_line, iftype2) for iftype2 in [ElseIfBlock, ElseBlock]]):
                 last_scope_line.render()
 
             scope_line.write()
             last_scope_line = scope_line
 
 
-    def create_operation(self, operation:Operation):
+    def create_operation(self, operation:op.Operation):
         operation.builder = self.builder
         return operation
     

@@ -4,15 +4,16 @@ from enum import Enum
 from typing import List, Tuple, Union
 from llvmlite import ir
 
-import llvmcompiler.ir_renderers.variable as vari
 
 
 import llvmcompiler.compiler_types as ct
 from llvmcompiler.compiler_types.types.char import C8PointerType
 if TYPE_CHECKING:
     from .builder_data import BuilderData
+from llvmcompiler.ir_renderers.variable import Variable, Value
 
-arg_type = Self | vari.Variable | ct.CompilerType | vari.Value | Tuple[str, vari.Variable]
+
+arg_type = Self | Variable | ct.CompilerType | Value | Tuple[str, Variable]
 
 class Operation:
     """
@@ -38,12 +39,12 @@ class Operation:
     def process_arg(self, arg:arg_type):
         if isinstance(arg, str):
             arg = self.builder.get_variable(arg)
-        if isinstance(arg, vari.Variable):
+        if isinstance(arg, Variable):
             if not arg.heap and not arg.function_argument:
                 return arg.load()
             else:
                 return arg.variable
-        elif isinstance(arg, vari.Value):
+        elif isinstance(arg, Value):
             return arg.get_value()
         else:
             return arg
@@ -72,7 +73,7 @@ class Operation:
 
                 value.builder = self.builder
                 self.arguments[r_a_n] = value
-            elif isinstance(raw_arg, vari.Value):
+            elif isinstance(raw_arg, Value):
                 raw_arg.parent = self.builder.function
                 raw_arg.module = self.builder.module
                 raw_arg.builder = self.builder
@@ -82,7 +83,7 @@ class Operation:
 
         
 
-    def _write(self) -> vari.Value | vari.Variable:
+    def _write(self) -> Value | Variable:
         """
         This should be overridden to in inheriting class.
         This function is what is called to write the ir for the operation

@@ -7,7 +7,17 @@ from typing import TYPE_CHECKING, Union
 if TYPE_CHECKING:
     from .builder_data import BuilderData
     import llvmcompiler.ir_renderers.function as fn
-import llvmcompiler.ir_renderers.builder_data as bd
+
+import sys
+
+
+IS_64BIT = sys.maxsize > 2**32
+
+SIZE_T = ir.IntType(1)
+if IS_64BIT:
+    SIZE_T = ir.IntType(64)
+else:
+    SIZE_T = ir.IntType(32)
 
 class Variable:
     def __init__(self, builder:BuilderData, name:str, value:Value, heap = False, function_argument = False):
@@ -23,7 +33,7 @@ class Variable:
         # declare the variable
         if not self.function_argument:
             if self.heap:
-                malloc_call = self.builder.cursor.call(self.builder.functions["allocate"].get_function().function, [bd.SIZE_T(self.value.type.size)])
+                malloc_call = self.builder.cursor.call(self.builder.functions["allocate"].get_function().function, [SIZE_T(self.value.type.size)])
 
                 bc = self.builder.cursor.bitcast(malloc_call, self.type.value)
 

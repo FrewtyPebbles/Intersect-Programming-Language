@@ -2,13 +2,15 @@ from llvmcompiler.compiler_types.type import CompilerType
 from ..operation import Operation, arg_type
 from llvmlite import ir
 import llvmcompiler.ir_renderers.variable as vari
-import llvmcompiler.ir_renderers.function as fn
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from llvmcompiler.ir_renderers.function import FunctionDefinition
 
 class CallOperation(Operation):
-    def __init__(self, function:str | fn.Function, arguments: list[arg_type] = [], template_arguments:list[CompilerType] = []) -> None:
+    def __init__(self, function:str, arguments: list[arg_type] = [], template_arguments:list[CompilerType] = []) -> None:
         super().__init__(arguments)
         self.template_arguments = template_arguments
-        self.function_name = function
+        self.function:str | FunctionDefinition = function
     
     def get_function(self):
         # link all templates to their functions.
@@ -17,7 +19,11 @@ class CallOperation(Operation):
             self.template_arguments[t_a].module = self.builder.module
         
         f_to_c = None
-        function_obj = self.builder.module.functions[self.function_name].get_function(self.template_arguments)
+        if isinstance(self.function, str):
+            function_obj = self.builder.module.functions[self.function].get_function(self.template_arguments)
+        else:
+            function_obj = self.function.get_function(self.template_arguments)
+
 
         f_to_c = function_obj.function
         return f_to_c

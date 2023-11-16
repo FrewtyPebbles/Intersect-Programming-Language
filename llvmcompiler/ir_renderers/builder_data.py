@@ -3,14 +3,15 @@ from __future__ import annotations
 from typing import Dict, List, Union
 from llvmlite import ir
 from typing import TYPE_CHECKING
-import llvmcompiler.ir_renderers.scopes as scps
 
-from .variable import Variable, Value
+
 if TYPE_CHECKING:
     from .function import Function
-import llvmcompiler.ir_renderers.operations as op
+    import llvmcompiler.ir_renderers.scopes as scps
+import llvmcompiler.ir_renderers.operations.free as fr
+from llvmcompiler.ir_renderers.variable import Variable, Value
 import sys
-from copy import deepcopy
+
 
 IS_64BIT = sys.maxsize > 2**32
 
@@ -74,13 +75,13 @@ class BuilderData:
         free_list:List[str] = []
         for name, var in top.items():
             if var.heap:
-                free_op = self.function.create_operation(op.FreeOperation([var]))
+                free_op = self.function.create_operation(fr.FreeOperation([var]))
                 free_op.write()
                 free_list.append(name)
         self.variables_stack.pop()
         return free_list
     
-    def write_operation(self, operation:op.Operation):
+    def write_operation(self, operation:fr.Operation):
         operation.builder = self
         return operation.write()
     
@@ -90,7 +91,7 @@ class BuilderData:
         free_list:List[str] = []
         for name, var in top.items():
             if var.heap:
-                self.function.create_operation(op.FreeOperation([var]))
+                self.function.create_operation(fr.FreeOperation([var]))
                 free_list.append(name)
                 del top[name]
         return free_list
