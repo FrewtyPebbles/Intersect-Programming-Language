@@ -5,15 +5,16 @@ import llvmcompiler.ir_renderers.variable as vari
 import llvmcompiler.ir_renderers.function as fn
 
 class CallOperation(Operation):
-    def __init__(self, function_name:str, arguments: list[arg_type] = [], template_arguments:list[CompilerType] = []) -> None:
+    def __init__(self, function:str | fn.Function, arguments: list[arg_type] = [], template_arguments:list[CompilerType] = []) -> None:
         super().__init__(arguments)
         self.template_arguments = template_arguments
-        self.function_name = function_name
+        self.function_name = function
     
     def get_function(self):
         # link all templates to their functions.
         for t_a in range(len(self.template_arguments)):
             self.template_arguments[t_a].parent = self.builder.function
+            self.template_arguments[t_a].module = self.builder.module
         
         f_to_c = None
         function_obj = self.builder.module.functions[self.function_name].get_function(self.template_arguments)

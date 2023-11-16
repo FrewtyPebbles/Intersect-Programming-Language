@@ -2,13 +2,22 @@ import sys
 import time
 from llvmcompiler import Function, Value, Module, I32Type, C8Type, ArrayType, I32PointerType,\
      ArrayPointerType, VectorType, BoolType, I8Type, ForLoop, VoidType, IfBlock, ElseBlock,\
-    ElseIfBlock, FunctionDefinition, Template
+    ElseIfBlock, FunctionDefinition, Template, StructDefinition, StructType
 from llvmcompiler.ir_renderers.operations import *
 
 
 module = Module("testmod.pop",scope=[
+    StructDefinition("Vector",{
+        "data":ArrayType(Template("ArrayType"), 3),
+        "length":I32Type()
+    },[
+        FunctionDefinition("new", {"arg":I32Type()}, VoidType(), scope=[
+            FunctionReturnOperation([])
+        ])
+    ],["ArrayType"]),
     FunctionDefinition("print_something", {}, Template("A"), scope=[
         DefineOperation(["number", Value(Template("A"), 5)]),
+        DefineOperation(["test_struct",Value(StructType("Vector", [I32Type()]))]),
 
         CallOperation("print", [Value(ArrayType(Template("B"), len("Heres a number: %i\n\0")), "Heres a number: %i\n\0"), "number"]),
         
@@ -17,8 +26,11 @@ module = Module("testmod.pop",scope=[
 
     FunctionDefinition("print_something_inbetween", {}, Template("B"), scope=[
         FunctionReturnOperation([
+            
             CallOperation("print_something", [], [Template("B"), Template("A")])
+            
         ])
+
     ], template_args=["A", "B"]),
 
     FunctionDefinition("test", {"num":I32Type()}, I32Type(), scope=[
@@ -38,16 +50,19 @@ module = Module("testmod.pop",scope=[
         ElseIfBlock(condition=[
             GreaterThanOperation(["num", Value(I32Type(), 10000)])
         ],scope=[
+
             CallOperation("print", [Value(ArrayType(C8Type(), len("greater than 300\n\0")), "greater than 300\n\0")]),
+        
         ]),
         ElseBlock(scope=[
+        
             CallOperation("print", [Value(ArrayType(C8Type(), len("else\n\0")), "else\n\0")]),
+        
         ]),
         
         CallOperation("print", [Value(ArrayType(C8Type(), len("after\n\0")), "after\n\0")]),
 
         FunctionReturnOperation(["num"])
-
     ], extern=True)
 ])
 

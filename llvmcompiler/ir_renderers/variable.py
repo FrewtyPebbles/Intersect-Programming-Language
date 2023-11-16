@@ -15,6 +15,7 @@ class Variable:
         self.name = name
         self.value = value
         self.value.parent = self.builder.function
+        self.value.module = self.builder.module
         self.heap = heap # wether a variable is stored on the heap or not
         self.function_argument = function_argument # wether or not the variable represents a function argument
         self.type = self.value.type.cast_ptr() if self.heap else self.value.type
@@ -65,12 +66,14 @@ class Value:
     @property
     def parent(self):
         self.type.parent = self._parent
+        self.type.module = self._parent.module
         return self._parent
     
     @parent.setter
     def parent(self, par):
         self._parent = par
         self.type.parent = par
+        self.type.module = par.module
 
     @property
     def builder(self):
@@ -80,6 +83,7 @@ class Value:
     def builder(self, value:BuilderData):
         self._builder = value
         self.type.parent = self._builder.function
+        self.type.module = self._builder.module
         
 
     def get_value(self):

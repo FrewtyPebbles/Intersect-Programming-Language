@@ -2,7 +2,7 @@ from llvmcompiler.compiler_types.type import CompilerType
 from ..operation import Operation
 from llvmlite import ir
 import llvmcompiler.ir_renderers.variable as vari
-import llvmcompiler.compiler_types as ct
+import llvmcompiler.ir_renderers.struct as st
 
 indexes_type = list[ir.LoadInstr | ir.GEPInstr | ir.AllocaInstr | str | ir.Constant | CompilerType | tuple[str, vari.Variable]]
 
@@ -12,7 +12,7 @@ class AccessOperation(Operation):
     or a pointer to some value.
     """
 
-    def _write(self) -> tuple[ir.Function, ct.Struct] | ir.GEPInstr:
+    def _write(self) -> tuple[ir.Function, st.Struct] | ir.GEPInstr:
         
         self.is_function = False
         self.final_item_heap = False

@@ -8,15 +8,18 @@ class ArrayType(ct.CompilerType):
         self.count = count
         self.type = item_type
         self._parent = None
+        self.module = None
 
     @property    
     def size(self):
         self.type.parent = self.parent
+        self.type.module = self.module
         return self.type.size * self.count
         
     @property
     def value(self):
         self.type.parent = self.parent
+        self.type.module = self.module
         return ir.ArrayType(self.type.value, self.count)
 
     @property
@@ -26,6 +29,7 @@ class ArrayType(ct.CompilerType):
     @parent.setter
     def parent(self, val):
         self.type.parent = self._parent
+        self.type.module = self.module
         self._parent = val
 
 

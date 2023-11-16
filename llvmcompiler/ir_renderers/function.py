@@ -2,6 +2,7 @@ from __future__ import annotations
 from typing import Dict, List, Union, TYPE_CHECKING
 from llvmlite import ir
 import llvmcompiler.ir_renderers.builder_data as bd
+import llvmcompiler.ir_renderers.struct as st
 from llvmcompiler.ir_renderers.operations import Operation
 from llvmcompiler.ir_renderers.scopes.forloop import ForLoop
 import llvmcompiler.ir_renderers.scopes as scps
@@ -18,7 +19,7 @@ import llvmcompiler.compiler_types as ct
 class FunctionDefinition:
     def __init__(self, name:str, arguments:Dict[str, ct.CompilerType],
             return_type:ct.CompilerType, variable_arguments:bool = False, template_args:list[str] = [],
-            scope:list[scps.Scope | Operation] = [], struct:ct.Struct = None, module:Module = None, extern = False):
+            scope:list[scps.Scope | Operation] = [], struct:st.Struct = None, module:Module = None, extern = False):
         self.name = name
         self.arguments = arguments
         self.return_type = return_type
@@ -61,6 +62,9 @@ class FunctionDefinition:
         if len(template_types) == 0:
             return mangled_name
         
+        if self.struct != None:
+            mangled_name += f"_{self.struct.name}_memberfunction"
+        
         mangled_name += f"_tmp_{self.module.mangle_salt}_{f'_{self.module.mangle_salt}_'.join([tt.value._to_string() for tt in template_types])}"
         return mangled_name
     
@@ -89,14 +93,27 @@ class Function:
         self.arguments = {**self.function_definition.arguments}
         for key in self.arguments.keys():
             self.arguments[key].parent = self
+            self.arguments[key].module = self.module
                 
 
 
     def get_template_type(self, name:str):
-        typ = self.template_types[self.function_definition.get_template_index(name)]
-        if isinstance(typ, ct.Template):
-            typ = typ.get_template_type()
-        return typ
+        try:
+            typ = self.template_types[self.function_definition.get_template_index(name)]
+            if isinstance(typ, ct.Template):
+                typ = typ.get_template_type()
+            return typ
+        except KeyError:
+            try:
+                typ = self.function_definition.struct.get_template_type(name)
+                if isinstance(typ, ct.Template):
+                    typ = typ.get_template_type()
+                return typ
+            except KeyError:
+                print(f"Error: {name} is not a valid template of {self.function_definition.struct.struct_definition.name}.")
+            except TypeError:
+                print(f"Error: {name} is not a valid template of {self.function_definition.name}.")
+        
 
     def write(self) -> Function:
 
@@ -131,11 +148,13 @@ class Function:
             if isinstance(val, ct.Template):
                 # replace function argument templates with template types
                 val.parent = self
+                val.module = self.module
                 func_args[key] = val
 
         func_ret = self.function_definition.return_type
         if isinstance(self.function_definition.return_type, ct.Template):
             self.function_definition.return_type.parent = self
+            self.function_definition.return_type.module = self.module
             func_ret = self.function_definition.return_type
         
         return func_args, func_ret

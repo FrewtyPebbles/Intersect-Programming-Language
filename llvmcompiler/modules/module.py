@@ -3,12 +3,12 @@ import llvmcompiler.ir_renderers.function as fn
 from llvmlite import ir
 import llvmcompiler.compiler_types as ty
 import llvmcompiler.ir_renderers.builder_data as bd
-import llvmcompiler.compiler_types.types.datastructures.struct as st
+import llvmcompiler.ir_renderers.struct as st
 from typing import Dict, List, Union
 
 
 class Module:
-    def __init__(self, name:str = '', scope:list[fn.FunctionDefinition | st.Struct] = [], mangle_salt = "MMAANNGGLLEE") -> None:
+    def __init__(self, name:str = '', scope:list[fn.FunctionDefinition | st.StructDefinition] = [], mangle_salt = "MMAANNGGLLEE") -> None:
         self.module = ir.Module(name=name)
         self.functions:Dict[str, ir.Function | fn.FunctionDefinition] = {
             # The key is the name that is parsed from source code,
@@ -19,7 +19,7 @@ class Module:
             "deallocate": fn.CFunctionDefinition(self._std_free())
             #"input":"input" # will be getting input function from c dll/so file via this method https://stackoverflow.com/questions/36658726/link-c-in-llvmlite
         }
-        self.structs:dict[str, st.Struct] = {}
+        self.structs:dict[str, st.StructDefinition] = {}
         self.scope = scope
         self.mangle_salt = mangle_salt
         
@@ -30,9 +30,8 @@ class Module:
                 self.append_function(scope_line)
                 if scope_line.name == "main" or scope_line.extern:
                     scope_line.get_function()
-            elif isinstance(scope_line, st.Struct):
+            elif isinstance(scope_line, st.StructDefinition):
                 self.append_struct(scope_line)
-                scope_line.write()
 
 
     def get_struct(self, name:str):
@@ -45,7 +44,7 @@ class Module:
         else:
             return None
 
-    def append_struct(self, struct:st.Struct):
+    def append_struct(self, struct:st.StructDefinition):
         struct.module = self
         self.structs[struct.name] = struct
         return struct

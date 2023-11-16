@@ -68,11 +68,13 @@ class Operation:
                 value = self.builder.function.create_operation(raw_arg).write()
 
                 value.parent = self.builder.function
+                value.module = self.builder.function.module
 
                 value.builder = self.builder
                 self.arguments[r_a_n] = value
             elif isinstance(raw_arg, vari.Value):
                 raw_arg.parent = self.builder.function
+                raw_arg.module = self.builder.module
                 raw_arg.builder = self.builder
                 self.arguments[r_a_n] = raw_arg
             else:
