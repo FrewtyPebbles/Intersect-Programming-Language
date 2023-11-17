@@ -18,7 +18,7 @@ class ForLoop(Scope):
         for condition in self.conditions:
             self.append_condition(condition)
         self.start_scope()
-        self.write_inner(self.scope_blocks["start"])
+        self.write_inner()
         self.exit_scope()
 
 

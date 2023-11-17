@@ -14,7 +14,7 @@ class IfBlock(scps.Scope):
         super().write()
         self.insert_condition(self.conditions[0])
         self.start_scope()
-        self.write_inner(self.scope_blocks["start"])
+        self.write_inner()
         self.exit_scope()
         
     def _define_scope_blocks(self):

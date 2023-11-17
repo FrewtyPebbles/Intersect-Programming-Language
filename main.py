@@ -34,6 +34,19 @@ module = Module("testmod.pop",scope=[
     ], template_args=["A", "B"]),
 
     FunctionDefinition("test", {"num":I32Type()}, I32Type(), scope=[
+        DefineHeapOperation(["testMD1",
+            ConstructListOperation(StructType("Vector", [I32Type()]), [
+                ConstructStructOperation("Vector", {
+                    "data": ConstructListOperation(I32Type(), [
+                        Value(I32Type(), 1),
+                        Value(I32Type(), 2),
+                        Value(I32Type(), 3)
+                    ]),
+                    "length": Value(I32Type(), 3)
+                }, [I32Type()])
+            ])
+        ]),
+        DefineOperation(["testMD2",Value(ArrayType(StructType("Vector", [I32Type()]), 5))]),
         IfBlock(condition=[LessThanOperation(["num", Value(I32Type(), 10000)])], scope=[
             
             ForLoop(condition=[

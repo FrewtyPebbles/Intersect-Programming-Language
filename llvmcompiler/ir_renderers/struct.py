@@ -122,7 +122,7 @@ class Struct:
                 if attr.struct.struct_definition.name == self.struct_definition.name:
                     self.raw_attributes[key] = self.raw_attributes[key].cast_ptr()
 
-    def get_attribute(self, name:str, template_types:list[ct.CompilerType] = []) -> fn.Function | ct.CompilerType:
+    def get_attribute(self, name:str, template_types:list[ct.CompilerType] = []) -> fn.Function | vari.Value:
         attrs = {**self.attributes, **self.functions}
         try:
             attr = attrs[name]

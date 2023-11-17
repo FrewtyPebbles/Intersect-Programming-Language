@@ -12,6 +12,7 @@ class DereferenceOperation(Operation):
             # throw error because the supplied token/item is not dereferenceable
             print(f"Error: {self.arguments[0]} cannot be dereferenced.")
         res = self.arguments[0].load()
+        
         self.builder.cursor.comment("OP::dereference END")
 
-        return vari.Value(CompilerType.create_from(res.type), res.get_reference(), True)
+        return vari.Value(CompilerType.create_from(res.type), res, True)

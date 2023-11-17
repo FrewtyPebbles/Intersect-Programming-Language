@@ -29,18 +29,12 @@ class Variable:
         self.heap = heap # wether a variable is stored on the heap or not
         self.function_argument = function_argument # wether or not the variable represents a function argument
         self.type = self.value.type.cast_ptr() if self.heap else self.value.type
+        self.is_instruction = True
+        self.module = self.builder.module
 
         # declare the variable
         if not self.function_argument:
-            if self.heap:
-                malloc_call = self.builder.cursor.call(self.builder.functions["allocate"].get_function().function, [SIZE_T(self.value.type.size)])
-
-                bc = self.builder.cursor.bitcast(malloc_call, self.type.value)
-
-                self.variable = self.builder.cursor.gep(bc, [ir.IntType(32)(0)], inbounds=True, name = self.name)
-                
-            else:
-                self.variable = self.builder.alloca(self.type.value, name = self.name)
+            self.allocate()
         else:
             self.variable = self.value.value
 
@@ -50,7 +44,19 @@ class Variable:
             if self.value.value != None:
                 self.set(self.value)
         
+    def allocate(self):
+        if self.heap:
+            malloc_call = self.builder.cursor.call(self.builder.functions["allocate"].get_function().function, [SIZE_T(self.value.type.size)])
+            self.type.parent = self.builder.function
+            self.type.module = self.builder.module
+            self.type.builder = self.builder
+            bc = self.builder.cursor.bitcast(malloc_call, self.type.value)
+
+            self.variable = self.builder.cursor.gep(bc, [ir.IntType(32)(0)], inbounds=True, name = self.name)
             
+        else:
+            self.variable = self.builder.alloca(self.type.value, name = self.name)        
+    
     def set(self, value:Union[Variable, Value, any]):
         self.builder.set_variable(self, value)
 
@@ -65,13 +71,15 @@ class Variable:
         return self.type.value.is_pointer
     
 class Value:
-    def __init__(self, value_type:ct.CompilerType, raw_value:Union[str, any] = None, is_instruction = False, heap = False) -> None:
+    def __init__(self, value_type:ct.CompilerType, raw_value:Union[str, any] = None, is_instruction = False, heap = False, dbg_tag = "") -> None:
         self._builder:BuilderData = None
         self.type = value_type
         self.value = raw_value
         self.is_instruction = is_instruction
         self.heap = heap
         self._parent:fn.Function = None
+        self.dbg_tag = dbg_tag
+        self.module = None
 
     @property
     def parent(self):
@@ -80,7 +88,7 @@ class Value:
         return self._parent
     
     @parent.setter
-    def parent(self, par):
+    def parent(self, par:fn.Function):
         self._parent = par
         self.type.parent = par
         self.type.module = par.module
@@ -97,6 +105,8 @@ class Value:
         
 
     def get_value(self):
+        if self.is_instruction and not isinstance(self.value, str):
+            return self.value
         if isinstance(self.type, ct.ArrayType):
             if isinstance(self.type.type.get_template_type(), ct.C8Type) if \
             isinstance(self.type.type, ct.Template) else \
@@ -122,7 +132,7 @@ class Value:
         print(self.type.value)
 
     def __repr__(self) -> str:
-        return f"(Value:[type:\"{self.type.value}\"|value:{self.value}])"
+        return f"(Value:[type:\"{self.type.value}\"|value:{self.value}]{{DBGTAG:\"{self.dbg_tag}\"}})"
 
     @property
     def is_pointer(self):

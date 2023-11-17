@@ -73,7 +73,7 @@ class Scope:
         self.builder.cursor.branch(self.scope_blocks["end"])
         self.builder.cursor.position_at_end(self.scope_blocks["end"])
 
-    def write_inner(self, context: ir.IRBuilder):
+    def write_inner(self):
         last_obj = None
         for inner_obj in self.inside:
             inner_obj.builder = self.builder

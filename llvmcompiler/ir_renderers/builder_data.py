@@ -100,7 +100,7 @@ class BuilderData:
 
     def set_variable(self, variable:Variable, value:Union[Variable, Value, any]):
         if variable.heap:
-            print(f" - [(heap)] : setting value of : [{variable.name}] : to : [{value.value}]")
+            # print(f" - [(heap)] : setting value of : [{variable.name}] : to : [{value.value}]")
             if isinstance(value, Value):
                 variable.value = value
                 self.cursor.store(value.get_value(), variable.variable)
@@ -112,7 +112,7 @@ class BuilderData:
                 variable.value = value
                 self.cursor.store(value, variable.variable)
         else:
-            print(f" - [(stack)] : setting value of : [{variable.name}] : to : [{value.value}]")
+            # print(f" - [(stack)] : setting value of : [{variable.name}] : to : [{value.value}]")
             if isinstance(value, Value):
                 variable.value = value
                 self.cursor.store(value.get_value(), variable.variable)

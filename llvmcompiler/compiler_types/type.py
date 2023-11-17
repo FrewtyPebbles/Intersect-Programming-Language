@@ -6,7 +6,8 @@ class CompilerType:
     """
     _size:int
     value:ir.Type
-
+    parent: None
+    module: None
     @staticmethod
     def create_from(ir_type:ir.Type):
         """

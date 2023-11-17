@@ -39,12 +39,18 @@ class Operation:
     def process_arg(self, arg:arg_type):
         if isinstance(arg, str):
             arg = self.builder.get_variable(arg)
+            arg.parent = self.builder.function
+            arg.module = self.builder.module
         if isinstance(arg, Variable):
+            arg.parent = self.builder.function
+            arg.module = self.builder.module
             if not arg.heap and not arg.function_argument:
                 return arg.load()
             else:
                 return arg.variable
         elif isinstance(arg, Value):
+            arg.parent = self.builder.function
+            arg.module = self.builder.module
             return arg.get_value()
         else:
             return arg
