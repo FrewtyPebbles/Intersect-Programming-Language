@@ -1,5 +1,5 @@
 
-struct Array<ItemType>(ParentStruct) {
+struct Array<ItemType> {
     # <> wrap a type template for the struct,
     # () wrap any Struct types this struct inherits methods, operators, and attributes from.
 
@@ -33,7 +33,7 @@ struct Array<ItemType>(ParentStruct) {
             #
             # Syntax might be something like:
             
-            throw ERROR {
+            ERROR {
                 
                 #   Dictionary like errors where you can put
                 # different fields that will stdout separately 
@@ -49,9 +49,16 @@ struct Array<ItemType>(ParentStruct) {
 }
 
 func test(num: i32) ~> i32{
-    let heap ret_val: i32 = 120.2;
-    let boolean:bool = true;
-    let test_md_array: [[i32]] = [[0,1,2],[0,1,2],[0,1,2],[0,1,2],[0,1,2]];
+    let ret_val: $i32 = heap 120.2;
+    let boolean: $bool = heap true;
+
+    let test_md_array: [$[i32]] persist = [
+        heap [0,1,2],
+        heap [0,1,2],
+        heap [0,1,2], 
+        heap [0,1,2], 
+        heap [0,1,2]
+    ];
     
     for (let i:i32 = 0; i <= 5; i++) {
         let test_str:str = "%i + (10 * %i) = %i!\n";

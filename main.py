@@ -2,7 +2,8 @@ import sys
 import time
 from llvmcompiler import Function, Value, Module, I32Type, C8Type, ArrayType, I32PointerType,\
      ArrayPointerType, VectorType, BoolType, I8Type, ForLoop, VoidType, IfBlock, ElseBlock,\
-    ElseIfBlock, FunctionDefinition, Template, StructDefinition, StructType
+    ElseIfBlock, FunctionDefinition, Template, StructDefinition, StructType, HeapValue,\
+    StructPointerType
 from llvmcompiler.ir_renderers.operations import *
 
 
@@ -34,8 +35,8 @@ module = Module("testmod.pop",scope=[
     ], template_args=["A", "B"]),
 
     FunctionDefinition("test", {"num":I32Type()}, I32Type(), scope=[
-        DefineHeapOperation(["testMD1",
-            ConstructListOperation(StructType("Vector", [I32Type()]), [
+        DefineOperation(["testMD1",
+            ConstructListOperation(StructPointerType("Vector", [I32Type()]), [
                 ConstructStructOperation("Vector", {
                     "data": ConstructListOperation(I32Type(), [
                         Value(I32Type(), 1),
@@ -43,11 +44,11 @@ module = Module("testmod.pop",scope=[
                         Value(I32Type(), 3)
                     ]),
                     "length": Value(I32Type(), 3)
-                }, [I32Type()])
+                }, [I32Type()], True)
             ])
         ]),
         DefineOperation(["testMD2",Value(ArrayType(StructType("Vector", [I32Type()]), 5))]),
-        IfBlock(condition=[LessThanOperation(["num", Value(I32Type(), 10000)])], scope=[
+        IfBlock(condition=[LessThanOperation(["num", Value(I32Type(), 100000)])], scope=[
             
             ForLoop(condition=[
                 DefineHeapOperation(["i", Value(I32Type(), 0)]),
@@ -61,7 +62,7 @@ module = Module("testmod.pop",scope=[
             
         ]),
         ElseIfBlock(condition=[
-            GreaterThanOperation(["num", Value(I32Type(), 10000)])
+            GreaterThanOperation(["num", Value(I32Type(), 100000)])
         ],scope=[
 
             CallOperation("print", [Value(ArrayType(C8Type(), len("greater than 300\n\0")), "greater than 300\n\0")]),
@@ -79,9 +80,11 @@ module = Module("testmod.pop",scope=[
     ], extern=True)
 ])
 
+
 module.write()
 
 module.dbg_print()
+
 
 #Pseudocode:
 

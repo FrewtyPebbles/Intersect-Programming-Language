@@ -28,6 +28,7 @@ class BuilderData:
         self.module = self.function.module
         self.cursor = builder
         self.variables_stack = variables
+        self.value_heap_stack:list[list[ir.Instruction]] = [[]]
         self.llvm_function = self.function.function
         self.debug = False
         self.scope_block_stack:List[Dict[str, ir.Block]] = []
@@ -58,6 +59,10 @@ class BuilderData:
     def declare_variable(self, variable:Variable):
         self.variables_stack[len(self.variables_stack)-1][variable.name] = variable
         return variable
+    
+    def push_value_heap(self, malloc:ir.Instruction):
+        self.value_heap_stack[len(self.value_heap_stack)-1].append(malloc)
+        return malloc
 
     def append_scope(self, scope:scps.Scope):
         scope.builder = self
@@ -68,9 +73,11 @@ class BuilderData:
 
     def push_variable_stack(self):
         self.variables_stack.append({})
+        self.value_heap_stack.append([])
 
     def pop_variables(self):
         # frees all variables at the top of the stack/in the current scope and returns a list of the names of all freed variables
+        # old garbage collector
         top = self.variables_stack[len(self.variables_stack)-1]
         free_list:List[str] = []
         for name, var in top.items():
@@ -79,6 +86,14 @@ class BuilderData:
                 free_op.write()
                 free_list.append(name)
         self.variables_stack.pop()
+
+        # new garbage collector
+        val_top = self.value_heap_stack[len(self.value_heap_stack)-1]
+        for ins in val_top:
+            free_op = self.function.create_operation(fr.FreeOperation([ins]))
+            free_op.write()
+        self.value_heap_stack.pop()
+
         return free_list
     
     def write_operation(self, operation:fr.Operation):

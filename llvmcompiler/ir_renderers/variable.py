@@ -81,6 +81,8 @@ class Value:
         self.dbg_tag = dbg_tag
         self.module = None
 
+    
+
     @property
     def parent(self):
         self.type.parent = self._parent
@@ -137,6 +139,31 @@ class Value:
     @property
     def is_pointer(self):
         return self.type.value.is_pointer
+    
+class HeapValue(Value):
+    """
+    This will add a value to the heap when it is read.
+    """
+    def render_heap(self):
+        malloc_call = self.builder.cursor.call(self.builder.functions["allocate"].get_function().function, [SIZE_T(self.type.cast_ptr().size)])
+        bc = self.builder.cursor.bitcast(malloc_call, self.type.cast_ptr().value)
+        ptr = self.builder.cursor.gep(bc, [ir.IntType(32)(0)], inbounds=True)
+        val = self.get_value()
+        # if isinstance(self.type, ct.PrecisionType):
+        #     if isinstance(self.type, ct.F32Type):
+        #         fti = self.builder.cursor.fptosi(self.get_value(), ir.IntType(32))
+        #         val = self.builder.cursor.inttoptr(fti, ir.IntType(32).as_pointer())
+        #     elif isinstance(self.type, ct.D64Type):
+        #         fti = self.builder.cursor.fptosi(self.get_value(), ir.IntType(64))
+        #         val = self.builder.cursor.inttoptr(fti, ir.IntType(64).as_pointer())
+        # elif isinstance(self.type, ct.IntegerType):
+        #     val = self.builder.cursor.inttoptr(self.get_value(), self.type.value.as_pointer())
+        print(f"{val} ||| {ptr}")
+        self.builder.cursor.store(val, ptr)
+        self.value = ptr
+        self.is_instruction = True
+        self.builder.push_value_heap(self.value)
+
     
 
 class InstructionValue(Value):

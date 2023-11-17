@@ -23,6 +23,12 @@ class Module:
         self.scope = scope
         self.mangle_salt = mangle_salt
         
+        self.null = ir.GlobalVariable(self.module, ir.IntType(8), "null")
+        """
+        Point a value to this when it is freed
+        """
+        self.null.initializer = ir.IntType(8)(ord("\0"))
+        
     
     def write(self):
         for scope_line in self.scope:

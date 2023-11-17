@@ -10,7 +10,7 @@ import llvmcompiler.compiler_types as ct
 from llvmcompiler.compiler_types.types.char import C8PointerType
 if TYPE_CHECKING:
     from .builder_data import BuilderData
-from llvmcompiler.ir_renderers.variable import Variable, Value
+from llvmcompiler.ir_renderers.variable import Variable, Value, HeapValue
 
 
 arg_type = Self | Variable | ct.CompilerType | Value | Tuple[str, Variable]
@@ -83,6 +83,8 @@ class Operation:
                 raw_arg.parent = self.builder.function
                 raw_arg.module = self.builder.module
                 raw_arg.builder = self.builder
+                if isinstance(raw_arg, HeapValue):
+                    raw_arg.render_heap()
                 self.arguments[r_a_n] = raw_arg
             else:
                 self.arguments[r_a_n] = raw_arg

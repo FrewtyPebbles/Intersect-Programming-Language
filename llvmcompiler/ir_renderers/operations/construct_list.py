@@ -12,9 +12,10 @@ class ConstructListOperation(Operation):
     """
     This is used to construct lists.
     """
-    def __init__(self, item_type:CompilerType, arguments: list[arg_type] = []) -> None:
+    def __init__(self, item_type:CompilerType, arguments: list[arg_type] = [], heap = False) -> None:
         super().__init__(arguments)
         self.type = item_type
+        self.heap = heap
 
     def create_list(self):
         self.type.module = self.builder.module
@@ -36,13 +37,23 @@ class ConstructListOperation(Operation):
         list_alloca = self.builder.alloca(ir.ArrayType(self.type.value, len(self.arguments)))
         for item_n, item in enumerate(self.arguments):
             pointer = self.builder.cursor.gep(list_alloca, [ir.IntType(32)(0), ir.IntType(32)(item_n)])
+            self.builder.module.dbg_print()
+            print(item)
             self.builder.cursor.store(item, pointer)
 
         
 
         self.builder.cursor.comment("OP::construct:list end")
-        ret = vari.Value(ArrayType(self.type, len(self.arguments)), self.builder.cursor.load(list_alloca), True)
-        ret.parent = self.builder.function
-        ret.builder = self.builder
-        ret.module = self.builder.module
-        return ret
+        if self.heap:
+            ret = vari.HeapValue(ArrayType(self.type, len(self.arguments)), self.builder.cursor.load(list_alloca), True)
+            ret.parent = self.builder.function
+            ret.builder = self.builder
+            ret.module = self.builder.module
+            ret.render_heap()
+            return ret
+        else:
+            ret = vari.Value(ArrayType(self.type, len(self.arguments)), self.builder.cursor.load(list_alloca), True)
+            ret.parent = self.builder.function
+            ret.builder = self.builder
+            ret.module = self.builder.module
+            return ret

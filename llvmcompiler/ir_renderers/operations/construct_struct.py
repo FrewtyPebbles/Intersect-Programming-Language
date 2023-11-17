@@ -27,7 +27,8 @@ class ConstructStructOperation(Operation):
         The values of the attributes are stored in arguments after the 
         "write_arguments" derived function runs before "_write".
         """
-        self.template_arguments = template_arguments  
+        self.template_arguments = template_arguments
+        self.heap = heap
     
     def create_attributes(self):
         for kn, key in enumerate(self.attributes.keys()):
@@ -57,8 +58,16 @@ class ConstructStructOperation(Operation):
 
         self.builder.cursor.comment("OP::construct:struct end")
 
-        ret = vari.Value(StructType(self.name, self.template_arguments, self.builder.module), self.builder.cursor.load(struct_alloca), True)
-        ret.parent = self.builder.function
-        ret.builder = self.builder
-        ret.module = self.builder.module
-        return ret
+        if self.heap:
+            ret = vari.HeapValue(StructType(self.name, self.template_arguments, self.builder.module), self.builder.cursor.load(struct_alloca), True)
+            ret.parent = self.builder.function
+            ret.builder = self.builder
+            ret.module = self.builder.module
+            ret.render_heap()
+            return ret
+        else:
+            ret = vari.Value(StructType(self.name, self.template_arguments, self.builder.module), self.builder.cursor.load(struct_alloca), True)
+            ret.parent = self.builder.function
+            ret.builder = self.builder
+            ret.module = self.builder.module
+            return ret
