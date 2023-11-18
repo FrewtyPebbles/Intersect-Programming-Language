@@ -10,104 +10,19 @@ from llvmcompiler.ir_renderers.operations import *
 
 
 module = Module("testmod.pop",scope=[
-    StructDefinition("Vector",{
-        "data":ArrayType(Template("ArrayType"), 3),
-        "length":I32Type()
-    },[
-        FunctionDefinition("new", {"self":StructPointerType("Vector", [Template("ArrayType")]), "arg":I32Type()}, VoidType(), scope=[
-            CallOperation("libc_printf", [CastOperation([Value(ArrayType(C8Type(), len("index 1 value: %i\n\0")), "index 1 value: %i\n\0"), C8PointerType()]),
-                DereferenceOperation([IndexOperation(["self", LookupLabel("data"), Value(I32Type(), 1)])])
-            ]),
-            AssignOperation([IndexOperation(["self", LookupLabel("data"), Value(I32Type(), 1)]), "arg"]),
-            FunctionReturnOperation([])
-        ])
-    ],["ArrayType"]),
-    
-    FunctionDefinition("print_something", {}, Template("A"), scope=[
-        DefineOperation(["number", Value(Template("A"), 5)]),
-        DefineOperation(["test_struct",Value(StructType("Vector", [I32Type()]))]),
-
-        CallOperation("libc_printf", [
-            CastOperation([Value(ArrayType(Template("B"), len("Heres a number: %i\n\0")), "Heres a number: %i\n\0"), C8PointerType()]),
-            "number"
-        ]),
-        
-        FunctionReturnOperation(["number"])
-    ], template_args=["A","B"]),
-
-    FunctionDefinition("print_something_inbetween", {}, Template("B"), scope=[
-        FunctionReturnOperation([
-            
-            CallOperation("print_something", [], [Template("B"), Template("A")])
-            
-        ])
-
-    ], template_args=["A", "B"]),
-
     FunctionDefinition("test", {"num":I32Type()}, I32Type(), scope=[
-        DefineOperation(["testMD1",
-            ConstructListOperation(StructPointerType("Vector", [I32Type()]), [
-                ConstructStructOperation("Vector", {
-                    "data": ConstructListOperation(I32Type(), [
-                        Value(I32Type(), 1),
-                        Value(I32Type(), 2),
-                        Value(I32Type(), 3)
-                    ]),
-                    "length": Value(I32Type(), 3)
-                }, [I32Type()], True)
-            ], False)
+        DefineOperation(["test_array", 
+            ConstructListOperation(I32Type(),[
+                Value(I32Type(), 10),
+                Value(I32Type(), 5),
+                Value(I32Type(), 100)
+            ], True)
         ]),
-
-        #
-        DefineOperation(["testVEC",
-            ConstructStructOperation("Vector", {
-                "data": ConstructListOperation(I32Type(), [
-                    Value(I32Type(), 1),
-                    Value(I32Type(), 2),
-                    Value(I32Type(), 3)
-                ]),
-                "length": Value(I32Type(), 3)
-            }, [I32Type()], True)
-        ]),
-        #
-        
-        CallOperation(IndexOperation(["testVEC", LookupLabel("new")]), ["num"]),
-        CallOperation(IndexOperation(["testVEC", LookupLabel("new")]), ["num"]),
-
-        IfBlock(condition=[LessThanOperation(["num", Value(I32Type(), 100000)])], scope=[
-            
-            ForLoop(condition=[
-                DefineHeapOperation(["i", Value(I32Type(), 0)]),
-                LessThanOperation([DereferenceOperation(["i"]), "num"]),
-                AssignOperation(["i", AddOperation([DereferenceOperation(["i"]), Value(I32Type(), 1)])])
-            ],scope=[
-
-                CallOperation("print_something_inbetween", [], [C8Type(), I32Type()])
-
-            ]),
-            
-        ]),
-        ElseIfBlock(condition=[
-            GreaterThanOperation(["num", Value(I32Type(), 100000)])
-        ],scope=[
-
-            CallOperation("libc_printf", [
-                CastOperation([Value(ArrayType(C8Type(), len("greater than 300\n\0")), "greater than 300\n\0"), C8PointerType()])
-            ]),
-        
-        ]),
-        ElseBlock(scope=[
-        
-            CallOperation("libc_printf", [
-                CastOperation([Value(ArrayType(C8Type(), len("else\n\0")), "else\n\0"), C8PointerType()])
-            ]),
-        
-        ]),
-        
         CallOperation("libc_printf", [
-            CastOperation([Value(ArrayType(C8Type(), len("after\n\0")), "after\n\0"), C8PointerType()])
+            CastOperation([Value(ArrayType(C8Type(), len("index %i: %i\n\00")), "index %i: %i\n\00"), C8PointerType()]),
+            "num",
+            DereferenceOperation([IndexOperation(["test_array", "num"])])
         ]),
-
         FunctionReturnOperation(["num"])
     ], extern=True)
 ])

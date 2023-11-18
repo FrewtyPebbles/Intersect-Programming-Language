@@ -12,6 +12,5 @@ from .function_return import *
 from .multiply import *
 from .subtract import *
 from .index import *
-from .access import *
 from .construct_list import *
 from .construct_struct import *
