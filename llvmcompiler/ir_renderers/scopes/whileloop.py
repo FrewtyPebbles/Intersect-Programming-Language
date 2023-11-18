@@ -7,7 +7,7 @@ if TYPE_CHECKING:
     import llvmcompiler.ir_renderers.variable as vari
 
 
-class ForLoop(Scope):
+class WhileLoop(Scope):
     def __init__(self, name="", scope: list[Scope | op.Operation] = [], condition: list[op.Operation] = []) -> None:
         super().__init__(name, scope, condition)
         self.inside = scope
@@ -24,31 +24,22 @@ class ForLoop(Scope):
 
 
     def _define_scope_blocks(self):
-        self.builder.cursor.comment("SCOPE::for START")
+        self.builder.cursor.comment("SCOPE::while START")
         self.scope_blocks = {
             # make it so you can for loop without a declaration
-            "declaration": self.builder.cursor.append_basic_block(),
             "condition": self.builder.cursor.append_basic_block(),
-            "increment": self.builder.cursor.append_basic_block(),
             "start": self.builder.cursor.append_basic_block(),
             "end": self.builder.cursor.append_basic_block()
         }
-        self.builder.cursor.branch(self.scope_blocks["declaration"])
-        self.builder.cursor.position_at_end(self.scope_blocks["declaration"])
+        self.builder.cursor.branch(self.scope_blocks["condition"])
+        self.builder.cursor.position_at_end(self.scope_blocks["condition"])
         # Then run define condition when the condition is parsed
         self.processed_args:List[Union[op.Operation, vari.Variable, vari.Value]] = []
         
     def append_condition(self, argument:Union[op.Operation, vari.Variable, vari.Value]):
         processed_arg = self.process_arg(argument)
         self.processed_args.append(processed_arg)
-        if len(self.processed_args) == 1:
-            self.builder.cursor.branch(self.scope_blocks["condition"])
-            self.builder.cursor.position_at_end(self.scope_blocks["condition"])
-        if len(self.processed_args) == 2:
-            self.builder.cursor.cbranch(self.processed_args[1], self.scope_blocks["start"], self.scope_blocks["end"])
-            self.builder.cursor.position_at_end(self.scope_blocks["increment"])
-        if len(self.processed_args) == 3:
-            self.builder.cursor.branch(self.scope_blocks["condition"])
+        self.builder.cursor.cbranch(self.processed_args[0], self.scope_blocks["start"], self.scope_blocks["end"])
 
     def start_scope(self):
         # define the condition
@@ -61,7 +52,7 @@ class ForLoop(Scope):
         # pop the variables
         self.builder.pop_variables()
         if not self.builder.cursor.block.is_terminated:
-            self.builder.cursor.branch(self.scope_blocks["increment"])
+            self.builder.cursor.branch(self.scope_blocks["condition"])
         self.builder.cursor.position_at_end(self.scope_blocks["end"])
-        self.builder.cursor.comment("SCOPE::for END")
+        self.builder.cursor.comment("SCOPE::while END")
         self.builder.pop_scope()

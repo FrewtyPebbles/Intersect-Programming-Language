@@ -175,6 +175,8 @@ class Function:
 
             scope_line.write()
             last_scope_line = scope_line
+        if any([isinstance(last_scope_line, iftype1) for iftype1 in [IfBlock, ElseIfBlock, ElseBlock]]):
+            last_scope_line.render()
 
 
     def create_operation(self, operation:op.Operation):

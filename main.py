@@ -3,7 +3,7 @@ import time
 from llvmcompiler import Function, Value, Module, I32Type, C8Type, ArrayType, I32PointerType,\
      ArrayPointerType, VectorType, BoolType, I8Type, ForLoop, VoidType, IfBlock, ElseBlock,\
     ElseIfBlock, FunctionDefinition, Template, StructDefinition, StructType, HeapValue,\
-    StructPointerType, LookupLabel, C8PointerType
+    StructPointerType, LookupLabel, C8PointerType, WhileLoop
 from llvmcompiler.ir_renderers.operations import *
 
 
@@ -11,17 +11,19 @@ from llvmcompiler.ir_renderers.operations import *
 
 module = Module("testmod.pop",scope=[
     FunctionDefinition("test", {"num":I32Type()}, I32Type(), scope=[
-        DefineOperation(["test_array", 
-            ConstructListOperation(I32Type(),[
-                Value(I32Type(), 10),
-                Value(I32Type(), 5),
-                Value(I32Type(), 100)
-            ], True)
-        ]),
-        CallOperation("libc_printf", [
-            CastOperation([Value(ArrayType(C8Type(), len("index %i: %i\n\00")), "index %i: %i\n\00"), C8PointerType()]),
-            "num",
-            DereferenceOperation([IndexOperation(["test_array", "num"])])
+        DefineOperation(["i", Value(I32Type(), 0)]),
+        WhileLoop(condition=[
+            LessThanOperation(["i", "num"])
+        ], scope=[
+            CallOperation("libc_printf", [
+                CastOperation([Value(ArrayType(C8Type(), len("index %i\n\00")), "index %i\n\00"), C8PointerType()]),
+                "i"
+            ]),
+            AssignOperation(["i", AddOperation(["i", Value(I32Type(), 1)])]),
+            IfBlock(condition=[GreaterThanOperation(["i", Value(I32Type(), 3)])], scope=[
+                DefineOperation(["A", HeapValue(I32Type(), 0)]),
+                BreakOperation()
+            ])
         ]),
         FunctionReturnOperation(["num"])
     ], extern=True)

@@ -33,8 +33,24 @@ class BuilderData:
         self.debug = False
         self.scope_block_stack:List[Dict[str, ir.Block]] = []
 
+        self.memory_stack:list[MemoryStackFrame] = [MemoryStackFrame(self.function)]
+
+        
+
         # this is where all function names/labels are defined
         self.functions = self.module.functions
+
+    @property
+    def memory_top(self):
+        return self.memory_stack[len(self.memory_stack)-1]
+
+    @property
+    def variable_top(self):
+        return self.memory_top.variable_top
+    
+    @property
+    def value_top(self):
+        return self.memory_top.value_top
 
     def declare_arguments(self):
         # declare the function arguments as variables
@@ -47,11 +63,11 @@ class BuilderData:
         cpy.scope_block_stack = self.scope_block_stack
         cpy.debug = self.debug
         return cpy
+    
 
-    def get_scope_block(self, name:str) -> Variable:
-        for layer_number, layer in enumerate(self.scope_block_stack):
-            if name in layer.keys():
-                return self.scope_block_stack[layer_number][name]
+            
+    def break_scope(self, name:str = "end") -> Variable:
+        return self.scope_block_stack[len(self.scope_block_stack)-1][name]
     
     def pop_scope(self):
         self.scope_block_stack.pop()
@@ -75,9 +91,10 @@ class BuilderData:
         self.variables_stack.append({})
         self.value_heap_stack.append([])
 
-    def pop_variables(self):
+    def pop_variables(self, nopop = False):
         # frees all variables at the top of the stack/in the current scope and returns a list of the names of all freed variables
         # old garbage collector
+        print(self.variables_stack)
         top = self.variables_stack[len(self.variables_stack)-1]
         free_list:List[str] = []
         for name, var in top.items():
@@ -85,14 +102,16 @@ class BuilderData:
                 free_op = self.function.create_operation(fr.FreeOperation([var]))
                 free_op.write()
                 free_list.append(name)
-        self.variables_stack.pop()
+        if nopop:
+            self.variables_stack.pop()
 
         # new garbage collector
         val_top = self.value_heap_stack[len(self.value_heap_stack)-1]
         for ins in val_top:
             free_op = self.function.create_operation(fr.FreeOperation([ins]))
             free_op.write()
-        self.value_heap_stack.pop()
+        if nopop:
+            self.value_heap_stack.pop()
 
         return free_list
     
@@ -158,3 +177,73 @@ class BuilderData:
         alloca_instr = self.cursor.alloca(ir_type, size, name)
         self.cursor.position_at_end(curr_block)
         return alloca_instr
+    
+class MemoryStackFrame:
+    """
+    This class creates a new stack for memory each time a `break`-able scope is pushed to the execution context.
+    
+    When a break is called, everything on the variable stack is garbage collected.
+
+    When A MemoryStackFrame is poped from self.memory_stack in the builder data, the `__del__` dunder is called
+    which frees all of the memory on that stack frame.
+    """
+    def __init__(self, function:Function, exit:ir.Block = None) -> None:
+        self.variables_stack:list[dict[str, Variable]] = [{}]
+        self.value_heap_stack:list[list[ir.Instruction]] = [[]]
+        self.exit:ir.Block = exit
+        self.function = function
+
+    @property
+    def variable_top(self):
+        return self.variables_stack[len(self.variables_stack)-1]
+    
+    @property
+    def value_top(self):
+        return self.value_heap_stack[len(self.value_heap_stack)-1]
+
+    def push_variable_stack(self):
+        self.variables_stack.append({})
+        self.value_heap_stack.append([])
+    
+    def pop_heap(self):
+        # frees heap variables at the top of the stack/in the current scope and returns a list of the names of all freed variables
+        top = self.variables_stack[len(self.variables_stack)-1]
+        free_list:List[str] = []
+        for name, var in top.items():
+            if var.heap:
+                self.function.create_operation(fr.FreeOperation([var]))
+                free_list.append(name)
+                del top[name]
+        return free_list
+    
+    def break_block(self) -> Variable:
+        return self.exit
+
+    def get_variable(self, name:str) -> Variable:
+
+        for layer_number, layer in enumerate(self.variables_stack):
+            if name in layer.keys():
+                return self.variables_stack[layer_number][name]
+        print(f"Error: Variable \"{name}\" not in reference stack:\n{self.variables_stack}")
+
+    def push_value_heap(self, malloc:ir.Instruction):
+        self.value_heap_stack[len(self.value_heap_stack)-1].append(malloc)
+        return malloc
+    
+    def declare_variable(self, variable:Variable):
+        self.variables_stack[len(self.variables_stack)-1][variable.name] = variable
+        return variable
+
+    def __del__(self):
+        self.variables_stack.reverse()
+        for v_stack in self.variables_stack:
+            for name, var in v_stack.items():
+                if var.heap:
+                    free_op = self.function.create_operation(fr.FreeOperation([var]))
+                    free_op.write()
+
+        self.value_heap_stack.reverse()
+        for v_h_stack in self.value_heap_stack:
+            for ins in v_h_stack:
+                free_op = self.function.create_operation(fr.FreeOperation([ins]))
+                free_op.write()

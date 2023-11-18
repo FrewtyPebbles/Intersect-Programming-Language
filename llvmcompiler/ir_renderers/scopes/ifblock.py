@@ -67,7 +67,9 @@ class IfBlock(scps.Scope):
         # pop the variables
         # self.builder.cursor.position_at_end(self.scope_blocks["start"])
 
-        self.builder.cursor.branch(self.scope_blocks["exit"])
+        if not self.builder.cursor.block.is_terminated:
+            self.builder.cursor.branch(self.scope_blocks["exit"])
+        
         self.builder.cursor.position_at_end(self.scope_blocks["exit"])
         self.scope_end_comment()
 

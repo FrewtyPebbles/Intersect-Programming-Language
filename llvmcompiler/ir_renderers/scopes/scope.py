@@ -39,7 +39,7 @@ class Scope:
         This is used to write the scope to ir
         """
         self._define_scope_blocks()
-        self.builder.push_scope(self.scope_blocks)
+        # self.builder.push_scope(self.scope_blocks)
         self.builder.push_variable_stack()
         
 
@@ -61,7 +61,7 @@ class Scope:
         """
         self._exit_scope()
         self.builder.pop_variables()
-        self.builder.pop_scope()
+        # self.builder.pop_scope()
 
     def _exit_scope(self):
         """
@@ -87,6 +87,9 @@ class Scope:
             
             inner_obj.write()
             last_obj = inner_obj
+        print(type(last_obj))
+        if any([isinstance(last_obj, iftype1) for iftype1 in [scps.IfBlock, scps.ElseIfBlock, scps.ElseBlock]]):
+            last_obj.render()
 
     def process_arg(self, argument:Union[op.Operation, vari.Variable, vari.Value]):
         processed_arg = None
