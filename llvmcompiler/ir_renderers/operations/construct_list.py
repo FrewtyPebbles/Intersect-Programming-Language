@@ -37,7 +37,6 @@ class ConstructListOperation(Operation):
         list_alloca = self.builder.alloca(ir.ArrayType(self.type.value, len(self.arguments)))
         for item_n, item in enumerate(self.arguments):
             pointer = self.builder.cursor.gep(list_alloca, [ir.IntType(32)(0), ir.IntType(32)(item_n)])
-            self.builder.module.dbg_print()
             print(item)
             self.builder.cursor.store(item, pointer)
 

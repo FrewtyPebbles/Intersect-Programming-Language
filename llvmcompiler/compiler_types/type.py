@@ -64,6 +64,7 @@ class CompilerType:
         """
         Check type and return pointer version of that type
         """
+        return self
     def __repr__(self) -> str:
         return self.value
     

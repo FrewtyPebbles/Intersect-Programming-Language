@@ -14,7 +14,7 @@ import llvmcompiler.compiler_types as ct
 from llvmcompiler.ir_renderers.builder_data import BuilderData
 from llvmcompiler.ir_renderers.scopes import IfBlock, ElseIfBlock, ElseBlock, Scope
 
-
+from copy import deepcopy
 
 
 
@@ -64,9 +64,6 @@ class FunctionDefinition:
         if len(template_types) == 0:
             return mangled_name
         
-        if self.struct != None:
-            mangled_name += f"_{self.struct.name}_memberfunction"
-        
         mangled_name += f"_tmp_{self.module.mangle_salt}_{f'_{self.module.mangle_salt}_'.join([tt.value._to_string() for tt in template_types])}"
         return mangled_name
     
@@ -85,14 +82,15 @@ class Function:
         self.template_types = template_types
         self.is_template_function = len(self.template_types) > 0
         self.function_definition = function_definition
-        self.module = function_definition.module
+        self.module = self.function_definition.module
         self.name = self.function_definition.get_mangled_name(template_types)
         "Name is mangled."
 
         self.variables:Dict[str, Variable] = [{}]
         "This is all variables within the function scope."
 
-        self.arguments = {**self.function_definition.arguments}
+        self.arguments = deepcopy(self.function_definition.arguments)
+        self.return_type = deepcopy(self.function_definition.return_type)
         for key in self.arguments.keys():
             self.arguments[key].parent = self
             self.arguments[key].module = self.module
@@ -105,7 +103,7 @@ class Function:
             if isinstance(typ, ct.Template):
                 typ = typ.get_template_type()
             return typ
-        except KeyError:
+        except ValueError:
             try:
                 typ = self.function_definition.struct.get_template_type(name)
                 if isinstance(typ, ct.Template):
@@ -121,6 +119,7 @@ class Function:
 
         func_args, func_ret = self.get_function_template_signature()
 
+        
         self.function_type = ir.FunctionType(func_ret.value, [stype.value for stype in func_args.values()], var_arg=self.function_definition.variable_arguments)
         
         self.function = ir.Function(self.module.module, self.function_type, self.name)
@@ -145,19 +144,20 @@ class Function:
         return self
 
     def get_function_template_signature(self):
-        func_args = {**self.function_definition.arguments}
-        for key, val in self.function_definition.arguments.items():
-            if isinstance(val, ct.Template):
-                # replace function argument templates with template types
-                val.parent = self
-                val.module = self.module
-                func_args[key] = val
+        for key in self.arguments.keys():
+            self.arguments[key].parent = self
+            self.arguments[key].module = self.module
 
-        func_ret = self.function_definition.return_type
-        if isinstance(self.function_definition.return_type, ct.Template):
-            self.function_definition.return_type.parent = self
-            self.function_definition.return_type.module = self.module
-            func_ret = self.function_definition.return_type
+        func_args = self.arguments
+        for key in self.arguments.keys():
+            func_args[key].parent = self
+            func_args[key].module = self.module
+
+        func_ret = self.return_type
+        self.return_type.parent = self
+        self.return_type.module = self.module
+        func_ret = self.return_type
+
         
         return func_args, func_ret
 

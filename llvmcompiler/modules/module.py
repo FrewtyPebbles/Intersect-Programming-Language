@@ -13,10 +13,10 @@ class Module:
         self.functions:Dict[str, ir.Function | fn.FunctionDefinition] = {
             # The key is the name that is parsed from source code,
             # the value is the llvm function.
-            "print": fn.CFunctionDefinition(self._std_printf()),
-            "allocate": fn.CFunctionDefinition(self._std_malloc()),
-            "reallocate": fn.CFunctionDefinition(self._std_realloc()),
-            "deallocate": fn.CFunctionDefinition(self._std_free())
+            "libc_printf": fn.CFunctionDefinition(self._std_printf()),
+            "libc_malloc": fn.CFunctionDefinition(self._std_malloc()),
+            "libc_realloc": fn.CFunctionDefinition(self._std_realloc()),
+            "libc_free": fn.CFunctionDefinition(self._std_free())
             #"input":"input" # will be getting input function from c dll/so file via this method https://stackoverflow.com/questions/36658726/link-c-in-llvmlite
         }
         self.structs:dict[str, st.StructDefinition] = {}

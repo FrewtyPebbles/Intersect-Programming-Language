@@ -15,7 +15,10 @@ class CastOperation(Operation):
             arg1 = self.arguments[0].variable
         elif isinstance(self.arguments[0], vari.Value):
             # If casting a literal, just cast at compile time and return a constant of the type
-            arg1 = self.arguments[0].write()
+            if self.arguments[0].is_instruction:
+                arg1 = self.arguments[0].get_value()
+            else:
+                arg1 = self.arguments[0].write()
         
         if isinstance(self.arguments[1], vari.Variable):
             # if variable is passed
@@ -30,5 +33,6 @@ class CastOperation(Operation):
         bitcast = self.builder.cursor.bitcast(arg1, arg2.value)
 
         self.builder.cursor.comment("OP::cast END")
+        self.builder.module.dbg_print()
 
         return vari.Value(arg2, bitcast, True)

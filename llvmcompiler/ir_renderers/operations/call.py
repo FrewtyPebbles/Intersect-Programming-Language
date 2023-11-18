@@ -2,17 +2,19 @@ from llvmcompiler.compiler_types.type import CompilerType
 from ..operation import Operation, arg_type
 from llvmlite import ir
 import llvmcompiler.ir_renderers.variable as vari
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 if TYPE_CHECKING:
     from llvmcompiler.ir_renderers.function import FunctionDefinition
 
 class CallOperation(Operation):
-    def __init__(self, function:str, arguments: list[arg_type] = [], template_arguments:list[CompilerType] = []) -> None:
+    def __init__(self, function:str | Operation | Any, arguments: list[arg_type] = [], template_arguments:list[CompilerType] = []) -> None:
         super().__init__(arguments)
         self.template_arguments = template_arguments
-        self.function:str | FunctionDefinition = function
+        self.function:str | FunctionDefinition | Operation = function
     
     def get_function(self):
+        if isinstance(self.function, Operation):
+            self.function: tuple[ir.Instruction, FunctionDefinition] = self.write_argument(self.function)
         # link all templates to their functions.
         for t_a in range(len(self.template_arguments)):
             self.template_arguments[t_a].parent = self.builder.function
@@ -21,6 +23,12 @@ class CallOperation(Operation):
         f_to_c = None
         if isinstance(self.function, str):
             function_obj = self.builder.module.functions[self.function].get_function(self.template_arguments)
+        elif isinstance(self.function, vari.Value):
+            """
+            This means that it is a member function.  The value of the Value should be a tuple containing (ir.Instruction, FunctionDefinition)
+            """
+            self.arguments.insert(0, self.function.get_value()[0])
+            function_obj = self.function.get_value()[1].get_function(self.template_arguments)
         else:
             function_obj = self.function.get_function(self.template_arguments)
 
@@ -42,7 +50,7 @@ class CallOperation(Operation):
         if len(self.arguments) > 0:
             for a_n, argument in enumerate(self.get_variables(self.arguments, True)):
                 
-                arg = None
+                arg = argument
 
                 if isinstance(argument, vari.Variable):
                     arg = argument.variable
@@ -51,17 +59,11 @@ class CallOperation(Operation):
                 
                 
 
-                if a_n < len(f_to_c.args):
-                    #cast to the right type
-                    arg = self.builder.cursor.bitcast(arg, f_to_c.args[a_n].type)
-                    
-                    # we auto cast pointers for non variable_arg arguments
-                    cast_arguments.append(arg)
-                else:
-                    arg = self.process_arg(argument)
-                    cast_arguments.append(arg)
+                arg = self.process_arg(argument)
+                cast_arguments.append(arg)
         
 
+        self.builder.module.dbg_print()
         func_call = self.builder.cursor.call(f_to_c, cast_arguments)
 
 

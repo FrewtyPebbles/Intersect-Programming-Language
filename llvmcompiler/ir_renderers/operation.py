@@ -63,6 +63,23 @@ class Operation:
         arg2 = self.process_arg(self.arguments[1])
 
         return arg1, arg2
+    
+    def write_argument(self, raw_arg: arg_type):
+        if isinstance(raw_arg, Operation):
+            value = self.builder.function.create_operation(raw_arg).write()
+            value.parent = self.builder.function
+            value.module = self.builder.function.module
+            value.builder = self.builder
+            return value
+        elif isinstance(raw_arg, Value):
+            raw_arg.parent = self.builder.function
+            raw_arg.module = self.builder.module
+            raw_arg.builder = self.builder
+            if isinstance(raw_arg, HeapValue):
+                raw_arg.render_heap()
+            return raw_arg
+        else:
+            return raw_arg
 
     def write_arguments(self):
         """
@@ -71,23 +88,7 @@ class Operation:
 
         # process the arguments and run any operation arguments
         for r_a_n, raw_arg in enumerate(self.raw_arguments):
-            if isinstance(raw_arg, Operation):
-                value = self.builder.function.create_operation(raw_arg).write()
-
-                value.parent = self.builder.function
-                value.module = self.builder.function.module
-
-                value.builder = self.builder
-                self.arguments[r_a_n] = value
-            elif isinstance(raw_arg, Value):
-                raw_arg.parent = self.builder.function
-                raw_arg.module = self.builder.module
-                raw_arg.builder = self.builder
-                if isinstance(raw_arg, HeapValue):
-                    raw_arg.render_heap()
-                self.arguments[r_a_n] = raw_arg
-            else:
-                self.arguments[r_a_n] = raw_arg
+            self.arguments[r_a_n] = self.write_argument(raw_arg)
 
         
 

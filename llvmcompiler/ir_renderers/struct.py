@@ -70,7 +70,9 @@ class Struct:
         """
         for func in [*self.struct_definition.functions]:
             func.struct = self
+            func.module = self.struct_definition.module
             self.functions[func.name] = func
+            func.name = f"{self.name}_memberfunction_{func.name}"
 
         self.raw_attributes:dict[str, ct.CompilerType] = {**self.struct_definition.attributes}
         """
@@ -122,12 +124,15 @@ class Struct:
                 if attr.struct.struct_definition.name == self.struct_definition.name:
                     self.raw_attributes[key] = self.raw_attributes[key].cast_ptr()
 
-    def get_attribute(self, name:str, template_types:list[ct.CompilerType] = []) -> fn.Function | vari.Value:
+    def get_attribute(self, name:str, template_types:list[ct.CompilerType] = [], get_definition = False) -> fn.Function | vari.Value:
         attrs = {**self.attributes, **self.functions}
         try:
             attr = attrs[name]
             if isinstance(attr, fn.FunctionDefinition):
-                return attr.get_function(template_types)
+                if get_definition:
+                    return attr
+                else:
+                    return attr.get_function(template_types)
             else:
                 return attr
         except KeyError:
@@ -143,20 +148,32 @@ class StructType(ct.CompilerType):
         self.template_types = template_types
 
     @property
-    def struct(self):
+    def struct(self) -> Struct:
+        for tt in self.template_types:
+            tt.module = self.module
+            tt.parent = self.parent
         return self.module.get_struct(self.name)\
             .get_struct(self.template_types)
 
     @property
     def size(self):
+        for tt in self.template_types:
+            tt.module = self.module
+            tt.parent = self.parent
         return self.struct.size
     
     @property
     def value(self):
+        for tt in self.template_types:
+            tt.module = self.module
+            tt.parent = self.parent
         return self.struct.ir_struct
     
     def cast_ptr(self):
-        return StructPointerType(self.name, self.template_types, self.module)
+        p_t = StructPointerType(self.name, self.template_types, self.module)
+        p_t.parent = self.parent
+        p_t.module = self.module
+        return p_t
     
 class StructPointerType(StructType):
     """

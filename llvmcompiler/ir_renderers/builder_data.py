@@ -9,7 +9,7 @@ if TYPE_CHECKING:
     from .function import Function
     import llvmcompiler.ir_renderers.scopes as scps
 import llvmcompiler.ir_renderers.operations.free as fr
-from llvmcompiler.ir_renderers.variable import Variable, Value
+from llvmcompiler.ir_renderers.variable import Variable, Value, HeapValue
 import sys
 
 
@@ -128,7 +128,11 @@ class BuilderData:
                 self.cursor.store(value, variable.variable)
         else:
             # print(f" - [(stack)] : setting value of : [{variable.name}] : to : [{value.value}]")
-            if isinstance(value, Value):
+            if isinstance(value, HeapValue):
+                variable.value = value
+                if not value.is_instruction:
+                    self.cursor.store(value.get_value(), variable.variable)
+            elif isinstance(value, Value):
                 variable.value = value
                 self.cursor.store(value.get_value(), variable.variable)
             elif isinstance(value, Variable):

@@ -5,3 +5,4 @@ from .char import *
 from .void import *
 from .datastructures import *
 from .template import *
+from .lookup_label import *

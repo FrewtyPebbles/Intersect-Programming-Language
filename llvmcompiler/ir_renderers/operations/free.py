@@ -14,5 +14,5 @@ class FreeOperation(Operation):
 
 
         bc = self.builder.cursor.bitcast(ptr, voidptr_ty)
-        self.builder.cursor.call(self.builder.functions["deallocate"].get_function().function, [bc])
+        self.builder.cursor.call(self.builder.functions["libc_free"].get_function().function, [bc])
         self.builder.cursor.comment(" OP::free(heap) END")

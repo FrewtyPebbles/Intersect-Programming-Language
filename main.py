@@ -3,8 +3,10 @@ import time
 from llvmcompiler import Function, Value, Module, I32Type, C8Type, ArrayType, I32PointerType,\
      ArrayPointerType, VectorType, BoolType, I8Type, ForLoop, VoidType, IfBlock, ElseBlock,\
     ElseIfBlock, FunctionDefinition, Template, StructDefinition, StructType, HeapValue,\
-    StructPointerType
+    StructPointerType, LookupLabel, C8PointerType
 from llvmcompiler.ir_renderers.operations import *
+
+
 
 
 module = Module("testmod.pop",scope=[
@@ -12,15 +14,23 @@ module = Module("testmod.pop",scope=[
         "data":ArrayType(Template("ArrayType"), 3),
         "length":I32Type()
     },[
-        FunctionDefinition("new", {"arg":I32Type()}, VoidType(), scope=[
+        FunctionDefinition("new", {"self":StructPointerType("Vector", [Template("ArrayType")]), "arg":I32Type()}, VoidType(), scope=[
+            CallOperation("libc_printf", [CastOperation([Value(ArrayType(C8Type(), len("index 1 value: %i\n\0")), "index 1 value: %i\n\0"), C8PointerType()]),
+                DereferenceOperation([IndexOperation(["self", LookupLabel("data"), Value(I32Type(), 1)])])
+            ]),
+            AssignOperation([IndexOperation(["self", LookupLabel("data"), Value(I32Type(), 1)]), "arg"]),
             FunctionReturnOperation([])
         ])
     ],["ArrayType"]),
+    
     FunctionDefinition("print_something", {}, Template("A"), scope=[
         DefineOperation(["number", Value(Template("A"), 5)]),
         DefineOperation(["test_struct",Value(StructType("Vector", [I32Type()]))]),
 
-        CallOperation("print", [Value(ArrayType(Template("B"), len("Heres a number: %i\n\0")), "Heres a number: %i\n\0"), "number"]),
+        CallOperation("libc_printf", [
+            CastOperation([Value(ArrayType(Template("B"), len("Heres a number: %i\n\0")), "Heres a number: %i\n\0"), C8PointerType()]),
+            "number"
+        ]),
         
         FunctionReturnOperation(["number"])
     ], template_args=["A","B"]),
@@ -45,9 +55,25 @@ module = Module("testmod.pop",scope=[
                     ]),
                     "length": Value(I32Type(), 3)
                 }, [I32Type()], True)
-            ])
+            ], False)
         ]),
-        DefineOperation(["testMD2",Value(ArrayType(StructType("Vector", [I32Type()]), 5))]),
+
+        #
+        DefineOperation(["testVEC",
+            ConstructStructOperation("Vector", {
+                "data": ConstructListOperation(I32Type(), [
+                    Value(I32Type(), 1),
+                    Value(I32Type(), 2),
+                    Value(I32Type(), 3)
+                ]),
+                "length": Value(I32Type(), 3)
+            }, [I32Type()], True)
+        ]),
+        #
+        
+        CallOperation(IndexOperation(["testVEC", LookupLabel("new")]), ["num"]),
+        CallOperation(IndexOperation(["testVEC", LookupLabel("new")]), ["num"]),
+
         IfBlock(condition=[LessThanOperation(["num", Value(I32Type(), 100000)])], scope=[
             
             ForLoop(condition=[
@@ -65,16 +91,22 @@ module = Module("testmod.pop",scope=[
             GreaterThanOperation(["num", Value(I32Type(), 100000)])
         ],scope=[
 
-            CallOperation("print", [Value(ArrayType(C8Type(), len("greater than 300\n\0")), "greater than 300\n\0")]),
+            CallOperation("libc_printf", [
+                CastOperation([Value(ArrayType(C8Type(), len("greater than 300\n\0")), "greater than 300\n\0"), C8PointerType()])
+            ]),
         
         ]),
         ElseBlock(scope=[
         
-            CallOperation("print", [Value(ArrayType(C8Type(), len("else\n\0")), "else\n\0")]),
+            CallOperation("libc_printf", [
+                CastOperation([Value(ArrayType(C8Type(), len("else\n\0")), "else\n\0"), C8PointerType()])
+            ]),
         
         ]),
         
-        CallOperation("print", [Value(ArrayType(C8Type(), len("after\n\0")), "after\n\0")]),
+        CallOperation("libc_printf", [
+            CastOperation([Value(ArrayType(C8Type(), len("after\n\0")), "after\n\0"), C8PointerType()])
+        ]),
 
         FunctionReturnOperation(["num"])
     ], extern=True)

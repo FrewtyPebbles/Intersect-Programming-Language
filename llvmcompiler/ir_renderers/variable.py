@@ -45,8 +45,12 @@ class Variable:
                 self.set(self.value)
         
     def allocate(self):
+        if isinstance(self.value, HeapValue):
+            if self.value.is_instruction:
+                self.variable = self.value.value
+                return
         if self.heap:
-            malloc_call = self.builder.cursor.call(self.builder.functions["allocate"].get_function().function, [SIZE_T(self.value.type.size)])
+            malloc_call = self.builder.cursor.call(self.builder.functions["libc_malloc"].get_function().function, [SIZE_T(self.value.type.size)])
             self.type.parent = self.builder.function
             self.type.module = self.builder.module
             self.type.builder = self.builder
@@ -94,6 +98,9 @@ class Value:
         self._parent = par
         self.type.parent = par
         self.type.module = par.module
+
+    def load(self):
+        return self.builder.cursor.load(self.value)
 
     @property
     def builder(self):
@@ -145,24 +152,26 @@ class HeapValue(Value):
     This will add a value to the heap when it is read.
     """
     def render_heap(self):
-        malloc_call = self.builder.cursor.call(self.builder.functions["allocate"].get_function().function, [SIZE_T(self.type.cast_ptr().size)])
-        bc = self.builder.cursor.bitcast(malloc_call, self.type.cast_ptr().value)
+        ptr_type = self.type.cast_ptr()
+        ptr_type.parent = self.parent
+        ptr_type.builder = self.builder
+        ptr_type.module = self.module
+        malloc_call = self.builder.cursor.call(self.builder.functions["libc_malloc"].get_function().function, [SIZE_T(ptr_type.size)])
+        bc = self.builder.cursor.bitcast(malloc_call, ptr_type.value)
         ptr = self.builder.cursor.gep(bc, [ir.IntType(32)(0)], inbounds=True)
         val = self.get_value()
-        # if isinstance(self.type, ct.PrecisionType):
-        #     if isinstance(self.type, ct.F32Type):
-        #         fti = self.builder.cursor.fptosi(self.get_value(), ir.IntType(32))
-        #         val = self.builder.cursor.inttoptr(fti, ir.IntType(32).as_pointer())
-        #     elif isinstance(self.type, ct.D64Type):
-        #         fti = self.builder.cursor.fptosi(self.get_value(), ir.IntType(64))
-        #         val = self.builder.cursor.inttoptr(fti, ir.IntType(64).as_pointer())
-        # elif isinstance(self.type, ct.IntegerType):
-        #     val = self.builder.cursor.inttoptr(self.get_value(), self.type.value.as_pointer())
         print(f"{val} ||| {ptr}")
         self.builder.cursor.store(val, ptr)
         self.value = ptr
         self.is_instruction = True
         self.builder.push_value_heap(self.value)
+
+        # Cast to pointer and link
+        self.type = self.type.cast_ptr()
+        self.type.parent = self.parent
+        self.type.builder = self.builder
+        self.type.module = self.module
+
 
     
 
