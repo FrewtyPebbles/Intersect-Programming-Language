@@ -13,7 +13,6 @@ class ElseBlock(scps.IfBlock):
 
     def write(self):
         self._define_scope_blocks()
-        self.builder.push_scope(self.scope_blocks)
         self.builder.push_variable_stack()
         self.start_scope()
         self.write_inner()

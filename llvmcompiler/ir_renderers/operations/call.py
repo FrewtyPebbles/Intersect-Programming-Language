@@ -63,7 +63,6 @@ class CallOperation(Operation):
                 cast_arguments.append(arg)
         
 
-        self.builder.module.dbg_print()
         func_call = self.builder.cursor.call(f_to_c, cast_arguments)
 
 

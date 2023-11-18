@@ -15,7 +15,7 @@ class WhileLoop(Scope):
 
     def write(self):
         super().write()
-        self.builder.push_scope(self.scope_blocks)
+        self.builder.push_scope(self.scope_blocks["end"])
         for condition in self.conditions:
             self.append_condition(condition)
         self.start_scope()
@@ -50,6 +50,7 @@ class WhileLoop(Scope):
 
     def _exit_scope(self):
         # pop the variables
+        print(self.builder.memory_top.variables_stack)
         self.builder.pop_variables()
         if not self.builder.cursor.block.is_terminated:
             self.builder.cursor.branch(self.scope_blocks["condition"])

@@ -33,6 +33,5 @@ class CastOperation(Operation):
         bitcast = self.builder.cursor.bitcast(arg1, arg2.value)
 
         self.builder.cursor.comment("OP::cast END")
-        self.builder.module.dbg_print()
 
         return vari.Value(arg2, bitcast, True)

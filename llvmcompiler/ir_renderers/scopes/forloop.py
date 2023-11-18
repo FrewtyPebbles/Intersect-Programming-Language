@@ -15,7 +15,7 @@ class ForLoop(Scope):
 
     def write(self):
         super().write()
-        self.builder.push_scope(self.scope_blocks)
+        self.builder.push_scope(self.scope_blocks["end"])
         for condition in self.conditions:
             self.append_condition(condition)
         self.start_scope()

@@ -39,7 +39,6 @@ class Scope:
         This is used to write the scope to ir
         """
         self._define_scope_blocks()
-        # self.builder.push_scope(self.scope_blocks)
         self.builder.push_variable_stack()
         
 
