@@ -1,7 +1,8 @@
-# **Tarantula** A Compiled Lanugage Written In cPython
+# **Tarantula**
 
-This is a compiler written in python that can be used to compose LLVM IR with syntax trees.
+### A Compiled Lanugage Written In cPython.
 
+This compiler was created using llvmlite.
 
 # Language Conventions
 
