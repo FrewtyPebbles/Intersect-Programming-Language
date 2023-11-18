@@ -226,6 +226,7 @@ class MemoryStackFrame:
     def push_value_heap(self, malloc:ir.Instruction):
         self.value_top.append(malloc)
         return malloc
+        
     
     def declare_variable(self, variable:Variable):
         self.variable_top[variable.name] = variable

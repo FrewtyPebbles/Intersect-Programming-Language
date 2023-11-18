@@ -128,3 +128,5 @@ struct StructName {
 ```
 
 The heap keyword should prefix values instead of variables.  This means that the garbage collector will need to free those values once the memory goes out of scope.
+
+### Implement Float Types For Operators
