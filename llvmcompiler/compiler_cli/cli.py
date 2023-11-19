@@ -1,12 +1,13 @@
 import sys
-from llvmcompiler.compiler_tokenizer.tokenizer import Tokenizer, SyntaxToken
+from llvmcompiler.tree_builder import Tokenizer, SyntaxToken, TreeBuilder
 
 class CLI:
     def __init__(self) -> None:
         self.arguments:dict[str,str|bool] = {
             "debug":False,
             "source":"./main.pop",
-            "output":"./program"
+            "output":"./program",
+            "salt": "MMAANNGGLLEE"
         }
         flag = ""
         for raw_argument in sys.argv:
@@ -14,6 +15,8 @@ class CLI:
             if argument in {"-output", "-o"}:
                 flag = argument
             elif argument in {"-source", "-s"}:
+                flag = argument
+            elif argument in {"-salt", "-sal", "-mangle", "-mang"}:
                 flag = argument
             elif argument in {"-debug", "-dbg", "-d"}:
                 self.arguments["debug"] = True
@@ -23,6 +26,9 @@ class CLI:
             elif flag in {"-source", "-s"}:
                 self.arguments["source"] = argument
                 flag = ""
+            elif flag in {"-salt", "-sal", "-mangle", "-mang"}:
+                self.arguments["salt"] = argument
+                flag = ""
         
         with open(self.arguments["source"], "r") as file:
             src = file.read()
@@ -30,8 +36,17 @@ class CLI:
 
     def run(self):
         token_list = self.tokenizer.tokenize()
-        for token in token_list:
-            tw = ""
-            if token.type == SyntaxToken.string_literal:
-                tw = "\""
-            sys.stdout.write(f"{tw}{token.value}{tw}{' ' * (30 - len(str(token.value)))}{token.type.name}\n")
+        
+        tree = TreeBuilder(token_list, self.arguments["source"], self.arguments["salt"])
+
+        tree.parse_trunk()
+
+        module = tree.get_module()
+
+        module.dbg_print()
+
+        # for token in token_list:
+        #     tw = ""
+        #     if token.type == SyntaxToken.string_literal:
+        #         tw = "\""
+        #     sys.stdout.write(f"{tw}{token.value}{tw}{' ' * (30 - len(str(token.value)))}{token.type.name}\n")

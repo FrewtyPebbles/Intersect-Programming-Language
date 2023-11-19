@@ -19,15 +19,15 @@ class Template(ct.CompilerType):
 
     @property
     def value(self):
-        return self.parent.get_template_type(self.name).value
+        return self.get_template_type(self).value
     
     @property
     def size(self):
-        return self.parent.get_template_type(self.name).size
+        return self.get_template_type(self).size
     
     @property
     def count(self):
-        return self.parent.get_template_type(self.name).count
+        return self.get_template_type(self).count
 
 
     def __eq__(self, __value: Template | str) -> bool:
@@ -35,3 +35,13 @@ class Template(ct.CompilerType):
             return self._value == __value.value
         else:
             return self._value == __value
+        
+    def cast_ptr(self):
+        ptr = TemplatePointer(self.name, self.parent)
+        return ptr
+    
+
+class TemplatePointer(Template):
+    
+    def get_template_type(self):
+        return super().get_template_type().cast_ptr()

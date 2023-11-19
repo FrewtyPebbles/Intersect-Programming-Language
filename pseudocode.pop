@@ -60,12 +60,20 @@ func test(num: i32) ~> i32{
         heap [0,1,2]
     ];
     
+    # to use a heap allocated value from a list it must be dereferenced:
+    # $$test_md_array[0]
+    # this value is dereferenced twice because the index operator returns
+    # a pointer to that memory
+
     for (let i:i32 = 0; i <= 5; i++) {
         let test_str:str = "%i + (10 * %i) = %i!\n";
         
         let t_val:i32 = -10;
 
-        print(test_str, num, i, $ret_val);
+        # (test_str:$c8) is a cast operation from str to $c8
+        # $c8 is a pointer to an 8 bit char.
+
+        libc_printf((test_str:$c8), num, i, $ret_val);
         
         $ret_val = $ret_val + 10;
     }

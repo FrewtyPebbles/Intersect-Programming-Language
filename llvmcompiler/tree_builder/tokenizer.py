@@ -1,4 +1,4 @@
-from llvmcompiler.compiler_tokenizer.utility import regex_in
+from llvmcompiler.tree_builder.utility import regex_in
 from .token import SyntaxToken, Token
 
 
