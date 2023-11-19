@@ -4,7 +4,7 @@ A compiled language that is **simple, strict, and without compromise.**
 
 ## How it works
 
-**Tarantula** compiles utilizing the *LLVMLite* python module by *Numba*.  It utilizes a complex concrete syntax tree to handle it's compile time mechanisms such as it's garbage collector, *minimal* function/struct emmitter and mangler, automatic typing, and much more.
+**Tarantula** compiles utilizing the *LLVMLite* python module by *Numba*.  It utilizes a complex concrete syntax tree to handle it's compile time mechanisms such as it's garbage collector, minimal function/struct emmitter and mangler, automatic typing, and much more.
 
 ## Language Conventions
 
