@@ -3,7 +3,8 @@ from llvmcompiler import StructDefinition, CompilerType,\
     I8Type, I8PointerType, I32Type, I32PointerType, C8Type, C8PointerType,\
     F32Type, F32PointerType, D64Type, D64PointerType, I64Type, I64PointerType,\
     BoolType, BoolPointerType, ArrayType, ArrayPointerType, StructType,\
-    StructPointerType, VoidType, Template, Module, FunctionDefinition, FunctionReturnOperation
+    StructPointerType, VoidType, Template, Module, FunctionDefinition,\
+    FunctionReturnOperation, DefineOperation, Value
 
 class TreeBuilder:
     """
@@ -26,25 +27,34 @@ class TreeBuilder:
         """
         Returns the file as a module.
         """
+        
         return Module(self.file_name, scope=self.module_scope, mangle_salt=self.program_salt)
 
     def parse_trunk(self):
         for tok in self.token_list:
             match tok.type:
                 case SyntaxToken.struct_keyword:
-                    self.context_struct_definition()
+                    self.module_scope.append(self.context_struct_definition())
 
                 case SyntaxToken.func_keyword | SyntaxToken.export_keyword:
                     if tok.type == SyntaxToken.export_keyword:
                         next(self.token_list)
-                        self.context_function_statement_definition([], True)
+                        self.module_scope.append(self.context_function_statement_definition([], True))
                     else:
-                        self.context_function_statement_definition([], False)
+                        self.module_scope.append(self.context_function_statement_definition([], False))
 
     def context_rhs_trunk(self, templates:list[str]):
         """
         This is the context trunk for the right hand side of an operator.
         """
+        rhs = None
+        for tok in self.token_list:
+            match tok.type:
+                case SyntaxToken.line_end:
+                    break
+
+        return rhs
+
 
     def context_lhs_trunk(self, templates:list[str]):
         """
@@ -53,12 +63,26 @@ class TreeBuilder:
         NOTE: This is not used for `let` statements.
         """
 
-    def context_declaration(self, templates:list[str]):
+    def context_define(self, templates:list[str]):
         """
         This is the context trunk for the left hand side of an assignment operator.
 
         NOTE: This is not used for `let` statements.
         """
+        name = ""
+        typ = None
+        for tok in self.token_list:
+            match tok.type:
+                case SyntaxToken.label:
+                    name = tok.value
+                case SyntaxToken.cast_op:
+                    typ = self.context_type_trunk(templates)
+                case SyntaxToken.line_end:
+                    # if there is no assignment operator, then the line_end token will
+                    # not be consumed and this block will execute.
+                    # This allocates a variable without assigning a value.
+                    return DefineOperation([name, Value(typ)])
+
     
     def context_scope_trunk(self, templates:list[str]):
         """
@@ -67,14 +91,22 @@ class TreeBuilder:
         scope = []
         for tok in self.token_list:
             match tok.type:
+                case SyntaxToken.scope_end:
+                    break
                 case SyntaxToken.let_keyword:
-                    scope.append(self.context_declaration(templates))
+                    scope.append(self.context_define(templates))
 
                 case SyntaxToken.label:
                     scope.append(self.context_lhs_trunk(templates))
                 
                 case SyntaxToken.return_op:
-                    scope.append(FunctionReturnOperation([self.context_rhs_trunk(templates)]))
+                    ret_val = self.context_rhs_trunk(templates)
+                    if ret_val == None:
+                        scope.append(FunctionReturnOperation())
+                    else:
+                        scope.append(FunctionReturnOperation(ret_val))
+        
+        return scope
 
 
     
@@ -115,7 +147,7 @@ class TreeBuilder:
         name = ""
         template_definition:list[str] = []
         scope = []
-        return_type:CompilerType = None
+        return_type:CompilerType = VoidType()
         arguments:dict[str,CompilerType] = {}
         for tok in self.token_list:
             match tok.type:
@@ -132,8 +164,9 @@ class TreeBuilder:
                     return_type = self.context_type_trunk([*templates, *template_definition])
 
                 case SyntaxToken.scope_start:
-                    scope = self.context_scope([*templates, *template_definition])
+                    scope = self.context_scope_trunk([*templates, *template_definition])
                     break
+
         
         return FunctionDefinition(name, arguments, return_type, False, template_definition, scope, extern=extern)
     
@@ -153,6 +186,8 @@ class TreeBuilder:
                 case SyntaxToken.less_than_op:
                     templates = self.context_template_definition()
                     break
+            
+        self.struct_namespace.append(name)
         
         # then parse the definition of the struct within the curly braces
 
@@ -169,8 +204,6 @@ class TreeBuilder:
                 case SyntaxToken.scope_end:
                     break
                     
-
-
         return StructDefinition(name, attributes, functions, templates)
 
 
@@ -186,11 +219,14 @@ class TreeBuilder:
                 pointer = True
             elif tok.type == SyntaxToken.sqr_bracket_end:
                 return ArrayType(*array_args)
+            elif tok.type == SyntaxToken.integer_literal:
+                array_args.append(int(tok.value))
             elif tok.value == "x" if tok.type == SyntaxToken.label else False:
                 # This is a stylistic label in arrays, It has no type value.
                 pass
             else:
                 array_args.append(self.get_type(tok, templates, pointer))
+                pointer = False
 
     def context_template(self, templates:list[str]):
         pointer = False
@@ -211,8 +247,9 @@ class TreeBuilder:
         Returns when an assignment, delimiter, or line_end (;) operator is reached
         """
         for tok in self.token_list:
-            if tok.type == SyntaxToken.sqr_bracket_start:
-                return StructType(name, self.context_template(templates))
+            if tok.type == SyntaxToken.less_than_op:
+                temps = self.context_template(templates)
+                return StructType(name, temps)
             else:
                 return StructType(name)
 
@@ -243,25 +280,25 @@ class TreeBuilder:
                 if tok.value in self.struct_namespace:
                     return get_ptr(self.context_type_struct(tok.value, templates))
                 elif tok.value in templates:
-                    return Template(tok.value)
+                    return get_ptr(Template(tok.value))
             
             case SyntaxToken.i8_type:
-                return get_ptr(I8Type)
+                return get_ptr(I8Type())
             
             case SyntaxToken.i32_type:
-                return get_ptr(I32Type)
+                return get_ptr(I32Type())
             
             case SyntaxToken.i64_type:
-                return get_ptr(I64Type)
+                return get_ptr(I64Type())
             
             case SyntaxToken.f32_type:
-                return get_ptr(F32Type)
+                return get_ptr(F32Type())
             
             case SyntaxToken.d64_type:
-                return get_ptr(D64Type)
+                return get_ptr(D64Type())
             
             case SyntaxToken.bool_type:
-                return get_ptr(I32Type)
+                return get_ptr(I32Type())
             
             case SyntaxToken.c8_type:
-                return get_ptr(C8Type)
+                return get_ptr(C8Type())

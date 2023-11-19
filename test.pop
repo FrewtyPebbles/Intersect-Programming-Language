@@ -1,0 +1,10 @@
+
+struct Vector<ItemType> {
+    data:[ItemType x 5];
+}
+
+export func test(num: i32) {
+    let my_vec:Vector<i32>;
+    
+    return;
+}

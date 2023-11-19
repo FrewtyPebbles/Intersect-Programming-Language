@@ -107,7 +107,7 @@ class SyntaxToken(Enum):
                 return 6
             case SyntaxToken.equal_to_op:
                 return 6
-            case SyntaxToken.add_op:
+            case SyntaxToken.and_op:
                 return 7
             case SyntaxToken.or_op:
                 return 7

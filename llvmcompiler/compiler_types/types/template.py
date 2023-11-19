@@ -19,15 +19,15 @@ class Template(ct.CompilerType):
 
     @property
     def value(self):
-        return self.get_template_type(self).value
+        return self.get_template_type().value
     
     @property
     def size(self):
-        return self.get_template_type(self).size
+        return self.get_template_type().size
     
     @property
     def count(self):
-        return self.get_template_type(self).count
+        return self.get_template_type().count
 
 
     def __eq__(self, __value: Template | str) -> bool:
