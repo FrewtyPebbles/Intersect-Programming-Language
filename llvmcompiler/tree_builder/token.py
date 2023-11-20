@@ -60,6 +60,44 @@ class SyntaxToken(Enum):
     persist_keyword = "persist"
     delete_keyword = "delete"
     export_keyword = "export" # this is the same as extern "c"
+    function_call_template_op = "?"
+
+    @property
+    def is_type(self):
+        return self in {
+            SyntaxToken.c8_type, SyntaxToken.i8_type,
+            SyntaxToken.d64_type, SyntaxToken.f32_type,
+            SyntaxToken.i32_type, SyntaxToken.i64_type,
+            SyntaxToken.str_type, SyntaxToken.bool_type            
+            }
+
+    @property
+    def is_lhs_rhs_operator(self):
+        return self in {
+            SyntaxToken.add_op, SyntaxToken.or_op,
+            SyntaxToken.less_than_op, SyntaxToken.greater_than_op,
+            SyntaxToken.less_than_or_equal_to_op, SyntaxToken.greater_than_or_equal_to_op,
+            SyntaxToken.equal_to_op, SyntaxToken.not_equal_to_op,
+            SyntaxToken.add_op, SyntaxToken.subtract_op,
+            SyntaxToken.multiply_op, SyntaxToken.modulo_op,
+            SyntaxToken.cast_op, SyntaxToken.divide_op
+            }
+    
+    @property
+    def is_single_arg_operator(self):
+        return self in {
+            SyntaxToken.not_op, SyntaxToken.dereference_op,
+            SyntaxToken.delete_keyword, SyntaxToken.heap_keyword,
+            SyntaxToken.persist_keyword, SyntaxToken.error_keyword
+            }
+    
+    @property
+    def is_literal(self):
+        return self in {
+            SyntaxToken.bool_literal, SyntaxToken.null_literal,
+            SyntaxToken.string_literal, SyntaxToken.integer_literal,
+            SyntaxToken.precision_literal    
+            }
 
     @property
     def priority(self):
@@ -116,7 +154,7 @@ class SyntaxToken(Enum):
             case SyntaxToken.delimiter:
                 return 9
             
-        return 999
+        return 0
 
     
 
@@ -156,4 +194,4 @@ class Token:
             print("Error: Unable to determine type of token.")
 
     def __repr__(self) -> str:
-        return f"\n{{Token:[type:{self.type}|value:{self.value}]}}"
+        return f"(TOKEN : {{type: {self.type}, value: {self.value}}})"

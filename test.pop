@@ -3,8 +3,12 @@ struct Vector<ItemType> {
     data:[ItemType x 5];
 }
 
-export func test(num: i32) {
+func add(val1: i32, val2: i32) ~> i32 {
+    return val1 + val2;
+}
+
+export func test(num: i32) ~> i32 {
     let my_vec:Vector<i32>;
     
-    return;
+    return (5 * add(2, 8)) - 4 / 2;
 }
