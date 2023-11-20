@@ -4,7 +4,8 @@ from llvmcompiler import StructDefinition, CompilerType,\
     F32Type, F32PointerType, D64Type, D64PointerType, I64Type, I64PointerType,\
     BoolType, BoolPointerType, ArrayType, ArrayPointerType, StructType,\
     StructPointerType, VoidType, Template, Module, FunctionDefinition,\
-    FunctionReturnOperation, DefineOperation, Value, Operation, CallOperation
+    FunctionReturnOperation, DefineOperation, Value, Operation, CallOperation,\
+    AssignOperation
 
 
 
@@ -95,63 +96,44 @@ class TreeBuilder:
                 break
 
         if len(operations) == 0 and len(current_op[0]) == 1:
+            print(f"ORDER OF OPS INPUT : {[current_op]}")
             # push a single value.
-            return (current_op[0][0].get_value(), last_tok)
-        # print(f"ORDER OF OPS INPUT : {operations}")
+            result = current_op[0][0].get_value()
+            print(f"ORDER OF OPS RES : {result}")
+            return (result, last_tok)
+        print(f"ORDER OF OPS INPUT : {operations}")
         op_order = tb.OperationsOrder([tb.PotentialOperation(*op) for op in operations])
         result = op_order.get_tree()
-        # print(f"ORDER OF OPS RES : {result}")
+        print(f"ORDER OF OPS RES : {result}")
         return (result, last_tok)
     
     def context_label_trunk(self, label:str, templates:list[str]):
         template_args:list[tb.Token] = []
         function_args = []
         is_function = False
+        lhs = label
         for itteration, tok in enumerate(self.token_list):
             if tok.type == tb.SyntaxToken.function_call_template_op:
                 is_function = True
             elif (is_function or itteration == 0)\
             and tok.type == tb.SyntaxToken.parentheses_start:
                 is_function = True
-                pemdas_res = self.context_order_of_operations(templates)
-                function_args.append(pemdas_res[0])
-                while pemdas_res[1].type == tb.SyntaxToken.delimiter:
-                    pemdas_res = self.context_order_of_operations(templates)
-                    function_args.append(pemdas_res[0])
+                ooo_ret = self.context_order_of_operations(templates)
+                function_args.append(ooo_ret[0])
+                while ooo_ret[1].type == tb.SyntaxToken.delimiter:
+                    ooo_ret = self.context_order_of_operations(templates)
+                    function_args.append(ooo_ret[0])
 
                 return CallOperation(label, function_args, template_args)
             
             elif is_function and tok.type == tb.SyntaxToken.less_than_op:
                 template_args = self.context_template(templates)
             elif not is_function:
+                if tok.type == tb.SyntaxToken.assign_op:
+                    ooo_ret = self.context_order_of_operations(templates)
+        
+                    return AssignOperation([lhs, ooo_ret[0]])
                 return tok
-
-
-                
-
-
-
-
-    def context_statement_trunk(self, label:str, templates:list[str]):
-        """
-        This is the context trunk for the left hand side of an assignment operator.
-
-        NOTE: This is not used for `let` statements.
-        """
-        label_ret = self.context_label_trunk(label, templates)
-        if isinstance(label_ret, tb.Token):
-            """
-            label_ret is a token, branch to a context based on what operator this token is.
-            """
-        else:
-            """
-            label_ret is an operation, check the next token.
-
-            If the next token is a `;` return label_ret
-            """
-            for itteration, tok in enumerate(self.token_list):
-                if tok.type == tb.SyntaxToken.line_end and itteration == 0:
-                    return label_ret
 
 
     def context_define(self, templates:list[str]):
@@ -168,6 +150,12 @@ class TreeBuilder:
                     name = tok.value
                 case tb.SyntaxToken.cast_op:
                     typ = self.context_type_trunk(templates)
+
+                case tb.SyntaxToken.assign_op:
+                    ooo_ret = self.context_order_of_operations(templates)
+
+                    return DefineOperation([name, ooo_ret[0]])
+
                 case tb.SyntaxToken.line_end:
                     # if there is no assignment operator, then the line_end token will
                     # not be consumed and this block will execute.
@@ -188,9 +176,10 @@ class TreeBuilder:
                     scope.append(self.context_define(templates))
 
                 case tb.SyntaxToken.label:
-                    scope.append(self.context_statement_trunk(tok.value, templates))
+                    scope.append(self.context_label_trunk(tok.value, templates))
                 case tb.SyntaxToken.return_op:
                     ret_val = self.context_order_of_operations(templates)
+                    print(f"RETURN OP = {ret_val}")
                     if ret_val[0] == None:
                         scope.append(FunctionReturnOperation())
                     else:
