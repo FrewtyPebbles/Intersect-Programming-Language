@@ -55,7 +55,7 @@ class CallOperation(Operation):
                 if isinstance(argument, vari.Variable):
                     arg = argument.variable
                 elif isinstance(argument, vari.Value):
-                    arg = argument.write()
+                    arg = argument.get_value()
                 
                 
 

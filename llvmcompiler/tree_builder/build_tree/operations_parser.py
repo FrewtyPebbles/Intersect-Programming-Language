@@ -170,20 +170,12 @@ class OpValue:
         return f"(OPVAL : {self.value.value if not isinstance(self.value, Operation) and not isinstance(self.value, Value) else type(self.value)})"
 
     def get_value(self):
-        if any([isinstance(self.value, typ) for typ in {Operation, Value}]):
+        if any([isinstance(self.value, typ) for typ in {Operation, Value, CompilerType}]):
             return self.value
         return get_value_from_token(self.value)
 
-def get_value_from_token(value:tb.Token | Operation):
-    match value.type:
-        case tb.SyntaxToken.label:
-            # this is for variables
-            return value.value
-        case tb.SyntaxToken.integer_literal:
-            return Value(I32Type(), value.value)
-        case tb.SyntaxToken.precision_literal:
-            return Value(F32Type(), value.value)
-        case tb.SyntaxToken.bool_literal:
-            return Value(BoolType(), value.value)
-        case tb.SyntaxToken.string_literal:
-            return Value(ArrayType(C8Type(), len(value.value)), value.value)
+def get_value_from_token(value:tb.Token):
+    if value.type.is_literal or value.type == tb.SyntaxToken.label:
+        return value.compiler_value
+    elif value.type.is_type:
+        return value.compiler_type

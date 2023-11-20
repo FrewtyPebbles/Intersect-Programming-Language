@@ -140,6 +140,7 @@ class BuilderData:
         print(f"Error: Variable \"{name}\" not in reference stack:\n{self.variables_stack}")
     
     def alloca(self, ir_type:ir.Type, size:int = None, name = ""):
+        print(ir_type)
         entry_block = self.function.entry
         curr_block = self.cursor.block
         self.cursor.position_at_start(entry_block)

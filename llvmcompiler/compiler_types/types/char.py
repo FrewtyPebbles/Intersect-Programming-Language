@@ -10,7 +10,7 @@ class C8Type(ct.CompilerType):
         self.value = ir.IntType(8)
 
     def cast_ptr(self):
-        return C8PointerType(self._size)
+        return C8PointerType()
     
 class C8PointerType(ct.CompilerType):
     def __init__(self) -> None:

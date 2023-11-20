@@ -66,5 +66,5 @@ class CompilerType:
         """
         return self
     def __repr__(self) -> str:
-        return self.value
+        return f"{{{self.value}}}"
     

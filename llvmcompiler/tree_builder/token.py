@@ -1,4 +1,7 @@
 from enum import Enum
+from llvmcompiler.compiler_types.types import I32Type, F32Type, C8Type, I8Type, D64Type, I64Type, BoolType, ArrayType
+
+from llvmcompiler.ir_renderers.variable import Value
 
 class SyntaxToken(Enum):
     scope_start = "{"
@@ -174,6 +177,46 @@ class Token:
         its priority will be 999.
         """
         return self.type.priority
+    
+    @property
+    def compiler_type(self):
+        match self.type:
+            case SyntaxToken.i8_type:
+                return I8Type()
+            
+            case SyntaxToken.i32_type:
+                return I32Type()
+            
+            case SyntaxToken.i64_type:
+                return I64Type()
+            
+            case SyntaxToken.f32_type:
+                return F32Type()
+            
+            case SyntaxToken.d64_type:
+                return D64Type()
+            
+            case SyntaxToken.bool_type:
+                return I32Type()
+            
+            case SyntaxToken.c8_type:
+                return C8Type()
+
+    @property
+    def compiler_value(self):
+        match self.type:
+            case SyntaxToken.label:
+                # this is for variables
+                return self.value
+            case SyntaxToken.integer_literal:
+                return Value(I32Type(), self.value)
+            case SyntaxToken.precision_literal:
+                return Value(F32Type(), self.value)
+            case SyntaxToken.bool_literal:
+                return Value(BoolType(), self.value)
+            case SyntaxToken.string_literal:
+                return Value(ArrayType(C8Type(), len(self.value)), self.value)
+        return None
 
     @staticmethod
     def new(value:str = None, syntax_type:SyntaxToken = None):

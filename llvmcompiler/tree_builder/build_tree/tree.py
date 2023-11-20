@@ -53,7 +53,6 @@ class TreeBuilder:
         """
         operations = []
         current_op = [[],None]
-
         # functions to handle creation of potential operator list.
         def push_val(val:tb.Token):
             # this only works for rhs lhs operators, single side ops will need to be evaluated manually
@@ -82,10 +81,12 @@ class TreeBuilder:
                         push_op(label_ret)
                 else:
                     push_val(label_ret)
-            elif tok.type.is_literal:
+            elif tok.type.is_literal or tok.type.is_type:
                 push_val(tok)
             elif tok.type.is_lhs_rhs_operator:
                 push_op(tok)
+                if tok.type == tb.SyntaxToken.cast_op:
+                    push_val(self.context_type_trunk(templates))
             elif tok.type == tb.SyntaxToken.parentheses_start:
                 push_val(self.context_order_of_operations(templates)[0])
             elif tok.type in {tb.SyntaxToken.line_end, tb.SyntaxToken.parentheses_end,\
@@ -96,13 +97,10 @@ class TreeBuilder:
         if len(operations) == 0 and len(current_op[0]) == 1:
             # push a single value.
             return (current_op[0][0].get_value(), last_tok)
-
-
-        
-        print(operations)
+        # print(f"ORDER OF OPS INPUT : {operations}")
         op_order = tb.OperationsOrder([tb.PotentialOperation(*op) for op in operations])
         result = op_order.get_tree()
-
+        # print(f"ORDER OF OPS RES : {result}")
         return (result, last_tok)
     
     def context_label_trunk(self, label:str, templates:list[str]):
@@ -134,12 +132,27 @@ class TreeBuilder:
 
 
 
-    def context_lhs_trunk(self, templates:list[str]):
+    def context_statement_trunk(self, label:str, templates:list[str]):
         """
         This is the context trunk for the left hand side of an assignment operator.
 
         NOTE: This is not used for `let` statements.
         """
+        label_ret = self.context_label_trunk(label, templates)
+        if isinstance(label_ret, tb.Token):
+            """
+            label_ret is a token, branch to a context based on what operator this token is.
+            """
+        else:
+            """
+            label_ret is an operation, check the next token.
+
+            If the next token is a `;` return label_ret
+            """
+            for itteration, tok in enumerate(self.token_list):
+                if tok.type == tb.SyntaxToken.line_end and itteration == 0:
+                    return label_ret
+
 
     def context_define(self, templates:list[str]):
         """
@@ -175,8 +188,7 @@ class TreeBuilder:
                     scope.append(self.context_define(templates))
 
                 case tb.SyntaxToken.label:
-                    scope.append(self.context_lhs_trunk(templates))
-                
+                    scope.append(self.context_statement_trunk(tok.value, templates))
                 case tb.SyntaxToken.return_op:
                     ret_val = self.context_order_of_operations(templates)
                     if ret_val[0] == None:

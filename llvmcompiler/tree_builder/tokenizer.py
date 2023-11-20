@@ -86,7 +86,11 @@ class Tokenizer:
         string = ""
         for char in self.src:
             if not escape:
+                if char == "\\":
+                    escape = True
+                    continue
                 if char == tok:
+                    print(string)
                     self.append_token(SyntaxToken.string_literal, string + "\0")
                     return
                 string += char
@@ -94,7 +98,16 @@ class Tokenizer:
             else:
                 match char:
                     case "n":
-                        pass
+                        string += "\n"
+                    case "\\":
+                        string += "\\"
+                    case "0":
+                        string += "\00"
+                    case "t":
+                        string += "\t"
+                    case "r":
+                        string += "\r"
+                escape = False
 
     def operator_context(self):
         for char in self.src:
