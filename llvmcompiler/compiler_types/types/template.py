@@ -40,6 +40,9 @@ class Template(ct.CompilerType):
         ptr = TemplatePointer(self.name, self.parent)
         return ptr
     
+    def __repr__(self) -> str:
+        return f"(Template : {self.name})"
+    
 
 class TemplatePointer(Template):
     

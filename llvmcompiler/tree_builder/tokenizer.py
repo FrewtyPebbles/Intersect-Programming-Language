@@ -35,7 +35,6 @@ class Tokenizer:
     def tokenize(self):
         # this is where the code gets tokenized
         self.keyword = ""
-        last_char = ""
         for char in self.src:
             self.parse_char(char)
 
@@ -44,29 +43,28 @@ class Tokenizer:
     def parse_char(self, char:str):
         match regex_in(char):
             case r"[{}():;,\[\]$.]":
+                
                 self.parse_keystring_and_append_token(SyntaxToken(char))
-                last_char = char
+                
                 return
-            case r"[~<>=*\-/+]":
+            case r"[~<>=*\-/+\?]":
+                
                 self.keyword += char
                 self.operator_context()
-                last_char = char
                 return
+            
                 
             case r"[0-9.]":
                 self.keyword += char
                 self.number_context()
-                last_char = char
                 return
                 
             case r"[A-Za-z_]":
                 self.keyword += char
                 self.label_context()
-                last_char = char
                 return
             case r"[\"\']":
                 self.string_context(char)
-                last_char = char
                 return
             case r"\s":
                 return
@@ -74,10 +72,7 @@ class Tokenizer:
                 self.comment_context()
                 return
             case _:
-                # if not last_char.isalnum() and last_char != "_":
-                #     self.parse_keystring()
-                # self.keyword += char
-                last_char = char
+                
                 return
 
     def string_context(self, tok:str):
@@ -90,7 +85,6 @@ class Tokenizer:
                     escape = True
                     continue
                 if char == tok:
-                    print(string)
                     self.append_token(SyntaxToken.string_literal, string + "\0")
                     return
                 string += char
@@ -111,7 +105,7 @@ class Tokenizer:
 
     def operator_context(self):
         for char in self.src:
-            if regex_in(char) == r"[~<>=*-/+_]":
+            if regex_in(char) == r"[~<>=\*-/+_]":
                 self.keyword += char
             else:
                 self.parse_keystring()
@@ -158,8 +152,15 @@ class Tokenizer:
         """
         This parsing context parses keyword into the correct syntax token type.
         """
+        
         if self.keyword == "":
             return
+        elif self.keyword == ">,":
+            self.append_token_only(SyntaxToken(">"))
+            self.append_token_only(SyntaxToken(","))
+        elif self.keyword == "?<":
+            self.append_token_only(SyntaxToken("?"))
+            self.append_token_only(SyntaxToken("<"))
         elif self.keyword in {e.value for e in SyntaxToken}:
             self.append_token_only(SyntaxToken(self.keyword))
         elif self.keyword in {"true", "false"}:

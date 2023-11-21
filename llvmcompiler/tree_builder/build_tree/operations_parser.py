@@ -167,10 +167,15 @@ class OpValue:
         self.value = value
 
     def __repr__(self) -> str:
-        return f"(OPVAL : {self.value.value if not isinstance(self.value, Operation) and not isinstance(self.value, Value) else type(self.value)})"
+        if all([not isinstance(self.value, typ) for typ in {Operation, Value, str}]):
+            return f"(OPVAL : {self.value.value})"
+        elif isinstance(self.value, str):
+            return f"(OPVAL : {self.value})"
+        else:
+            return f"(OPVAL : {type(self.value)})"
 
     def get_value(self):
-        if any([isinstance(self.value, typ) for typ in {Operation, Value, CompilerType}]):
+        if any([isinstance(self.value, typ) for typ in {Operation, Value, CompilerType, str}]):
             return self.value
         return get_value_from_token(self.value)
 

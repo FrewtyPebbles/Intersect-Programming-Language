@@ -104,7 +104,7 @@ class Operation:
         return self._write()
 
     def __repr__(self) -> str:
-        return f"\n({self.__class__.__name__}:[arguments:{self.arguments}])"
+        return f"({self.__class__.__name__} : {{arguments: {self.arguments}}})"
 
         
 

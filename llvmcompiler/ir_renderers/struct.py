@@ -175,6 +175,9 @@ class StructType(ct.CompilerType):
         p_t.module = self.module
         return p_t
     
+    def __repr__(self) -> str:
+        return f"(STRUCT TYPE : {{name: {self.name}, templates_types: {self.template_types}}})"
+    
 class StructPointerType(StructType):
     """
     This is the type reference to the struct.

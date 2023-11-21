@@ -5,7 +5,7 @@ from llvmcompiler import StructDefinition, CompilerType,\
     BoolType, BoolPointerType, ArrayType, ArrayPointerType, StructType,\
     StructPointerType, VoidType, Template, Module, FunctionDefinition,\
     FunctionReturnOperation, DefineOperation, Value, Operation, CallOperation,\
-    AssignOperation
+    AssignOperation, IndexOperation
 
 
 
@@ -67,6 +67,7 @@ class TreeBuilder:
         def push_op(op:tb.Token):
             nonlocal current_op
             current_op[1] = op
+
         
         last_tok = None
         for tok in self.token_list:
@@ -75,8 +76,8 @@ class TreeBuilder:
                 if isinstance(label_ret, tb.Token):
                     push_val(tok)
                     if label_ret.type in {tb.SyntaxToken.line_end, tb.SyntaxToken.parentheses_end,\
-                    tb.SyntaxToken.delimiter}:
-                        last_tok = tok
+                    tb.SyntaxToken.delimiter, tb.SyntaxToken.sqr_bracket_end}:
+                        last_tok = label_ret
                         break
                     else:
                         push_op(label_ret)
@@ -91,49 +92,92 @@ class TreeBuilder:
             elif tok.type == tb.SyntaxToken.parentheses_start:
                 push_val(self.context_order_of_operations(templates)[0])
             elif tok.type in {tb.SyntaxToken.line_end, tb.SyntaxToken.parentheses_end,\
-            tb.SyntaxToken.delimiter}:
+            tb.SyntaxToken.delimiter, tb.SyntaxToken.sqr_bracket_end}:
                 last_tok = tok
                 break
 
         if len(operations) == 0 and len(current_op[0]) == 1:
-            print(f"ORDER OF OPS INPUT : {[current_op]}")
             # push a single value.
             result = current_op[0][0].get_value()
-            print(f"ORDER OF OPS RES : {result}")
             return (result, last_tok)
-        print(f"ORDER OF OPS INPUT : {operations}")
-        op_order = tb.OperationsOrder([tb.PotentialOperation(*op) for op in operations])
-        result = op_order.get_tree()
-        print(f"ORDER OF OPS RES : {result}")
-        return (result, last_tok)
+        
+        if len(operations) != 0:
+            op_order = tb.OperationsOrder([tb.PotentialOperation(*op) for op in operations])
+            result = op_order.get_tree()
+            return (result, last_tok)
+        
+        return (None, last_tok)
     
     def context_label_trunk(self, label:str, templates:list[str]):
         template_args:list[tb.Token] = []
         function_args = []
         is_function = False
-        lhs = label
+        label_product = label
+        is_index = False
+        index_args = []
+
+        # helper function to call function
+        def call_function(templates):
+            nonlocal self
+            nonlocal function_args
+            nonlocal label_product
+            nonlocal template_args
+            
+            # is a function but not a memeber function
+            ooo_ret = self.context_order_of_operations(templates)
+            if ooo_ret[0] != None:
+                function_args.append(ooo_ret[0])
+                
+                while ooo_ret[1].type != tb.SyntaxToken.parentheses_end:
+                    ooo_ret = self.context_order_of_operations(templates)
+                    function_args.append(ooo_ret[0])
+            print(f"""Function Call {{
+    label:     {label_product}
+    args:      {function_args}
+    templates: {template_args}
+}}
+""")
+            return CallOperation(label_product, function_args, template_args)
+        
         for itteration, tok in enumerate(self.token_list):
             if tok.type == tb.SyntaxToken.function_call_template_op:
+                # is a template function
                 is_function = True
             elif (is_function or itteration == 0)\
             and tok.type == tb.SyntaxToken.parentheses_start:
-                is_function = True
-                ooo_ret = self.context_order_of_operations(templates)
-                function_args.append(ooo_ret[0])
-                while ooo_ret[1].type == tb.SyntaxToken.delimiter:
-                    ooo_ret = self.context_order_of_operations(templates)
-                    function_args.append(ooo_ret[0])
-
-                return CallOperation(label, function_args, template_args)
-            
+                # is a function that may be a template function
+                return call_function(templates)
             elif is_function and tok.type == tb.SyntaxToken.less_than_op:
+                # Get the templates
                 template_args = self.context_template(templates)
             elif not is_function:
+                # is not a function
                 if tok.type == tb.SyntaxToken.assign_op:
+                    if is_index:
+                        label_product = IndexOperation([label_product, *index_args])
+                    
+                    ooo_ret = self.context_order_of_operations(templates)
+                    print(f"INDEX ASSIGNMENT {{{label_product} : {ooo_ret[0]}}}")
+                    return AssignOperation([label_product, ooo_ret[0]])
+                elif tok.type == tb.SyntaxToken.sqr_bracket_start:
+                    is_index = True
                     ooo_ret = self.context_order_of_operations(templates)
         
-                    return AssignOperation([lhs, ooo_ret[0]])
-                return tok
+                    index_args.extend([ooo_ret[0]])
+                elif tok.type == tb.SyntaxToken.access_op:
+                    is_index = True
+                    
+                elif tok.type == tb.SyntaxToken.label and is_index:
+                    # is a label after an access operator
+                    index_args.append(tok.value)
+                elif tok.type == tb.SyntaxToken.parentheses_start:
+                    # call member function without templates
+                    if is_index:
+                        label_product = IndexOperation([label_product, *index_args])
+                    print(f"INDEX OP LABEL 2 {{{label_product}}}")
+                    return call_function(templates)
+                else:
+                    return tok
 
 
     def context_define(self, templates:list[str]):
@@ -179,7 +223,6 @@ class TreeBuilder:
                     scope.append(self.context_label_trunk(tok.value, templates))
                 case tb.SyntaxToken.return_op:
                     ret_val = self.context_order_of_operations(templates)
-                    print(f"RETURN OP = {ret_val}")
                     if ret_val[0] == None:
                         scope.append(FunctionReturnOperation())
                     else:
@@ -211,6 +254,7 @@ class TreeBuilder:
                     argument_label_buffer = tok.value
                 case tb.SyntaxToken.cast_op:
                     arguments[argument_label_buffer] = self.context_type_trunk(templates)
+                    
                     argument_label_buffer = ""
                 case tb.SyntaxToken.parentheses_end:
                     break
@@ -265,7 +309,8 @@ class TreeBuilder:
                 case tb.SyntaxToken.less_than_op:
                     templates = self.context_template_definition()
                     break
-            
+        
+        
         self.struct_namespace.append(name)
         
         # then parse the definition of the struct within the curly braces
@@ -279,9 +324,11 @@ class TreeBuilder:
                     attributes[attribute_label_buffer] = self.context_type_trunk(templates)
                     attribute_label_buffer = ""
                 case tb.SyntaxToken.func_keyword:
+                    print("STRUCT FUNCTION START VVV")
                     functions.append(self.context_function_statement_definition(templates))
                 case tb.SyntaxToken.scope_end:
                     break
+
                     
         return StructDefinition(name, attributes, functions, templates)
 

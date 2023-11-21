@@ -46,7 +46,7 @@ class IndexOperation(Operation):
 
         indexes:indexes_type = self.process_indexes()
 
-
+        
         if len(indexes):
             if self.arguments[0].heap:
                 if isinstance(self.arguments[0], vari.Variable):

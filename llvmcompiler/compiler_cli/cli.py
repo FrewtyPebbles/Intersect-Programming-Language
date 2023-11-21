@@ -39,11 +39,11 @@ class CLI:
         
         tree = TreeBuilder(token_list, self.arguments["source"], self.arguments["salt"])
 
-        # for token in token_list:
-        #     tw = ""
-        #     if token.type == SyntaxToken.string_literal:
-        #         tw = "\""
-        #     sys.stdout.write(f"{tw}{token.value}{tw}{' ' * (30 - len(str(token.value)))}{token.type.name}\n")
+        for token in token_list:
+            tw = ""
+            if token.type == SyntaxToken.string_literal:
+                tw = "\""
+            sys.stdout.write(f"{tw}{token.value}{tw}{' ' * (30 - len(str(token.value)))}{token.type.name}\n")
 
         tree.parse_trunk()
 

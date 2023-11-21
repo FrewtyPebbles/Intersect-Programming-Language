@@ -101,6 +101,11 @@ class SyntaxToken(Enum):
             SyntaxToken.string_literal, SyntaxToken.integer_literal,
             SyntaxToken.precision_literal    
             }
+    
+    @property
+    def is_ending_token(self):
+        return self in {SyntaxToken.line_end, SyntaxToken.parentheses_end,\
+                    SyntaxToken.delimiter, SyntaxToken.sqr_bracket_end}
 
     @property
     def priority(self):
@@ -201,6 +206,7 @@ class Token:
             
             case SyntaxToken.c8_type:
                 return C8Type()
+
 
     @property
     def compiler_value(self):
