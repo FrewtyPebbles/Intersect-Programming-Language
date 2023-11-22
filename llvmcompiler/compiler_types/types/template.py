@@ -2,9 +2,12 @@ from __future__ import annotations
 from llvmlite import ir
 from typing import TYPE_CHECKING
 import llvmcompiler.compiler_types as ct
+
 if TYPE_CHECKING:
     import llvmcompiler.ir_renderers.struct as st
     import llvmcompiler.ir_renderers.function as fn
+
+from copy import deepcopy
 
 # I32
 class Template(ct.CompilerType):
@@ -15,11 +18,18 @@ class Template(ct.CompilerType):
         self.parent: fn.Function | st.Struct = parent
 
     def get_template_type(self):
-        return self.parent.get_template_type(self.name)
+        return deepcopy(self.parent.get_template_type(self.name))
 
     @property
     def value(self):
-        return self.get_template_type().value
+        if self._value == None:
+            self._value = self.get_template_type().value
+        return self._value
+    
+    @value.setter
+    def value(self, value):
+        self._value = value
+    
     
     @property
     def size(self):
@@ -35,19 +45,31 @@ class Template(ct.CompilerType):
             return self._value == __value.value
         else:
             return self._value == __value
-        
-    def cast_ptr(self):
-        ptr = TemplatePointer(self.name, self.parent)
-        return ptr
     
     def __repr__(self) -> str:
         return f"(Template : {self.name})"
     
-
 class TemplatePointer(Template):
     
-    def get_template_type(self):
-        return super().get_template_type().cast_ptr()
+    def __init__(self, name="", parent: fn.Function | st.Struct = None, ptr_count = 0) -> None:
+        super().__init__(name, parent)
+        self.ptr_count = ptr_count
     
+    def get_template_type(self):
+        ptr = super().get_template_type()
+        return ptr
+    
+    @property
+    def value(self):
+        if self._value == None:
+            self._value = deepcopy(self.get_template_type().value)
+            for pn in range(self.ptr_count):
+                self._value = self._value.as_pointer()
+        return self._value
+    
+    @value.setter
+    def value(self, value):
+        self._value = value
+
     def __repr__(self) -> str:
-        return f"(TemplatePTR : {self.name})"
+        return f"(TemplatePTR : {{{self.name}, {self.ptr_count}}})"

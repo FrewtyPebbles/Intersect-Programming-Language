@@ -3,6 +3,7 @@ import llvmcompiler.compiler_types as ct
 import llvmcompiler.ir_renderers.function as fn
 import llvmcompiler.ir_renderers.variable as vari
 import llvmcompiler.modules as mod
+from copy import deepcopy
 
 class StructDefinition:
     """
@@ -122,7 +123,7 @@ class Struct:
             attr = self.raw_attributes[key]
             if isinstance(attr, StructType):
                 if attr.struct.struct_definition.name == self.struct_definition.name:
-                    self.raw_attributes[key] = self.raw_attributes[key].cast_ptr()
+                    self.raw_attributes[key] = self.raw_attributes[key].create_ptr()
 
     def get_attribute(self, name:str, template_types:list[ct.CompilerType] = [], get_definition = False) -> fn.Function | vari.Value:
         attrs = {**self.attributes, **self.functions}
@@ -136,7 +137,7 @@ class Struct:
             else:
                 return attr
         except KeyError:
-            print(f"Error: {name} is not a valid attribute of {self.struct_definition.name}!")
+            print(f"Error: {name} is not a valid attribute of {self.struct_definition.name}!\n The valid attributes are:\n{attrs}")
 
 class StructType(ct.CompilerType):
     """
@@ -169,11 +170,10 @@ class StructType(ct.CompilerType):
             tt.parent = self.parent
         return self.struct.ir_struct
     
-    def cast_ptr(self):
-        p_t = StructPointerType(self.name, self.template_types, self.module)
-        p_t.parent = self.parent
-        p_t.module = self.module
-        return p_t
+    @value.setter
+    def value(self, val):
+        self.struct.ir_struct = val
+    
     
     def __repr__(self) -> str:
         return f"(STRUCT TYPE : {{name: {self.name}, templates_types: {self.template_types}}})"
@@ -182,8 +182,20 @@ class StructPointerType(StructType):
     """
     This is the type reference to the struct.
     """
+    def __init__(self, name: str, template_types: list[ct.CompilerType] = [], module: mod.Module = None, ptr_count = 0) -> None:
+        super().__init__(name, template_types, module)
+        self.ptr_count = ptr_count
+        self._value = None
     
     @property
     def value(self):
-        return self.struct.ir_struct.as_pointer()
-
+        if self._value == None:
+            self._value = deepcopy(self.struct.ir_struct)
+            for pn in range(self.ptr_count):
+                self._value = self._value.as_pointer()
+        return self._value
+    
+    @value.setter
+    def value(self, value):
+        self._value = value
+        

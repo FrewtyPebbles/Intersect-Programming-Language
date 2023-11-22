@@ -1,4 +1,5 @@
 from llvmlite import ir
+from copy import deepcopy, copy
 
 class CompilerType:
     """
@@ -15,7 +16,7 @@ class CompilerType:
         This is not inherited and is used to create the correct
         compiler type from an llvmlite.ir Type instance.
         """
-        from .types import ArrayType, VoidType, BoolType, I32Type, I8Type, I64Type, F32Type, D64Type, I8PointerType, C8PointerType, D64PointerType, F32PointerType, I32PointerType, I64PointerType, BoolPointerType
+        from .types import ArrayType, VoidType, BoolType, I32Type, I8Type, I64Type, F32Type, D64Type
         # check datastructures
         if isinstance(ir_type, ir.ArrayType):
             return ArrayType(CompilerType.create_from(ir_type.element), ir_type.count)
@@ -37,17 +38,17 @@ class CompilerType:
             return D64Type()
         # pointer scalars
         elif ir_type == ir.IntType(1).as_pointer():
-            return BoolPointerType()
+            return BoolType().cast_ptr()
         elif ir_type == ir.IntType(8).as_pointer():
-            return I8PointerType()
+            return I8Type().cast_ptr()
         elif ir_type == ir.IntType(32).as_pointer():
-            return I32PointerType()
+            return I32Type().cast_ptr()
         elif ir_type == ir.IntType(64).as_pointer():
-            return I64PointerType()
+            return I64Type().cast_ptr()
         elif ir_type == ir.FloatType().as_pointer():
-            return F32PointerType()
+            return F32Type().cast_ptr()
         elif ir_type == ir.DoubleType().as_pointer():
-            return D64PointerType()
+            return D64Type().cast_ptr()
 
     def render_template(self):
         pass
@@ -61,10 +62,12 @@ class CompilerType:
         return self._size
     
     def cast_ptr(self):
-        """
-        Check type and return pointer version of that type
-        """
+        self.value = self.value.as_pointer()
         return self
+    def create_ptr(self):
+        self_cpy = deepcopy(self)
+        self_cpy.value = self_cpy.value.as_pointer()
+        return self_cpy
     def __repr__(self) -> str:
         return f"{{{self.value}}}"
     

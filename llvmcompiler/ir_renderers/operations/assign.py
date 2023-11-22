@@ -1,6 +1,7 @@
 from ..operation import Operation
 from llvmlite import ir
 import llvmcompiler.ir_renderers.variable as vari
+from copy import deepcopy
 
 class AssignOperation(Operation):
     def _write(self):
@@ -10,7 +11,9 @@ class AssignOperation(Operation):
         if isinstance(self.arguments[1], vari.Value):
             if isinstance(self.arguments[1].value, int) or\
             self.arguments[1].value in {"true", "false"}:
-                self.arguments[1].type = self.arguments[0].type
+                new_type = deepcopy(self.arguments[0].type)
+                new_type.value = ir.IntType(new_type.size)
+                self.arguments[1].type = new_type
         var = None
         if isinstance(self.arguments[0], vari.Variable):
             var = self.builder.set_variable(self.arguments[0], self.arguments[1])

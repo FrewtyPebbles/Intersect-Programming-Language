@@ -8,8 +8,17 @@ struct Vector<ItemType> {
         return;
     }
 
+    func push(self:$Vector<ItemType>, item:ItemType) {
+        self.length = $self.length + 1;
+        
+        self.data = libc_realloc(sizeof($ItemType) * $self.length):$ItemType;
+                                #^^^^^^^^^^^^^^^^^ BUG HERE: sizeof not playing nice with operations after it in the parser
+        self.data[$self.length - 1] = item;
+        return;
+    }
+
     func del(self:$Vector<ItemType>) {
-        libc_free(self.data:$i8);
+        libc_free(($self.data):$i8);
         return;
     }
 }
@@ -20,6 +29,8 @@ export func test(num: i32) ~> i32 {
 
     vec.init();
 
+    vec.push(10);
+    
     vec.del();
     return 1;
 }

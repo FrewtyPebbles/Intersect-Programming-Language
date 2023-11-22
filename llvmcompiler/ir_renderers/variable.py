@@ -28,7 +28,7 @@ class Variable:
         self.value.module = self.builder.module
         self.heap = heap # wether a variable is stored on the heap or not
         self.function_argument = function_argument # wether or not the variable represents a function argument
-        self.type = self.value.type.cast_ptr() if self.heap else self.value.type
+        self.type = self.value.type.create_ptr() if self.heap else self.value.type
         self.is_instruction = True
         self.module = self.builder.module
 
@@ -152,7 +152,7 @@ class HeapValue(Value):
     This will add a value to the heap when it is read.
     """
     def render_heap(self):
-        ptr_type = self.type.cast_ptr()
+        ptr_type = self.type.create_ptr()
         ptr_type.parent = self.parent
         ptr_type.builder = self.builder
         ptr_type.module = self.module
@@ -166,7 +166,7 @@ class HeapValue(Value):
         self.builder.push_value_heap(self.value)
 
         # Cast to pointer and link
-        self.type = self.type.cast_ptr()
+        self.type = self.type.create_ptr()
         self.type.parent = self.parent
         self.type.builder = self.builder
         self.type.module = self.module

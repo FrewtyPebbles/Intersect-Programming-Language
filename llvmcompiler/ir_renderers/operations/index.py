@@ -34,7 +34,7 @@ class IndexOperation(Operation):
             else:
                 indexes.append(self.process_arg(argument))
 
-        self.type = prev_struct.cast_ptr()
+        self.type = prev_struct.create_ptr()
         self.type.parent = self.builder.function
         self.type.module = self.builder.module
         
@@ -50,14 +50,15 @@ class IndexOperation(Operation):
         if len(indexes):
             if self.arguments[0].heap:
                 if isinstance(self.arguments[0], vari.Variable):
-                    res = self.builder.cursor.gep(self.arguments[0].variable, indexes)
+                    res = self.builder.cursor.gep(self.arguments[0].variable, indexes, True)
                 elif isinstance(self.arguments[0], vari.Value):
-                    res = self.builder.cursor.gep(self.arguments[0].value, indexes)
+                    res = self.builder.cursor.gep(self.arguments[0].value, indexes, True)
             else:
                 if isinstance(self.arguments[0], vari.Variable):
-                    res = self.builder.cursor.gep(self.arguments[0].variable, [ir.IntType(32)(0), *indexes])
+                    
+                    res = self.builder.cursor.gep(self.arguments[0].variable, [ir.IntType(32)(0), *indexes], True)
                 if isinstance(self.arguments[0], vari.Value):
-                    res = self.builder.cursor.gep(self.arguments[0].value, [ir.IntType(32)(0), *indexes])
+                    res = self.builder.cursor.gep(self.arguments[0].value, [ir.IntType(32)(0), *indexes], True)
             self.builder.cursor.comment("OP::index END")
 
 

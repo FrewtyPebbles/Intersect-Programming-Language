@@ -20,7 +20,7 @@ module = Module("testmod.pop",scope=[
             AssignOperation([
                 IndexOperation(["self", LookupLabel("data")]),
                 CastOperation([
-                    CallOperation("libc_malloc", [TypeSizeOperation([TemplatePointer("ItemType")])]), 
+                    CallOperation("libc_malloc", [TypeSizeOperation([Template("ItemType")])]), 
                     TemplatePointer("ItemType")
                 ])
             ]),

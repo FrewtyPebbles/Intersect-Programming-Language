@@ -29,6 +29,7 @@ class CallOperation(Operation):
             """
             self.arguments.insert(0, self.function.get_value()[0])
             function_obj = self.function.get_value()[1].get_function(self.template_arguments)
+            
         else:
             function_obj = self.function.get_function(self.template_arguments)
 
@@ -44,7 +45,6 @@ class CallOperation(Operation):
         cast_arguments:list[ir.AllocaInstr | ir.Constant | ir.CallInstr.CallInstr | any] = []
         
         f_to_c = self.get_function()
-        print(f_to_c)
 
 
 
@@ -62,7 +62,7 @@ class CallOperation(Operation):
 
                 arg = self.process_arg(argument)
                 cast_arguments.append(arg)
-        
+        print(cast_arguments)
 
         func_call = self.builder.cursor.call(f_to_c, cast_arguments)
 
