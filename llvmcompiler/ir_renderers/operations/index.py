@@ -55,7 +55,6 @@ class IndexOperation(Operation):
                     res = self.builder.cursor.gep(self.arguments[0].value, indexes)
             else:
                 if isinstance(self.arguments[0], vari.Variable):
-                    print([ir.IntType(32)(0), *indexes])
                     res = self.builder.cursor.gep(self.arguments[0].variable, [ir.IntType(32)(0), *indexes])
                 if isinstance(self.arguments[0], vari.Value):
                     res = self.builder.cursor.gep(self.arguments[0].value, [ir.IntType(32)(0), *indexes])

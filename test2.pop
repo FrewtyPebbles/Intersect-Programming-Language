@@ -1,0 +1,21 @@
+struct Storage<ItemType> {
+    data:ItemType;
+
+    func set(self:$Storage<ItemType>, val:ItemType) {
+        self.data = val;
+        return;
+    }
+
+    func get(self:$Storage<ItemType>) ~> ItemType {
+        return $self.data;
+    }
+}
+
+
+export func test(num: i32) ~> i32 {
+    let store:Storage<i32>;
+
+    store.set(5);
+
+    return store.get();
+}

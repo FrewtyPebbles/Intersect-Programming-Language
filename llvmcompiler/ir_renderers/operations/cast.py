@@ -9,6 +9,7 @@ class CastOperation(Operation):
             
         self.builder.cursor.comment("OP::cast START")
         self.arguments = self.get_variables()
+        self.set_arguments_parent()
 
         #process arg1
         if isinstance(self.arguments[0], vari.Variable):

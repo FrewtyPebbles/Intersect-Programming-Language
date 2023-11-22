@@ -86,7 +86,6 @@ class Scope:
             
             inner_obj.write()
             last_obj = inner_obj
-        print(type(last_obj))
         if any([isinstance(last_obj, iftype1) for iftype1 in [scps.IfBlock, scps.ElseIfBlock, scps.ElseBlock]]):
             last_obj.render()
 

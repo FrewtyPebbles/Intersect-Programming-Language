@@ -127,10 +127,11 @@ class PotentialOperation:
             case tb.SyntaxToken.subtract_op:
                 return SubtractOperation(values)
             case tb.SyntaxToken.multiply_op:
-                
                 return MultiplyOperation(values)
             case tb.SyntaxToken.divide_op:
                 return DivideOperation(values)
+            case tb.SyntaxToken.modulo_op:
+                return ModuloOperation(values)
             case tb.SyntaxToken.less_than_op:
                 return LessThanOperation(values)
             case tb.SyntaxToken.greater_than_op:
@@ -151,6 +152,9 @@ class PotentialOperation:
                 return CastOperation(values)
             case tb.SyntaxToken.dereference_op:
                 return DereferenceOperation(values)
+            case tb.SyntaxToken.type_size_op:
+                print(f"EMIT SIZEOF OPERATION {values}")
+                return TypeSizeOperation(values)
             case tb.SyntaxToken.not_op:
                 # not implemented yet
                 pass
@@ -167,7 +171,7 @@ class OpValue:
         self.value = value
 
     def __repr__(self) -> str:
-        if all([not isinstance(self.value, typ) for typ in {Operation, Value, str}]):
+        if all([not isinstance(self.value, typ) for typ in {Operation, Value, str, CompilerType}]):
             return f"(OPVAL : {self.value.value})"
         elif isinstance(self.value, str):
             return f"(OPVAL : {self.value})"

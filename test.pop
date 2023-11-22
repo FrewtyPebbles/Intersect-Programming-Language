@@ -1,31 +1,25 @@
+struct Vector<ItemType> {
+    data:$ItemType;
+    length:i64;
 
-struct Storage<ItemType> {
-    data:ItemType;
-
-    func set(self:$Storage<ItemType>, value:ItemType) {
-        self.data = value;
+    func init(self:$Vector<ItemType>) {
+        self.data = libc_malloc(sizeof($ItemType)):$ItemType;
+        self.length = 0;
         return;
     }
 
-    func get(self:$Storage<ItemType>) ~> ItemType {
-        return $self.data;
+    func del(self:$Vector<ItemType>) {
+        libc_free(self.data:$i8);
+        return;
     }
 }
 
-func add<TmpArg>(num1:TmpArg, num2:TmpArg) ~> TmpArg {
-    return num1 + num2;
-}
 
-export func test(num:i32) ~> i32 {
-    let store:Storage<i32>;
+export func test(num: i32) ~> i32 {
+    let vec:Vector<i32>;
 
-    store.set(add?<i32>(num, 1));
+    vec.init();
 
-    libc_printf(("data: %i\n":$c8), store.get());
-
-    store.set(add?<i32>($store.data, 1));
-
-    libc_printf(("data: %i\n":$c8), store.get());
-    
-    return store.get();
+    vec.del();
+    return 1;
 }

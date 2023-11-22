@@ -14,7 +14,8 @@ class IntegerType(ct.CompilerType):
         self.value = ir.IntType(self._size)
 
     def cast_ptr(self):
-        return IntegerPointerType(self._size)
+        self.value = self.value.as_pointer()
+        return self
     
 class IntegerPointerType(IntegerType):
     def __init__(self, size:int) -> None:

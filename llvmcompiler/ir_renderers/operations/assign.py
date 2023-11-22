@@ -7,7 +7,10 @@ class AssignOperation(Operation):
         # self.arguments: 0 = variable, 1 = value
         self.builder.cursor.comment("OP::assign START")
         self.arguments = self.get_variables()
-
+        if isinstance(self.arguments[1], vari.Value):
+            if isinstance(self.arguments[1].value, int) or\
+            self.arguments[1].value in {"true", "false"}:
+                self.arguments[1].type = self.arguments[0].type
         var = None
         if isinstance(self.arguments[0], vari.Variable):
             var = self.builder.set_variable(self.arguments[0], self.arguments[1])

@@ -14,7 +14,6 @@ class CallOperation(Operation):
     
     def get_function(self):
         if isinstance(self.function, Operation):
-            print(f"Operation function {self.function}")
             self.function: tuple[ir.Instruction, FunctionDefinition] = self.write_argument(self.function)
         # link all templates to their functions.
         for t_a in range(len(self.template_arguments)):
@@ -45,6 +44,7 @@ class CallOperation(Operation):
         cast_arguments:list[ir.AllocaInstr | ir.Constant | ir.CallInstr.CallInstr | any] = []
         
         f_to_c = self.get_function()
+        print(f_to_c)
 
 
 

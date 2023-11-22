@@ -39,6 +39,10 @@ class Operation:
     def get_variable(self, var_name:str):
         return self.builder.get_variable(var_name)
 
+    def set_arguments_parent(self):
+        for a_n in range(len(self.arguments)):
+            self.arguments[a_n].parent = self.builder.function
+            self.arguments[a_n].module = self.builder.module
 
     def process_arg(self, arg:arg_type):
         if isinstance(arg, str):

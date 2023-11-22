@@ -172,8 +172,6 @@ class Function:
             elif any([isinstance(last_scope_line, iftype1) for iftype1 in [IfBlock, ElseIfBlock, ElseBlock]])\
             and not any([isinstance(scope_line, iftype2) for iftype2 in [ElseIfBlock, ElseBlock]]):
                 last_scope_line.render()
-            if type(scope_line).__name__ == "Token":
-                print(scope_line)
             scope_line.write()
             last_scope_line = scope_line
         if any([isinstance(last_scope_line, iftype1) for iftype1 in [IfBlock, ElseIfBlock, ElseBlock]]):

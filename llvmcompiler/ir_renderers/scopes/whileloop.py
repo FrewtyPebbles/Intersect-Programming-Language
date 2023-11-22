@@ -50,7 +50,6 @@ class WhileLoop(Scope):
 
     def _exit_scope(self):
         # pop the variables
-        print(self.builder.memory_top.variables_stack)
         self.builder.pop_variables()
         if not self.builder.cursor.block.is_terminated:
             self.builder.cursor.branch(self.scope_blocks["condition"])

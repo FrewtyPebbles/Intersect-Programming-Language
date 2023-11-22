@@ -7,19 +7,21 @@ class CLI:
             "debug":False,
             "source":"./main.pop",
             "output":"./program",
-            "salt": "MMAANNGGLLEE"
+            "salt": "MMAANNGGLLEE",
+            "show_ir": False,
+            "optimize": 3
         }
         flag = ""
         for raw_argument in sys.argv:
             argument = raw_argument.lower()
-            if argument in {"-output", "-o"}:
+            if argument in {"-output", "-o", "-salt",
+            "-sal", "-mangle", "-mang", "-source", "-s",
+            "-opt", "-optimize", "-opt_level"}:
                 flag = argument
-            elif argument in {"-source", "-s"}:
-                flag = argument
-            elif argument in {"-salt", "-sal", "-mangle", "-mang"}:
-                flag = argument
-            elif argument in {"-debug", "-dbg", "-d"}:
+            elif argument in {"--debug", "--dbg", "--d"}:
                 self.arguments["debug"] = True
+            elif argument in {"--show_ir", "--ir", "--llvm_ir"}:
+                self.arguments["show_ir"] = True
             elif flag in {"-output", "-o"}:
                 self.arguments["output"] = argument
                 flag = ""
@@ -28,6 +30,9 @@ class CLI:
                 flag = ""
             elif flag in {"-salt", "-sal", "-mangle", "-mang"}:
                 self.arguments["salt"] = argument
+                flag = ""
+            elif flag in {"-opt", "-optimize", "-opt_level"}:
+                self.arguments["optimize"] = int(argument)
                 flag = ""
         
         with open(self.arguments["source"], "r") as file:
@@ -47,12 +52,13 @@ class CLI:
 
         tree.parse_trunk()
 
-
+        
         module = tree.get_module()
 
         module.write()
 
-        module.dbg_print()
+        if self.arguments["show_ir"]:
+            module.dbg_print()
 
         self.compile(module)
 
@@ -69,7 +75,7 @@ class CLI:
         # optimizer
         pm = llvm.create_module_pass_manager()
         pmb = llvm.create_pass_manager_builder()
-        pmb.opt_level = 3  # -O3
+        pmb.opt_level = self.arguments["optimize"]  # -O3
         pmb.populate(pm)
 
         # run optimizer

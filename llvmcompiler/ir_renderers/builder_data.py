@@ -140,7 +140,6 @@ class BuilderData:
         print(f"Error: Variable \"{name}\" not in reference stack:\n{self.variables_stack}")
     
     def alloca(self, ir_type:ir.Type, size:int = None, name = ""):
-        print(ir_type)
         entry_block = self.function.entry
         curr_block = self.cursor.block
         self.cursor.position_at_start(entry_block)
@@ -203,7 +202,6 @@ class MemoryStackFrame:
 
         # then free everything we're gonna be breaking out of
 
-        print(self.variables_stack)
         for v_stack in reversed(self.variables_stack):
             for var in v_stack.values():
                 if var.heap:

@@ -48,3 +48,6 @@ class TemplatePointer(Template):
     
     def get_template_type(self):
         return super().get_template_type().cast_ptr()
+    
+    def __repr__(self) -> str:
+        return f"(TemplatePTR : {self.name})"

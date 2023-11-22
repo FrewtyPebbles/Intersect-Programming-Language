@@ -160,7 +160,6 @@ class HeapValue(Value):
         bc = self.builder.cursor.bitcast(malloc_call, ptr_type.value)
         ptr = self.builder.cursor.gep(bc, [ir.IntType(32)(0)], inbounds=True)
         val = self.get_value()
-        print(f"{val} ||| {ptr}")
         self.builder.cursor.store(val, ptr)
         self.value = ptr
         self.is_instruction = True

@@ -47,7 +47,7 @@ class Tokenizer:
                 self.parse_keystring_and_append_token(SyntaxToken(char))
                 
                 return
-            case r"[~<>=*\-/+\?]":
+            case r"[~<>=*\-/+\?%]":
                 
                 self.keyword += char
                 self.operator_context()
@@ -137,9 +137,14 @@ class Tokenizer:
     
     def comment_context(self):
         self.parse_keystring()
-        for char in self.src:
-            if char == "\n":
+        multiline = False
+        last_char = ""
+        for c_n, char in enumerate(self.src):
+            if (char == "\n" and not multiline) or last_char + char == ":#":
                 return
+            elif char == ":" and c_n == 0:
+                multiline = True
+            last_char = char
     
     def previous_is(self, token:SyntaxToken):
         return self.token_list[len(self.token_list)-1].value == token

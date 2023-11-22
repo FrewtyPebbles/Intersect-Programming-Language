@@ -78,7 +78,7 @@ class TreeBuilder:
         for tok in self.token_list:
             if tok.type == tb.SyntaxToken.label:
                 label_ret = self.context_label_trunk(tok.value, templates)
-                print(f"My label : {label_ret}")
+                
                 if isinstance(label_ret, tuple):
                     push_val(label_ret[0])
                     if label_ret[1].type.is_ending_token:
@@ -88,31 +88,44 @@ class TreeBuilder:
                         push_op(label_ret[1])
                 else:
                     push_val(label_ret)
+                print(f"LABEL CURRENT OP == {current_op}")
             elif tok.type.is_literal or tok.type.is_type:
                 push_val(tok)
             elif tok.type.is_lhs_rhs_operator:
                 push_op(tok)
                 if tok.type == tb.SyntaxToken.cast_op:
-                    push_val(self.context_type_trunk(templates))
+                    typ = self.context_type_trunk(templates)
+                    print(op_val_len)
+                    print(current_op)
+                    push_val(typ)
+                    print(op_val_len)
+                    print(current_op)
             elif tok.type.is_single_arg_operator:
                 push_op(tok, 1)
             elif tok.type == tb.SyntaxToken.parentheses_start:
-                push_val(self.context_order_of_operations(templates)[0])
+                if current_op[1].type == tb.SyntaxToken.type_size_op:
+                    push_val(self.context_type_trunk(templates))
+                    next(self.token_list)# skip closing parentheses
+                else:
+                    push_val(self.context_order_of_operations(templates)[0])
             elif tok.type in {tb.SyntaxToken.line_end, tb.SyntaxToken.parentheses_end,\
             tb.SyntaxToken.delimiter, tb.SyntaxToken.sqr_bracket_end}:
                 last_tok = tok
                 break
 
+        
         if len(operations) == 0 and len(current_op[0]) == 1:
             # push a single value.
             result = current_op[0][0].get_value()
+            print(f"RESULT == {(result, last_tok)}")
             return (result, last_tok)
         
         if len(operations) != 0:
             op_order = tb.OperationsOrder([tb.PotentialOperation(*op) for op in operations])
             result = op_order.get_tree()
+            print(f"RESULT == {(result, last_tok)}")
             return (result, last_tok)
-        
+        print(f"RESULT == {(None, last_tok)}")
         return (None, last_tok)
     
     def context_label_trunk(self, label:str, templates:list[str]):
@@ -138,12 +151,7 @@ class TreeBuilder:
                 while ooo_ret[1].type != tb.SyntaxToken.parentheses_end:
                     ooo_ret = self.context_order_of_operations(templates)
                     function_args.append(ooo_ret[0])
-            print(f"""Function Call {{
-    label:     {label_product}
-    args:      {function_args}
-    templates: {template_args}
-}}
-""")
+
             return CallOperation(label_product, function_args, template_args)
         
         for itteration, tok in enumerate(self.token_list):
@@ -164,7 +172,7 @@ class TreeBuilder:
                         label_product = IndexOperation([label_product, *index_args])
                     
                     ooo_ret = self.context_order_of_operations(templates)
-                    print(f"INDEX ASSIGNMENT {{{label_product} : {ooo_ret[0]}}}")
+                    print(f"ASSIGNMENT {[label_product, ooo_ret[0]]}")
                     return AssignOperation([label_product, ooo_ret[0]])
                 elif tok.type == tb.SyntaxToken.sqr_bracket_start:
                     is_index = True
@@ -181,7 +189,7 @@ class TreeBuilder:
                     # call member function without templates
                     if is_index:
                         label_product = IndexOperation([label_product, *index_args])
-                    print(f"INDEX OP LABEL 2 {{{label_product}}}")
+                    
                     return call_function(templates)
                 elif tok.type.is_ending_token and is_index:
                     # this is for if we reach an ending token.
@@ -332,9 +340,9 @@ class TreeBuilder:
                     attribute_label_buffer = tok.value
                 case tb.SyntaxToken.cast_op:
                     attributes[attribute_label_buffer] = self.context_type_trunk(templates)
+                    print(f"STRUCT ATTRIBUTE {attributes[attribute_label_buffer]}")
                     attribute_label_buffer = ""
                 case tb.SyntaxToken.func_keyword:
-                    print("STRUCT FUNCTION START VVV")
                     functions.append(self.context_function_statement_definition(templates))
                 case tb.SyntaxToken.scope_end:
                     break

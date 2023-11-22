@@ -2,39 +2,45 @@ import sys
 import time
 from llvmcompiler import Function, Value, Module, I32Type, C8Type, ArrayType, I32PointerType,\
      ArrayPointerType, VectorType, BoolType, I8Type, ForLoop, VoidType, IfBlock, ElseBlock,\
-    ElseIfBlock, FunctionDefinition, Template, StructDefinition, StructType, HeapValue,\
-    StructPointerType, LookupLabel, C8PointerType, WhileLoop
+    ElseIfBlock, FunctionDefinition, Template, TemplatePointer, StructDefinition, StructType, HeapValue,\
+    StructPointerType, LookupLabel, C8PointerType, WhileLoop, I8PointerType
 from llvmcompiler.ir_renderers.operations import *
 
 
 
 
 module = Module("testmod.pop",scope=[
-    StructDefinition("Storage", {
-        "data":Template("ItemType")
+    StructDefinition("Vector", {
+        "data":TemplatePointer("ItemType"),
+        "length":I64Type()
     }, [
-        FunctionDefinition("set", {
-            "self":StructPointerType("Storage", [Template("ItemType")]),
-            "value":Template("ItemType")
+        FunctionDefinition("init", {
+            "self":StructPointerType("Vector", [Template("ItemType")])
         }, VoidType(),scope=[
             AssignOperation([
                 IndexOperation(["self", LookupLabel("data")]),
-                "value"
+                CastOperation([
+                    CallOperation("libc_malloc", [TypeSizeOperation([TemplatePointer("ItemType")])]), 
+                    TemplatePointer("ItemType")
+                ])
             ]),
             FunctionReturnOperation()
         ]),
-        FunctionDefinition("get", {
-            "self":StructPointerType("Storage", [Template("ItemType")]),
-        }, Template("ItemType"),scope=[
-            FunctionReturnOperation([DereferenceOperation([IndexOperation(["self", LookupLabel("data")])])])
+        FunctionDefinition("del", {
+            "self":StructPointerType("Vector", [Template("ItemType")]),
+        }, VoidType(),scope=[
+            CallOperation("libc_free", [CastOperation([
+                IndexOperation(["self", LookupLabel("data")]),
+                I8PointerType()
+            ])]),
+            FunctionReturnOperation()
         ])
     ], ["ItemType"]),
     FunctionDefinition("test", {"num":I32Type()}, I32Type(), scope=[
-        DefineOperation(["store", Value(StructType("Storage", [I32Type()]))]),
-        CallOperation(IndexOperation(["store", LookupLabel("set")]), ["num"]),
-        FunctionReturnOperation([
-            DereferenceOperation([IndexOperation(["store", LookupLabel("data")])])
-        ])
+        DefineOperation(["vec", Value(StructType("Vector", [I32Type()]))]),
+        CallOperation(IndexOperation(["vec", LookupLabel("init")]), []),
+        CallOperation(IndexOperation(["vec", LookupLabel("del")]), []),
+        FunctionReturnOperation([Value(I32Type(), 1)])
     ], extern=True)
 ])
 

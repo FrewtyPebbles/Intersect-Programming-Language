@@ -64,6 +64,7 @@ class SyntaxToken(Enum):
     delete_keyword = "delete"
     export_keyword = "export" # this is the same as extern "c"
     function_call_template_op = "?"
+    type_size_op = "sizeof"
 
     @property
     def is_type(self):
@@ -91,7 +92,8 @@ class SyntaxToken(Enum):
         return self in {
             SyntaxToken.not_op, SyntaxToken.dereference_op,
             SyntaxToken.delete_keyword, SyntaxToken.heap_keyword,
-            SyntaxToken.persist_keyword, SyntaxToken.error_keyword
+            SyntaxToken.persist_keyword, SyntaxToken.error_keyword,
+            SyntaxToken.type_size_op
             }
     
     @property
@@ -123,13 +125,9 @@ class SyntaxToken(Enum):
                 return 1
             case SyntaxToken.sqr_bracket_end:
                 return 1
-            case SyntaxToken.access_op:
-                return 2
-            case SyntaxToken.dereference_op:
-                return 2
-            case SyntaxToken.heap_keyword:
-                return 2
-            case SyntaxToken.cast_op:
+            case SyntaxToken.type_size_op | SyntaxToken.access_op |\
+            SyntaxToken.dereference_op | SyntaxToken.heap_keyword |\
+            SyntaxToken.cast_op:
                 return 2
             case SyntaxToken.divide_op:
                 return 3
