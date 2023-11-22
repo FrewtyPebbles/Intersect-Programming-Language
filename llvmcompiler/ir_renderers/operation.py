@@ -30,11 +30,15 @@ class Operation:
         new_args = [*arguments]
         for a_n, a in enumerate(arguments):
             if isinstance(a, str):
-                new_args[a_n] = self.builder.get_variable(a)
+                new_args[a_n] = self.get_variable(a)
             else:
                 new_args[a_n].builder = self.builder
-
+        
         return new_args
+
+    def get_variable(self, var_name:str):
+        return self.builder.get_variable(var_name)
+
 
     def process_arg(self, arg:arg_type):
         if isinstance(arg, str):

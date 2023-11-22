@@ -1,3 +1,4 @@
+from llvmcompiler.compiler_types.types.lookup_label import LookupLabel
 import llvmcompiler.tree_builder as tb
 from llvmcompiler import StructDefinition, CompilerType,\
     I8Type, I8PointerType, I32Type, I32PointerType, C8Type, C8PointerType,\
@@ -54,33 +55,37 @@ class TreeBuilder:
         """
         operations = []
         current_op = [[],None]
+        op_val_len = 2
         # functions to handle creation of potential operator list.
         def push_val(val:tb.Token):
             # this only works for rhs lhs operators, single side ops will need to be evaluated manually
             nonlocal operations
             nonlocal current_op
+            nonlocal op_val_len
             current_op[0].append(tb.OpValue(val))
-            if len(current_op[0]) == 2:
+            if len(current_op[0]) == op_val_len:
                 operations.append(current_op)
-                current_op = [[current_op[0][1]], current_op[1]]
+                current_op = [[current_op[0][len(current_op[0])-1]], current_op[1]]
             
-        def push_op(op:tb.Token):
+        def push_op(op:tb.Token, _op_val_len = 2):
             nonlocal current_op
+            nonlocal op_val_len
             current_op[1] = op
+            op_val_len = _op_val_len
 
         
         last_tok = None
         for tok in self.token_list:
             if tok.type == tb.SyntaxToken.label:
                 label_ret = self.context_label_trunk(tok.value, templates)
-                if isinstance(label_ret, tb.Token):
-                    push_val(tok)
-                    if label_ret.type in {tb.SyntaxToken.line_end, tb.SyntaxToken.parentheses_end,\
-                    tb.SyntaxToken.delimiter, tb.SyntaxToken.sqr_bracket_end}:
-                        last_tok = label_ret
+                print(f"My label : {label_ret}")
+                if isinstance(label_ret, tuple):
+                    push_val(label_ret[0])
+                    if label_ret[1].type.is_ending_token:
+                        last_tok = label_ret[1]
                         break
                     else:
-                        push_op(label_ret)
+                        push_op(label_ret[1])
                 else:
                     push_val(label_ret)
             elif tok.type.is_literal or tok.type.is_type:
@@ -89,6 +94,8 @@ class TreeBuilder:
                 push_op(tok)
                 if tok.type == tb.SyntaxToken.cast_op:
                     push_val(self.context_type_trunk(templates))
+            elif tok.type.is_single_arg_operator:
+                push_op(tok, 1)
             elif tok.type == tb.SyntaxToken.parentheses_start:
                 push_val(self.context_order_of_operations(templates)[0])
             elif tok.type in {tb.SyntaxToken.line_end, tb.SyntaxToken.parentheses_end,\
@@ -169,15 +176,18 @@ class TreeBuilder:
                     
                 elif tok.type == tb.SyntaxToken.label and is_index:
                     # is a label after an access operator
-                    index_args.append(tok.value)
+                    index_args.append(LookupLabel(tok.value))
                 elif tok.type == tb.SyntaxToken.parentheses_start:
                     # call member function without templates
                     if is_index:
                         label_product = IndexOperation([label_product, *index_args])
                     print(f"INDEX OP LABEL 2 {{{label_product}}}")
                     return call_function(templates)
+                elif tok.type.is_ending_token and is_index:
+                    # this is for if we reach an ending token.
+                    return (IndexOperation([label_product, *index_args]), tok)
                 else:
-                    return tok
+                    return (label_product, tok)
 
 
     def context_define(self, templates:list[str]):
@@ -368,16 +378,22 @@ class TreeBuilder:
         
         return type_templates
 
-    def context_type_struct(self, name:str, templates:list[str]) -> CompilerType:
+    def context_type_struct(self, name:str, templates:list[str], pointer = False) -> CompilerType:
         """
         Returns when an assignment, delimiter, or line_end (;) operator is reached
         """
         for tok in self.token_list:
             if tok.type == tb.SyntaxToken.less_than_op:
                 temps = self.context_template(templates)
-                return StructType(name, temps)
+                if pointer:
+                    return StructPointerType(name, temps)
+                else:
+                    return StructType(name, temps)
             else:
-                return StructType(name)
+                if pointer:
+                    return StructPointerType(name)
+                else:
+                    return StructType(name)
 
     def context_type_trunk(self, templates:list[str]) -> CompilerType:
         """
@@ -404,7 +420,7 @@ class TreeBuilder:
             
             case tb.SyntaxToken.label:
                 if tok.value in self.struct_namespace:
-                    return get_ptr(self.context_type_struct(tok.value, templates))
+                    return self.context_type_struct(tok.value, templates, pointer)
                 elif tok.value in templates:
                     return get_ptr(Template(tok.value))
             

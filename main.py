@@ -10,22 +10,31 @@ from llvmcompiler.ir_renderers.operations import *
 
 
 module = Module("testmod.pop",scope=[
-    FunctionDefinition("test", {"num":I32Type()}, I32Type(), scope=[
-        DefineOperation(["i", Value(I32Type(), 0)]),
-        WhileLoop(condition=[
-            LessThanOperation(["i", "num"])
-        ], scope=[
-            CallOperation("libc_printf", [
-                CastOperation([Value(ArrayType(C8Type(), len("index %i\n\00")), "index %i\n\00"), C8PointerType()]),
-                "i"
+    StructDefinition("Storage", {
+        "data":Template("ItemType")
+    }, [
+        FunctionDefinition("set", {
+            "self":StructPointerType("Storage", [Template("ItemType")]),
+            "value":Template("ItemType")
+        }, VoidType(),scope=[
+            AssignOperation([
+                IndexOperation(["self", LookupLabel("data")]),
+                "value"
             ]),
-            AssignOperation(["i", AddOperation(["i", Value(I32Type(), 1)])]),
-            IfBlock(condition=[GreaterThanOperation(["i", Value(I32Type(), 3)])], scope=[
-                DefineOperation(["A", HeapValue(I32Type(), 0)]),
-                BreakOperation()
-            ])
+            FunctionReturnOperation()
         ]),
-        FunctionReturnOperation(["num"])
+        FunctionDefinition("get", {
+            "self":StructPointerType("Storage", [Template("ItemType")]),
+        }, Template("ItemType"),scope=[
+            FunctionReturnOperation([DereferenceOperation([IndexOperation(["self", LookupLabel("data")])])])
+        ])
+    ], ["ItemType"]),
+    FunctionDefinition("test", {"num":I32Type()}, I32Type(), scope=[
+        DefineOperation(["store", Value(StructType("Storage", [I32Type()]))]),
+        CallOperation(IndexOperation(["store", LookupLabel("set")]), ["num"]),
+        FunctionReturnOperation([
+            DereferenceOperation([IndexOperation(["store", LookupLabel("data")])])
+        ])
     ], extern=True)
 ])
 

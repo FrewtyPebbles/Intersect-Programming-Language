@@ -14,6 +14,7 @@ class CallOperation(Operation):
     
     def get_function(self):
         if isinstance(self.function, Operation):
+            print(f"Operation function {self.function}")
             self.function: tuple[ir.Instruction, FunctionDefinition] = self.write_argument(self.function)
         # link all templates to their functions.
         for t_a in range(len(self.template_arguments)):

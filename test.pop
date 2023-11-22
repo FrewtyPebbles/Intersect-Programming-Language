@@ -2,13 +2,13 @@
 struct Storage<ItemType> {
     data:ItemType;
 
-    func set(self:Storage<ItemType>, value:ItemType) {
+    func set(self:$Storage<ItemType>, value:ItemType) {
         self.data = value;
         return;
     }
 
-    func get(self:Storage<ItemType>) ~> ItemType {
-        return self.data;
+    func get(self:$Storage<ItemType>) ~> ItemType {
+        return $self.data;
     }
 }
 
@@ -17,10 +17,15 @@ func add<TmpArg>(num1:TmpArg, num2:TmpArg) ~> TmpArg {
 }
 
 export func test(num:i32) ~> i32 {
-    
-    let product = add?<i32>(5*2, 7);
+    let store:Storage<i32>;
 
-    libc_printf(("data: %i\n":$c8), add?<i32>(9, product) / 2 + 3);
+    store.set(add?<i32>(num, 1));
+
+    libc_printf(("data: %i\n":$c8), store.get());
+
+    store.set(add?<i32>($store.data, 1));
+
+    libc_printf(("data: %i\n":$c8), store.get());
     
-    return product;
+    return store.get();
 }

@@ -141,7 +141,7 @@ class Value:
         print(self.type.value)
 
     def __repr__(self) -> str:
-        return f"(Value:[type:\"{self.type.value}\"|value:{self.value}]{{DBGTAG:\"{self.dbg_tag}\"}})"
+        return f"(Value:[type:\"{self.type}\"|value:{self.value}]{{DBGTAG:\"{self.dbg_tag}\"}})"
 
     @property
     def is_pointer(self):
