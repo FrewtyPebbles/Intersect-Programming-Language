@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING, Self
 from enum import Enum
 from typing import List, Tuple, Union
 from llvmlite import ir
-
+from copy import deepcopy
 
 
 import llvmcompiler.compiler_types as ct
@@ -72,6 +72,20 @@ class Operation:
 
         return arg1, arg2
     
+    def convert_literal_types(self):
+        compare_arg = self.arguments[0]
+        for a_n in range(len(self.arguments)):
+            if self.arguments[a_n].is_instruction:
+                compare_arg = self.arguments[a_n]
+        for a_n in range(len(self.arguments)):
+            if not self.arguments[a_n].is_instruction:
+                if isinstance(self.arguments[a_n].value, int) or\
+                self.arguments[a_n].value in {"true", "false"}:
+                    new_type = deepcopy(compare_arg.type)
+                    new_type.value = ir.IntType(new_type.size)
+                    self.arguments[1].type = new_type
+
+
     def write_argument(self, raw_arg: arg_type):
         if isinstance(raw_arg, Operation):
             value = self.builder.function.create_operation(raw_arg).write()

@@ -1,7 +1,8 @@
-from llvmcompiler.compiler_types.type import CompilerType
+from llvmcompiler.compiler_types import CompilerType, IntegerType
 from ..operation import Operation
 from llvmlite import ir
 import llvmcompiler.ir_renderers.variable as vari
+import llvmcompiler.ir_renderers.struct as st
 
 class CastOperation(Operation):
     def _write(self):
@@ -30,9 +31,22 @@ class CastOperation(Operation):
         else:
             # if type is passed
             arg2 = self.arguments[1]
+        cast = None
 
-        bitcast = self.builder.cursor.bitcast(arg1, arg2.value)
+        if not isinstance(self.arguments[0].type, IntegerType) or self.arguments[0].type.is_pointer:
+            cast = self.builder.cursor.bitcast(arg1, arg2.value)
+        elif self.arguments[0].type.size > self.arguments[1].size:
+            # downcast
+            cast = self.builder.cursor.trunc(arg1, arg2.value)
+            print("Downcast")
+        elif self.arguments[0].type.size < self.arguments[1].size:
+            # upcast
+            cast = self.builder.cursor.sext(arg1, arg2.value)
+            print("Upcast")
+        else:
+            print("Error: Invalid cast")
+        
 
         self.builder.cursor.comment("OP::cast END")
 
-        return vari.Value(arg2, bitcast, True)
+        return vari.Value(arg2, cast, True)

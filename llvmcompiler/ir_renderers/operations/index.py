@@ -40,25 +40,34 @@ class IndexOperation(Operation):
         
         return indexes
 
+    def cast_itter_i32(self, itter:list[ir.IntType]):
+        for i_n, item in enumerate(itter):
+            if item != ir.IntType(32):
+                try:
+                    itter[i_n] = self.builder.cursor.bitcast(item, ir.IntType(32))
+                except RuntimeError:
+                    print("Error: Cannot use i-type larger than 32 within the index operator.")
+
     def _write(self):
         self.builder.cursor.comment("OP::index START")
         self.arguments = self.get_variables()
 
         indexes:indexes_type = self.process_indexes()
 
-        
+
+        self.cast_itter_i32(indexes)
+
         if len(indexes):
             if self.arguments[0].heap:
                 if isinstance(self.arguments[0], vari.Variable):
-                    res = self.builder.cursor.gep(self.arguments[0].variable, indexes, True)
+                    res = self.builder.cursor.gep(self.arguments[0].variable, indexes)
                 elif isinstance(self.arguments[0], vari.Value):
-                    res = self.builder.cursor.gep(self.arguments[0].value, indexes, True)
+                    res = self.builder.cursor.gep(self.arguments[0].value, indexes)
             else:
                 if isinstance(self.arguments[0], vari.Variable):
-                    
-                    res = self.builder.cursor.gep(self.arguments[0].variable, [ir.IntType(32)(0), *indexes], True)
+                    res = self.builder.cursor.gep(self.arguments[0].variable, [ir.IntType(32)(0), *indexes])
                 if isinstance(self.arguments[0], vari.Value):
-                    res = self.builder.cursor.gep(self.arguments[0].value, [ir.IntType(32)(0), *indexes], True)
+                    res = self.builder.cursor.gep(self.arguments[0].value, [ir.IntType(32)(0), *indexes])
             self.builder.cursor.comment("OP::index END")
 
 

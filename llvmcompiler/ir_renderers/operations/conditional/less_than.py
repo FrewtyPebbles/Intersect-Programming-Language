@@ -7,6 +7,7 @@ class LessThanOperation(Operation):
     def _write(self):
         self.builder.cursor.comment("OP::less_than START")
         self.arguments = self.get_variables()
+        self.convert_literal_types()
         #process args
         
         arg1, arg2 = self.process_lhs_rhs_args()

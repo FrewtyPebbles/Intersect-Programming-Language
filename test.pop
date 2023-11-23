@@ -1,9 +1,9 @@
 struct Vector<ItemType> {
     data:$ItemType;
-    length:i64;
+    length:i32;
 
     func init(self:$Vector<ItemType>) {
-        self.data = libc_malloc(sizeof($ItemType)):$ItemType;
+        self.data = libc_malloc(sizeof $ItemType):$ItemType;
         self.length = 0;
         return;
     }
@@ -11,11 +11,22 @@ struct Vector<ItemType> {
     func push(self:$Vector<ItemType>, item:ItemType) {
         self.length = $self.length + 1;
         
-        self.data = libc_realloc(sizeof($ItemType) * $self.length):$ItemType;
-                                #^^^^^^^^^^^^^^^^^ BUG HERE: sizeof not playing nice with operations after it in the parser
-        self.data[$self.length - 1] = item;
+        self.data = libc_realloc($self.data:$i8, sizeof $ItemType  * $self.length:i64):$ItemType;
+
+        # need to implement pointer arrithmetic with ptrtoint before this will work.
+        # self.data[$self.length - 1] = item;
         return;
     }
+
+    #: <- also this is a multilie comment
+    BUG
+    Use ptrtoint for indexing pointers
+    This function breaks the compiler.
+    
+    func get(self:$Vector<ItemType>, index:i32) ~> ItemType {
+        return $vec.data[index];
+    }
+    :#
 
     func del(self:$Vector<ItemType>) {
         libc_free(($self.data):$i8);
@@ -30,6 +41,10 @@ export func test(num: i32) ~> i32 {
     vec.init();
 
     vec.push(10);
+
+    #let top:i32 = $(self.data[$self.length - 1]);
+
+    libc_printf("pushed data: %i\n":$c8, 10);
     
     vec.del();
     return 1;

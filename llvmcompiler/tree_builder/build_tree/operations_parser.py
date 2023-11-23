@@ -152,12 +152,11 @@ class PotentialOperation:
                 return CastOperation(values)
             case tb.SyntaxToken.dereference_op:
                 return DereferenceOperation(values)
-            case tb.SyntaxToken.type_size_op:
+            case tb.SyntaxToken.sizeof_op:
                 print(f"EMIT SIZEOF OPERATION {values}")
                 return TypeSizeOperation(values)
             case tb.SyntaxToken.not_op:
-                # not implemented yet
-                pass
+                return NotOperation(values)
             case tb.SyntaxToken.post_increment_op:
                 # not implemented yet
                 pass
