@@ -239,6 +239,7 @@ class TreeBuilder:
                     # this is for if we reach an ending token
                     # BUG
                     self.token_list.prepend(tok)
+                    print(f"LABEL RET {[label_product, *index_args]}")
                     return IndexOperation([label_product, *index_args])
                 elif tok.type.is_ending_token or tok.type.is_lhs_rhs_operator:
                     self.token_list.prepend(tok)

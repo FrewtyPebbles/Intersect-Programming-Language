@@ -7,23 +7,41 @@ import llvmcompiler.ir_renderers.struct as st
 
 indexes_type = list[ir.LoadInstr | ir.GEPInstr | ir.AllocaInstr | str | ir.Constant | ct.CompilerType | tuple[str, vari.Variable]]
 
+#TODO:
+#
+# - Make a separate gep instruction whenever the next index is for a non struct type
+#
+
 class IndexOperation(Operation):
     def __init__(self, arguments: list[arg_type] = []) -> None:
         super().__init__(arguments)
         self.ret_func:fn.FunctionDefinition = None
         self.type = None
+        
 
     def process_indexes(self):
 
 
         indexes:indexes_type = []
         # process all arguments to get indexes
-        pointer = self.arguments[0]
-        prev_struct:st.StructType = pointer.type
+        pointer = None
+        if isinstance(self.arguments[0], vari.Variable):
+            pointer = self.arguments[0].variable
+        else:
+            pointer = self.arguments[0].value
+        prev_struct:st.StructType = self.arguments[0].type
+        is_struct = 0
+        step_over_ptr = True
         for argument in self.arguments[1:]:
             if isinstance(argument, int):
                 indexes.append(ir.IntType(32)(argument))
             elif isinstance(argument, ct.LookupLabel):
+                if is_struct <= 0:
+                    if is_struct == -1:
+                        pointer = self.gep(pointer, indexes, step_over_ptr)
+                        indexes = []
+                        step_over_ptr = True
+                    is_struct = 1
                 nxt = prev_struct.struct.get_attribute(argument.value, get_definition=True)
                 if isinstance(nxt, fn.FunctionDefinition):
                     self.ret_func = nxt
@@ -32,13 +50,22 @@ class IndexOperation(Operation):
                     indexes.append(nxt.get_value())
                     prev_struct = prev_struct.struct.raw_attributes[argument.value]
             else:
-                indexes.append(self.process_arg(argument))
+                # for [] operations
+                if is_struct == 1:
+                    pointer = self.gep(pointer, indexes, step_over_ptr)
+                    indexes = []
+                    is_struct = -1
+                    step_over_ptr = False
+                processed_arg = self.process_arg(argument)
+                indexes.append(processed_arg)
+
+        pointer = self.gep(pointer, indexes, step_over_ptr)
 
         self.type = prev_struct.create_ptr()
         self.type.parent = self.builder.function
         self.type.module = self.builder.module
         
-        return indexes
+        return pointer
 
     def cast_itter_i32(self, itter:list[ir.IntType]):
         for i_n, item in enumerate(itter):
@@ -47,38 +74,24 @@ class IndexOperation(Operation):
                     itter[i_n] = self.builder.cursor.bitcast(item, ir.IntType(32))
                 except RuntimeError:
                     print("Error: Cannot use i-type larger than 32 within the index operator.")
+    
+    def gep(self, ptr:ir.Instruction, indexes:list, step_over_pointer = True):
+        if step_over_pointer:
+            return self.builder.cursor.gep(ptr, [ir.IntType(32)(0), *indexes])
+        else:
+            return self.builder.cursor.gep(ptr, [*indexes])
+        
+            
 
     def _write(self):
         self.builder.cursor.comment("OP::index START")
         self.arguments = self.get_variables()
-
-        indexes:indexes_type = self.process_indexes()
-
-
-        self.cast_itter_i32(indexes)
-
-        if len(indexes):
-            if self.arguments[0].heap:
-                if isinstance(self.arguments[0], vari.Variable):
-                    res = self.builder.cursor.gep(self.arguments[0].variable, indexes)
-                elif isinstance(self.arguments[0], vari.Value):
-                    res = self.builder.cursor.gep(self.arguments[0].value, indexes)
-            else:
-                if isinstance(self.arguments[0], vari.Variable):
-                    res = self.builder.cursor.gep(self.arguments[0].variable, [ir.IntType(32)(0), *indexes])
-                if isinstance(self.arguments[0], vari.Value):
-                    res = self.builder.cursor.gep(self.arguments[0].value, [ir.IntType(32)(0), *indexes])
-            self.builder.cursor.comment("OP::index END")
+        res = self.process_indexes()
+        self.builder.cursor.comment("OP::index END")
 
 
-            if self.ret_func == None:
-                return vari.Value(self.type, res, True, self.arguments[0].heap)
-            else:
-                return vari.Value(self.type, (res, self.ret_func), True, self.arguments[0].heap)
+        if self.ret_func == None:
+            return vari.Value(self.type, res, True, self.arguments[0].heap)
         else:
-            self.builder.cursor.comment("OP::index END")
-            if isinstance(self.arguments[0], vari.Variable):
-                res = self.arguments[0].variable
-            elif isinstance(self.arguments[0], vari.Value):
-                res = self.arguments[0].value
             return vari.Value(self.type, (res, self.ret_func), True, self.arguments[0].heap)
+        

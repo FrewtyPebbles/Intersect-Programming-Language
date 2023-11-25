@@ -13,23 +13,16 @@ struct Vector<ItemType> {
         
         self.data = libc_realloc($self.data:$i8, sizeof $ItemType  * $self.length:i64):$ItemType;
 
-        # need to implement pointer arrithmetic with ptrtoint before this will work.
-        # self.data[$self.length - 1] = item;
+        self.data[$self.length - 1] = item;
         return;
     }
-
-    #: <- also this is a multilie comment
-    BUG
-    Use ptrtoint for indexing pointers
-    This function breaks the compiler.
     
     func get(self:$Vector<ItemType>, index:i32) ~> ItemType {
-        return $vec.data[index];
+        return $$self.data[index];
     }
-    :#
 
     func del(self:$Vector<ItemType>) {
-        libc_free(($self.data):$i8);
+        libc_free($self.data:$i8);
         return;
     }
 }
@@ -39,13 +32,19 @@ export func test(num: i32) ~> i32 {
     let vec:Vector<i32>;
 
     vec.init();
+    libc_printf("Init called.\n":$c8);
 
     vec.push(10);
-
-    #let top:i32 = $(self.data[$self.length - 1]);
-
-    libc_printf("pushed data: %i\n":$c8, 10);
+    libc_printf("Push called.\n":$c8);
+    vec.push(7878);
+    libc_printf("Push called.\n":$c8);
+    vec.push(26);
+    libc_printf("Push called.\n":$c8);
     
+
+    libc_printf("pushed data: %i, %i, %i\n":$c8, vec.get(0), vec.get(1), vec.get(2));
+    libc_printf("get called.\n":$c8);
     vec.del();
+    libc_printf("Del called.\n":$c8);
     return 1;
 }
