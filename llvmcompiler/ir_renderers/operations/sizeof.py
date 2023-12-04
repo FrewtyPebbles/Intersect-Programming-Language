@@ -15,11 +15,11 @@ class TypeSizeOperation(Operation):
         res = 0
         #process arg1
         if isinstance(self.arguments[0], vari.Variable):
-            res = self.arguments[0].type.size
+            res = int(self.arguments[0].type.size/4)
         elif isinstance(self.arguments[0], vari.Value):
-            res = self.arguments[0].type.size
+            res = int(self.arguments[0].type.size/4)
         elif isinstance(self.arguments[0], CompilerType):
-            res = self.arguments[0].size
+            res = int(self.arguments[0].size/4)
         
         self.builder.cursor.comment("OP::dereference END")
 
