@@ -1,19 +1,27 @@
-func realloc<PtrType>(ptr:$PtrType, new_size:i64, old_size:i64) ~> $PtrType {
-    let new_pointer = libc_malloc(new_size):$PtrType;
-    libc_memcpy(new_pointer:$i8, ptr:$i8, old_size);
+func realloc<PtrType>(ptr:$PtrType, new_size:i32) ~> $PtrType {
+    return libc_realloc(ptr:$i8, sizeof $PtrType * new_size:i64):$PtrType;
+}
+func malloc<PtrType>(size:i32) ~> $PtrType {
+    return libc_malloc(sizeof $i8 * size:i64):$PtrType;
+}
+func free<PtrType>(ptr:$PtrType) {
     libc_free(ptr:$i8);
-    return new_pointer;
+    return;
 }
 
 export func test(num: i32) ~> i32 {
-    let pointer = libc_malloc(sizeof $i8):$i32;
+    let pointer = malloc?<i32>(1);
     pointer[0] = 100;
     libc_printf("pointer 0 = %i\n":$c8, $pointer[0])
-    pointer = realloc?<i32>(pointer, sizeof $i32  * 2, sizeof $i32);
+    pointer = realloc?<i32>(pointer, 2);
     libc_printf("realloc1 %i\n":$c8, $pointer[0]);
     pointer[1] = 200;
-    libc_printf("vector data: %i, %i\n":$c8, $pointer[0], $pointer[1]);
+    pointer = realloc?<i32>(pointer, 3);
+    pointer[2] = 200;
+    libc_printf("realloc2 %i\n":$c8, $pointer[2]);
+    libc_printf("vector data: %i, %i, %i\n":$c8, $pointer[0], $pointer[1], $pointer[2]);
     libc_printf("end\n":$c8);
+    free?<i32>(pointer);
     return 0;
 }
 

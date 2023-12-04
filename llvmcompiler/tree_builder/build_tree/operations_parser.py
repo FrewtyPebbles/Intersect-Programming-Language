@@ -53,8 +53,8 @@ Requirements for this to work:
     the priority number given to the next operation that recieves a priority number is incremented by 1. The current priority number is not reset between scans.
 """
 class OperationsOrder:
-    def __init__(self, potential_operations: list[PotentialOperation | OperationsOrder] = []) -> None:
-        self.potential_operations = potential_operations
+    def __init__(self, potential_operations: list[PotentialOperation | OperationsOrder] = None) -> None:
+        self.potential_operations = [] if potential_operations == None else potential_operations
         self._priority_stack: list[PotentialOperation | OperationsOrder] = []
         self._result:PotentialOperation = None
         

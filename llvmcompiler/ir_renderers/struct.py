@@ -10,13 +10,13 @@ class StructDefinition:
     This is the definition of the struct.
     """
     def __init__(self, name:str, attributes:dict[str, ct.CompilerType] = {},
-        functions:dict[fn.FunctionDefinition] = [], templates:list[str] = [],
+        functions:dict[fn.FunctionDefinition] = None, templates:list[str] = None,
         module:mod.Module = None, packed = False
     ) -> None:
         self.name = name
         self.attributes = attributes
-        self.functions = functions
-        self.templates = templates
+        self.functions = [] if functions == None else functions
+        self.templates = [] if templates == None else templates
         self.module = module
         self.packed = packed
 
@@ -26,7 +26,8 @@ class StructDefinition:
         Use `get_struct` to retrieve/write and retrieve structs from/to this variable
         """
 
-    def get_struct(self, template_types:list[ct.CompilerType] = []):
+    def get_struct(self, template_types:list[ct.CompilerType] = None):
+        template_types = [] if template_types == None else template_types
         mangled_name = self.get_mangled_name(template_types)
         if mangled_name in self.struct_aliases.keys():
             return self.struct_aliases[mangled_name]

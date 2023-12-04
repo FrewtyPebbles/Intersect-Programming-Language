@@ -8,19 +8,20 @@ from typing import Dict, List, Union
 
 
 class Module:
-    def __init__(self, name:str = '', scope:list[fn.FunctionDefinition | st.StructDefinition] = [], mangle_salt = "MMAANNGGLLEE") -> None:
+    def __init__(self, name:str = '', scope:list[fn.FunctionDefinition | st.StructDefinition] = None, mangle_salt = "MMAANNGGLLEE") -> None:
         self.module = ir.Module(name=name)
         self.functions:Dict[str, ir.Function | fn.FunctionDefinition] = {
             # The key is the name that is parsed from source code,
             # the value is the llvm function.
             "libc_printf": fn.CFunctionDefinition(self._std_printf()),
             "libc_malloc": fn.CFunctionDefinition(self._std_malloc()),
+            "libc_realloc": fn.CFunctionDefinition(self._std_realloc()),
             "libc_memcpy": fn.CFunctionDefinition(self._std_memcpy()),
             "libc_free": fn.CFunctionDefinition(self._std_free())
             #"input":"input" # will be getting input function from c dll/so file via this method https://stackoverflow.com/questions/36658726/link-c-in-llvmlite
         }
         self.structs:dict[str, st.StructDefinition] = {}
-        self.scope = scope
+        self.scope = [] if scope == None else scope
         self.mangle_salt = mangle_salt
         
         self.null = ir.GlobalVariable(self.module, ir.IntType(8), "null")
@@ -100,5 +101,12 @@ class Module:
         voidptr_ty = ir.IntType(8).as_pointer()
         memcpy_ty = ir.FunctionType(ir.VoidType(), [voidptr_ty, voidptr_ty, bd.SIZE_T], var_arg=False)
         realloc = ir.Function(self.module, memcpy_ty, name="memcpy")
+        return realloc
+    
+    def _std_realloc(self) -> ir.Function:
+        # this creates the IR for malloc
+        voidptr_ty = ir.IntType(8).as_pointer()
+        realloc_ty = ir.FunctionType(voidptr_ty, [voidptr_ty, bd.SIZE_T], var_arg=False)
+        realloc = ir.Function(self.module, realloc_ty, name="realloc")
         return realloc
     
