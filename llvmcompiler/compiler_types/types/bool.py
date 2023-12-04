@@ -8,8 +8,6 @@ class BoolType(ct.CompilerType):
         self._size = 1
         self.value = ir.IntType(1)
 
-    def cast_ptr(self):
-        return BoolPointerType()
     
 
 class BoolPointerType(ct.CompilerType):

@@ -33,14 +33,14 @@ class Variable:
         self.module = self.builder.module
 
         # declare the variable
-        if not self.function_argument:
+        if not self.function_argument and not self.value.is_instruction:
             self.allocate()
         else:
             self.variable = self.value.value
-
+    
         self.builder.declare_variable(self)
 
-        if not self.function_argument:
+        if not self.function_argument and not self.value.is_instruction:
             if self.value.value != None:
                 self.set(self.value)
         
@@ -96,6 +96,7 @@ class Value:
     @parent.setter
     def parent(self, par:fn.Function):
         self._parent = par
+        print(self)
         self.type.parent = par
         self.type.module = par.module
 

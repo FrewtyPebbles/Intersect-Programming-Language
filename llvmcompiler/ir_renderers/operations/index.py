@@ -31,7 +31,7 @@ class IndexOperation(Operation):
             pointer = self.arguments[0].value
         prev_struct:st.StructType = self.arguments[0].type
         is_struct = 0
-        step_over_ptr = True
+        step_over_ptr = isinstance(self.arguments[0].type, st.StructType)
         for argument in self.arguments[1:]:
             if isinstance(argument, int):
                 indexes.append(ir.IntType(32)(argument))

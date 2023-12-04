@@ -2,7 +2,7 @@ struct Storage<ItemType> {
     data:ItemType;
 
     func set(self:$Storage<ItemType>, val:ItemType) {
-        self.data = val;
+        self.data[0] = val;
         return;
     }
 

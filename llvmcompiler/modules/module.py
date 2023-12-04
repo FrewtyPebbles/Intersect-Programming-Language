@@ -15,7 +15,7 @@ class Module:
             # the value is the llvm function.
             "libc_printf": fn.CFunctionDefinition(self._std_printf()),
             "libc_malloc": fn.CFunctionDefinition(self._std_malloc()),
-            "libc_realloc": fn.CFunctionDefinition(self._std_realloc()),
+            "libc_memcpy": fn.CFunctionDefinition(self._std_memcpy()),
             "libc_free": fn.CFunctionDefinition(self._std_free())
             #"input":"input" # will be getting input function from c dll/so file via this method https://stackoverflow.com/questions/36658726/link-c-in-llvmlite
         }
@@ -95,10 +95,10 @@ class Module:
         free = ir.Function(self.module, printf_ty, name="free")
         return free
     
-    def _std_realloc(self) -> ir.Function:
+    def _std_memcpy(self) -> ir.Function:
         # this creates the IR for malloc
         voidptr_ty = ir.IntType(8).as_pointer()
-        printf_ty = ir.FunctionType(voidptr_ty, [voidptr_ty, bd.SIZE_T], var_arg=False)
-        realloc = ir.Function(self.module, printf_ty, name="realloc")
+        memcpy_ty = ir.FunctionType(ir.VoidType(), [voidptr_ty, voidptr_ty, bd.SIZE_T], var_arg=False)
+        realloc = ir.Function(self.module, memcpy_ty, name="memcpy")
         return realloc
     

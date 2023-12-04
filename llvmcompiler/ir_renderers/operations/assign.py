@@ -10,17 +10,19 @@ class AssignOperation(Operation):
         self.arguments = self.get_variables()
         self.convert_literal_types()
         var = None
-        if isinstance(self.arguments[0], vari.Variable):
-            var = self.builder.set_variable(self.arguments[0], self.arguments[1])
-        elif isinstance(self.arguments[0], vari.Value):
-            try:
-                self.builder.cursor.store(self.process_arg(self.arguments[1]), self.arguments[0].value)
-            # TODO: inttoptr might not be the best solution to this problem.
-            # Search for a better solution
-            except TypeError:
-                int_to_ptr = self.builder.cursor.inttoptr(self.process_arg(self.arguments[1]), self.arguments[0].type.value.pointee)
-                self.builder.cursor.store(int_to_ptr, self.arguments[0].value)
+        
+        if isinstance(self.arguments[0], vari.Value):
+            print(self.arguments[1])
+            self.builder.cursor.store(self.process_arg(self.arguments[1]), self.arguments[0].value)
+            
             var = self.arguments[0]
+        elif self.arguments[1].is_instruction:
+            if self.arguments[0].type.value == self.arguments[1].type.value:
+                var = self.builder.declare_variable(vari.Variable(self.builder, *self.arguments))
+            else:
+                print("Error: Function return type does not match assigning type.")
+        elif isinstance(self.arguments[0], vari.Variable):
+            var = self.builder.set_variable(self.arguments[0], self.arguments[1])
 
         self.builder.cursor.comment("OP::assign END")
         # returns the variable that was assigned to so you can assign variables in operations

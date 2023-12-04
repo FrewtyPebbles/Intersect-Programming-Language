@@ -13,8 +13,6 @@ class PrecisionType(ct.CompilerType):
         else:
             print("Error: Not a valid size for a precision type.")
 
-    def cast_ptr(self):
-        return PrecisionPointerType(self.size)
     
 class PrecisionPointerType(PrecisionType):
     def __init__(self, size:int) -> None:
@@ -33,8 +31,6 @@ class F32Type(PrecisionType):
         self._size = 32
         self.value = ir.FloatType()
 
-    def cast_ptr(self):
-        return F32PointerType()
     
 
 class F32PointerType(PrecisionType):
@@ -49,8 +45,6 @@ class D64Type(PrecisionType):
         self._size = 64
         self.value = ir.DoubleType()
 
-    def cast_ptr(self):
-        return D64PointerType()
     
 
 class D64PointerType(PrecisionType):

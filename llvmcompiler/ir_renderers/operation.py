@@ -52,10 +52,7 @@ class Operation:
         if isinstance(arg, Variable):
             arg.parent = self.builder.function
             arg.module = self.builder.module
-            if not arg.heap and not arg.function_argument:
-                return arg.load()
-            else:
-                return arg.variable
+            return arg.variable
         elif isinstance(arg, Value):
             arg.parent = self.builder.function
             arg.module = self.builder.module

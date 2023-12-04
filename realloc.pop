@@ -1,0 +1,19 @@
+func realloc<PtrType>(ptr:$PtrType, new_size:i64, old_size:i64) ~> $PtrType {
+    let new_pointer = libc_malloc(new_size):$PtrType;
+    libc_memcpy(new_pointer:$i8, ptr:$i8, old_size);
+    libc_free(ptr:$i8);
+    return new_pointer;
+}
+
+export func test(num: i32) ~> i32 {
+    let pointer = libc_malloc(sizeof $i8):$i32;
+    pointer[0] = 100;
+    libc_printf("pointer 0 = %i\n":$c8, $pointer[0])
+    pointer = realloc?<i32>(pointer, sizeof $i32  * 2, sizeof $i32);
+    libc_printf("realloc1 %i\n":$c8, $pointer[0]);
+    pointer[1] = 200;
+    libc_printf("vector data: %i, %i\n":$c8, $pointer[0], $pointer[1]);
+    libc_printf("end\n":$c8);
+    return 0;
+}
+

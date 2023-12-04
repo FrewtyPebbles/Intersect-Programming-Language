@@ -64,14 +64,15 @@ class CallOperation(Operation):
                 arguments.append(arg)
         
         print(f_to_c.name)
+        
         print(arguments)
         
         func_call = self.builder.cursor.call(f_to_c, arguments)
-
+        print(func_call.type)
 
         self.builder.cursor.comment("OP::call end")
 
-        return vari.Value(CompilerType.create_from(func_call.type), func_call.get_reference(), True)
+        return vari.Value(CompilerType.create_from(func_call.type), func_call, True)
     
     def __repr__(self) -> str:
         return f"({self.__class__.__name__} : {{function: {self.function}, arguments: {self.arguments}}})"

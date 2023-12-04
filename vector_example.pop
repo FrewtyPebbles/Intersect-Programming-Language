@@ -1,3 +1,10 @@
+func realloc<PtrType>(ptr:$PtrType, new_size:i64, old_size:i64) ~> $PtrType {
+    let new_pointer = libc_malloc(new_size):$PtrType;
+    libc_memcpy(new_pointer:$i8, ptr:$i8, old_size);
+    libc_free(ptr:$i8);
+    return new_pointer;
+}
+
 struct Vector<ItemType> {
     data:$ItemType;
     length:i32;
@@ -11,9 +18,9 @@ struct Vector<ItemType> {
     func push(self:$Vector<ItemType>, item:ItemType) {
         self.length = $self.length + 1;
         
-        self.data = libc_realloc($self.data:$i8, sizeof $ItemType  * $self.length:i64):$ItemType;
+        self.data = realloc?<ItemType>($self.data, sizeof $ItemType  * $self.length:i64, sizeof $ItemType  * ($self.length - 1):i64);
 
-        self.data[$self.length - 1] = item;
+        $self.data[$self.length - 1] = item;
         return;
     }
     

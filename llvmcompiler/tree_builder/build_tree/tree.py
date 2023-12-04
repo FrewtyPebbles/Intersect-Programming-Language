@@ -172,13 +172,21 @@ class TreeBuilder:
                 return ret_operation(self.context_label_trunk(tok.value, templates))
 
 
-    def context_label_trunk(self, label:str, templates:list[str]):
+    def context_label_trunk(self, label:str, templates:list[str], dereferences = 0):
         template_args:list[tb.Token] = []
         function_args = []
         is_function = False
         label_product = label
         is_index = False
         index_args = []
+
+        # helper function to add dereferences to lhs
+        def prepend_derefs(instr):
+            ret_ins = instr
+            for _ in range(dereferences):
+                ret_ins = DereferenceOperation([ret_ins])
+
+            return ret_ins
 
         # helper function to call function
         def call_function(templates):
@@ -191,11 +199,11 @@ class TreeBuilder:
                 while ooo_ret[1].type != tb.SyntaxToken.parentheses_end:
                     ooo_ret = self.context_order_of_operations(templates)
                     function_args.append(ooo_ret[0])
-            print(f"""FUNCTION {{
+            print(f"""\nFUNCTION {{
     LABEL     = {label_product}
     ARGS      = {function_args}
     TEMPLATES = {template_args}
-}}""")
+}}\n""")
             return CallOperation(label_product, function_args, template_args)
         
         for itteration, tok in enumerate(self.token_list):
@@ -205,7 +213,7 @@ class TreeBuilder:
             elif (is_function or itteration == 0)\
             and tok.type == tb.SyntaxToken.parentheses_start:
                 # is a function that may be a template function
-                return call_function(templates)
+                return prepend_derefs(call_function(templates))
             elif is_function and tok.type == tb.SyntaxToken.less_than_op:
                 # Get the templates
                 template_args = self.context_template(templates)
@@ -213,7 +221,7 @@ class TreeBuilder:
                 # is not a function
                 if tok.type == tb.SyntaxToken.assign_op:
                     if is_index:
-                        label_product = IndexOperation([label_product, *index_args])
+                        label_product = prepend_derefs(IndexOperation([label_product, *index_args]))
                     
                     ooo_ret = self.context_order_of_operations(templates)
                     print(f"ASSIGN OP {[label_product, ooo_ret[0]]}")
@@ -234,20 +242,20 @@ class TreeBuilder:
                     if is_index:
                         label_product = IndexOperation([label_product, *index_args])
                     
-                    return call_function(templates)
+                    return prepend_derefs(call_function(templates))
                 elif (tok.type.is_ending_token or tok.type.is_lhs_rhs_operator) and is_index:
                     # this is for if we reach an ending token
                     # BUG
                     self.token_list.prepend(tok)
                     print(f"LABEL RET {[label_product, *index_args]}")
-                    return IndexOperation([label_product, *index_args])
+                    return prepend_derefs(IndexOperation([label_product, *index_args]))
                 elif tok.type.is_ending_token or tok.type.is_lhs_rhs_operator:
                     self.token_list.prepend(tok)
-                    return label_product
+                    return prepend_derefs(label_product)
                 elif tok.type == tb.SyntaxToken.cast_op and is_index:
-                    return CastOperation([IndexOperation([label_product, *index_args]), self.context_type_trunk(templates)])
+                    return prepend_derefs(CastOperation([IndexOperation([label_product, *index_args]), self.context_type_trunk(templates)]))
                 else:
-                    return label_product
+                    return prepend_derefs(label_product)
 
 
     def context_define(self, templates:list[str]):
@@ -282,15 +290,21 @@ class TreeBuilder:
         This is where lines of code/scopes are parsed from.
         """
         scope = []
+        deref = 0
+
         for tok in self.token_list:
             match tok.type:
+                case tb.SyntaxToken.dereference_op:
+                    deref += 1
+                    continue
                 case tb.SyntaxToken.scope_end:
                     break
                 case tb.SyntaxToken.let_keyword:
                     scope.append(self.context_define(templates))
 
                 case tb.SyntaxToken.label:
-                    scope.append(self.context_label_trunk(tok.value, templates))
+                    scope.append(self.context_label_trunk(tok.value, templates, deref))
+                    deref = 0
                 case tb.SyntaxToken.return_op:
                     ret_val = self.context_order_of_operations(templates)
                     if ret_val[0] == None:
@@ -360,7 +374,6 @@ class TreeBuilder:
                     scope = self.context_scope_trunk([*templates, *template_definition])
                     break
 
-        
         return FunctionDefinition(name, arguments, return_type, False, template_definition, scope, extern=extern)
     
     def context_struct_definition(self):

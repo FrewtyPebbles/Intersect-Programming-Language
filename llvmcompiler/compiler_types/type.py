@@ -21,6 +21,8 @@ class CompilerType:
         if isinstance(ir_type, ir.ArrayType):
             return ArrayType(CompilerType.create_from(ir_type.element), ir_type.count)
 
+        ptr_count = ir_type._to_string().count("*")
+        
         # check Scalars
         if ir_type == ir.VoidType():
             return VoidType()
@@ -37,18 +39,36 @@ class CompilerType:
         elif ir_type == ir.DoubleType():
             return D64Type()
         # pointer scalars
-        elif ir_type == ir.IntType(1).as_pointer():
-            return BoolType().cast_ptr()
-        elif ir_type == ir.IntType(8).as_pointer():
-            return I8Type().cast_ptr()
-        elif ir_type == ir.IntType(32).as_pointer():
-            return I32Type().cast_ptr()
-        elif ir_type == ir.IntType(64).as_pointer():
-            return I64Type().cast_ptr()
-        elif ir_type == ir.FloatType().as_pointer():
-            return F32Type().cast_ptr()
-        elif ir_type == ir.DoubleType().as_pointer():
-            return D64Type().cast_ptr()
+        elif ptr_count:
+
+            #ptr types
+            bool_ptr = BoolType().cast_ptr()
+            i8_ptr = I8Type().cast_ptr()
+            i32_ptr = I32Type().cast_ptr()
+            i64_ptr = I64Type().cast_ptr()
+            f32_ptr = F32Type().cast_ptr()
+            d64_ptr = D64Type().cast_ptr()
+            
+            while True:
+                match ir_type:
+                    case bool_ptr.value:
+                        return bool_ptr
+                    case i8_ptr.value:
+                        return i8_ptr
+                    case i32_ptr.value:
+                        return i32_ptr
+                    case i64_ptr.value:
+                        return i64_ptr
+                    case f32_ptr.value:
+                        return f32_ptr
+                    case d64_ptr.value:
+                        return d64_ptr
+                bool_ptr.cast_ptr()
+                i8_ptr.cast_ptr()
+                i32_ptr.cast_ptr()
+                i64_ptr.cast_ptr()
+                f32_ptr.cast_ptr()
+                d64_ptr.cast_ptr()
 
     def render_template(self):
         pass
