@@ -12,14 +12,16 @@ func free<PtrType>(ptr:$PtrType) {
 export func test(num: i32) ~> i32 {
     let pointer = malloc?<i32>(1);
     pointer[0] = 100;
-    libc_printf("pointer 0 = %i\n":$c8, $pointer[0])
+    libc_printf("malloc %i\n":$c8, $pointer[0])
     pointer = realloc?<i32>(pointer, 2);
-    libc_printf("realloc1 %i\n":$c8, $pointer[0]);
     pointer[1] = 200;
+    libc_printf("realloc1 %i\n":$c8, $pointer[1]);
     pointer = realloc?<i32>(pointer, 3);
-    pointer[2] = 200;
+    pointer[2] = 300;
     libc_printf("realloc2 %i\n":$c8, $pointer[2]);
+
     libc_printf("vector data: %i, %i, %i\n":$c8, $pointer[0], $pointer[1], $pointer[2]);
+    
     libc_printf("end\n":$c8);
     free?<i32>(pointer);
     return 0;

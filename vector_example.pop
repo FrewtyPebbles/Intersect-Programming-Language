@@ -1,31 +1,41 @@
-func realloc<PtrType>(ptr:$PtrType, new_size:i64, old_size:i64) ~> $PtrType {
-    let new_pointer = libc_malloc(new_size):$PtrType;
-    libc_memcpy(new_pointer:$i8, ptr:$i8, old_size);
-    libc_free(ptr:$i8);
-    return new_pointer;
+func realloc<PtrType>(ptr:$PtrType, new_size:i32) ~> $PtrType {
+    return libc_realloc(ptr:$i8, sizeof $PtrType * new_size:i64):$PtrType;
 }
 
 struct Vector<ItemType> {
     data:$ItemType;
+    capacity:i32;
     length:i32;
 
     func init(self:$Vector<ItemType>) {
         self.data = libc_malloc(sizeof $ItemType):$ItemType;
+        self.capacity = 1;
         self.length = 0;
         return;
     }
 
     func push(self:$Vector<ItemType>, item:ItemType) {
+        ($self.data)[$self.capacity - 1] = item;
+
+        self.capacity = $self.capacity + 1;
         self.length = $self.length + 1;
         
-        self.data = realloc?<ItemType>($self.data, sizeof $ItemType  * $self.length:i64, sizeof $ItemType  * ($self.length - 1):i64);
+        self.data = realloc?<ItemType>($self.data, $self.capacity);
+        return;
+    }
 
-        $self.data[$self.length - 1] = item;
+    func pop(self:$Vector<ItemType>) {
+        self.capacity = $self.capacity - 1;
+        self.length = $self.length - 1;
+        self.data = realloc?<ItemType>($self.data, $self.capacity);
         return;
     }
     
     func get(self:$Vector<ItemType>, index:i32) ~> ItemType {
-        return $$self.data[index];
+        return $(($self.data)[index]);
+    }
+    func top(self:$Vector<ItemType>) ~> ItemType {
+        return $(($self.data)[$self.length-1]);
     }
 
     func del(self:$Vector<ItemType>) {
@@ -42,16 +52,18 @@ export func test(num: i32) ~> i32 {
     libc_printf("Init called.\n":$c8);
 
     vec.push(10);
-    libc_printf("Push called.\n":$c8);
+    libc_printf("push %i, len %i\n":$c8, vec.get(0), $vec.length);
     vec.push(7878);
-    libc_printf("Push called.\n":$c8);
+    libc_printf("push %i, len %i\n":$c8, vec.get(1), $vec.length);
     vec.push(26);
-    libc_printf("Push called.\n":$c8);
-    
+    libc_printf("push %i, len %i\n":$c8, vec.get(2), $vec.length);
 
     libc_printf("pushed data: %i, %i, %i\n":$c8, vec.get(0), vec.get(1), vec.get(2));
-    libc_printf("get called.\n":$c8);
+
+
+    libc_printf("vector top: %i\n":$c8, vec.top());
+
     vec.del();
-    libc_printf("Del called.\n":$c8);
-    return 1;
+    libc_printf("end.\n":$c8);
+    return 0;
 }
