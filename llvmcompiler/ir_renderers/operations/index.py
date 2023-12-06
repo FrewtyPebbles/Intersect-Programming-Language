@@ -4,6 +4,7 @@ from llvmlite import ir
 import llvmcompiler.ir_renderers.variable as vari
 import llvmcompiler.ir_renderers.function as fn
 import llvmcompiler.ir_renderers.struct as st
+from enum import Enum
 
 indexes_type = list[ir.LoadInstr | ir.GEPInstr | ir.AllocaInstr | str | ir.Constant | ct.CompilerType | tuple[str, vari.Variable]]
 
@@ -11,6 +12,11 @@ indexes_type = list[ir.LoadInstr | ir.GEPInstr | ir.AllocaInstr | str | ir.Const
 #
 # - Make a separate gep instruction whenever the next index is for a non struct type
 #
+
+class IndType(Enum):
+    Struct = 1
+    Array = -1
+    Unknown = 0
 
 class IndexOperation(Operation):
     def __init__(self, arguments: list[arg_type] = []) -> None:
@@ -30,19 +36,23 @@ class IndexOperation(Operation):
         else:
             pointer = self.arguments[0].value
         prev_struct:st.StructType = self.arguments[0].type
-        is_struct = 0
+        is_struct = IndType.Struct if isinstance(self.arguments[0].type, st.StructType) else IndType.Array
         step_over_ptr = isinstance(self.arguments[0].type, st.StructType)
+
+        #print(f"INDEX ARGS {self.arguments}")
         for argument in self.arguments[1:]:
             if isinstance(argument, int):
                 indexes.append(ir.IntType(32)(argument))
             elif isinstance(argument, ct.LookupLabel):
-                if is_struct <= 0:
-                    if is_struct == -1:
+                if is_struct in {IndType.Unknown, IndType.Array}:
+                    if is_struct == IndType.Array:
                         pointer = self.gep(pointer, indexes, step_over_ptr)
                         indexes = []
                         step_over_ptr = True
-                    is_struct = 1
+                    is_struct = IndType.Struct
+
                 nxt = prev_struct.struct.get_attribute(argument.value, get_definition=True)
+
                 if isinstance(nxt, fn.FunctionDefinition):
                     self.ret_func = nxt
                     break
@@ -51,12 +61,15 @@ class IndexOperation(Operation):
                     prev_struct = prev_struct.struct.raw_attributes[argument.value]
             else:
                 # for [] operations
-                if is_struct == 1:
+                if is_struct == IndType.Struct:
                     pointer = self.gep(pointer, indexes, step_over_ptr)
                     indexes = []
-                    is_struct = -1
+                    is_struct = IndType.Array
                     step_over_ptr = False
+
+                #print(f"ARGU = {argument}")
                 processed_arg = self.process_arg(argument)
+                #print(f"PROCESSED ARGU = {processed_arg}")
                 indexes.append(processed_arg)
 
         pointer = self.gep(pointer, indexes, step_over_ptr)
@@ -77,8 +90,11 @@ class IndexOperation(Operation):
     
     def gep(self, ptr:ir.Instruction, indexes:list, step_over_pointer = True):
         if step_over_pointer:
+            #print(ptr)
+            #print(indexes)
             return self.builder.cursor.gep(ptr, [ir.IntType(32)(0), *indexes])
         else:
+            #print(indexes)
             return self.builder.cursor.gep(ptr, [*indexes])
         
             

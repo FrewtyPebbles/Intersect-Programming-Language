@@ -87,6 +87,7 @@ class Struct:
         
         self.size = 0
         self.template_types = template_types
+        self.ir_struct = None
 
     def get_template_type(self, name:str):
         typ = self.template_types[self.struct_definition.get_template_index(name)]
@@ -114,19 +115,28 @@ class Struct:
     def link_raw_attributes(self):
         """
         This adds attributes parent and module to the attributes.
-        Also changes any attributes that are referencing its own type to a pointer.
         """
         for key in self.raw_attributes.keys():
             
             self.raw_attributes[key].module = self.module
             self.raw_attributes[key].parent = self
 
-            attr = self.raw_attributes[key]
-            if isinstance(attr, StructType):
-                if attr.struct.struct_definition.name == self.struct_definition.name:
-                    self.raw_attributes[key] = self.raw_attributes[key].create_ptr()
+            # attr = self.raw_attributes[key]
+            # if isinstance(attr, StructType):
+            #     if attr.struct.struct_definition.name == self.struct_definition.name:
+            #         self.raw_attributes[key] = self.raw_attributes[key].create_ptr()
+
+    def get_type(self, func:fn.Function):
+        struct = StructType(self.name, self.template_types, self.module)
+        struct.parent = func
+        return struct
 
     def get_attribute(self, name:str, template_types:list[ct.CompilerType] = [], get_definition = False) -> fn.Function | vari.Value:
+        """
+        Gets an attribute on the struct.  (Includes member functions.)
+
+        The attribute type is a Value.
+        """
         attrs = {**self.attributes, **self.functions}
         try:
             attr = attrs[name]
@@ -138,42 +148,55 @@ class Struct:
             else:
                 return attr
         except KeyError:
-            print(f"Error: {name} is not a valid attribute of {self.struct_definition.name}!\n The valid attributes are:\n{attrs}")
+            definition_attrs = {"attributes":self.struct_definition.attributes, "functions":self.struct_definition.functions}
+            print(f"Error: {name} is not a valid attribute of {self.struct_definition.name}!\n The valid attributes are:\n{definition_attrs}")
 
 class StructType(ct.CompilerType):
     """
     This is the type reference to the struct.
     """
     def __init__(self, name:str, template_types:list[ct.CompilerType] = [], module:mod.Module = None) -> None:
-        self.module = module
+        self.module:mod.Module = module
         self.name = name
         self.template_types = template_types
+        self.templates_linked = False
 
     @property
     def struct(self) -> Struct:
-        for tt in self.template_types:
-            tt.module = self.module
-            tt.parent = self.parent
+        if not self.templates_linked:
+            for tt in self.template_types:
+                tt.module = self.module
+                tt.parent = self.parent
+                self.templates_linked = True
         return self.module.get_struct(self.name)\
             .get_struct(self.template_types)
 
     @property
     def size(self):
-        for tt in self.template_types:
-            tt.module = self.module
-            tt.parent = self.parent
+        if not self.templates_linked:
+            for tt in self.template_types:
+                tt.module = self.module
+                tt.parent = self.parent
+                self.templates_linked = True
         return self.struct.size
     
     @property
     def value(self):
-        for tt in self.template_types:
-            tt.module = self.module
-            tt.parent = self.parent
+        if not self.templates_linked:
+            for tt in self.template_types:
+                tt.module = self.module
+                tt.parent = self.parent
+                self.templates_linked = True
         return self.struct.ir_struct
     
     @value.setter
     def value(self, val):
         self.struct.ir_struct = val
+
+    def cast_ptr(self):
+        struct = StructPointerType(self.name, self.template_types, self.module, 1)
+        struct.parent = self.parent
+        return struct
     
     
     def __repr__(self) -> str:
@@ -199,4 +222,11 @@ class StructPointerType(StructType):
     @value.setter
     def value(self, value):
         self._value = value
+
+    def cast_ptr(self):
+        self.ptr_count += 1
+        return self
+    
+    def __repr__(self) -> str:
+        return f"(STRUCT PTR TYPE : {{name: {self.name}, templates_types: {self.template_types}, pointers: {self.ptr_count}}})"
         

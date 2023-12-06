@@ -1,16 +1,22 @@
+from __future__ import annotations
 from llvmlite import ir
 from copy import deepcopy, copy
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    import llvmcompiler.modules.module as md
 
 class CompilerType:
     """
     This class is inherited by all type classes.
     """
+
+    
     _size:int
     value:ir.Type
     parent: None
     module: None
     @staticmethod
-    def create_from(ir_type:ir.Type):
+    def create_from(ir_type:ir.Type | ir.IdentifiedStructType, module:md.Module = None, func = None):
         """
         Create an instance of the type from the llvm IR type.
         This is not inherited and is used to create the correct
@@ -19,56 +25,52 @@ class CompilerType:
         from .types import ArrayType, VoidType, BoolType, I32Type, I8Type, I64Type, F32Type, D64Type
         # check datastructures
         if isinstance(ir_type, ir.ArrayType):
-            return ArrayType(CompilerType.create_from(ir_type.element), ir_type.count)
+            return ArrayType(CompilerType.create_from(ir_type.element, module, func), ir_type.count)
 
         ptr_count = ir_type._to_string().count("*")
         
-        # check Scalars
-        if ir_type == ir.VoidType():
-            return VoidType()
-        elif ir_type == ir.IntType(1):
-            return BoolType()
-        elif ir_type == ir.IntType(8):
-            return I8Type()
-        elif ir_type == ir.IntType(32):
-            return I32Type()
-        elif ir_type == ir.IntType(64):
-            return I64Type()
-        elif ir_type == ir.FloatType():
-            return F32Type()
-        elif ir_type == ir.DoubleType():
-            return D64Type()
-        # pointer scalars
-        elif ptr_count:
+        bool_ = "i1"
+        i8 = "i8"
+        i32 = "i32"
+        i64 = "i64"
+        f32 = "float"
+        d64 = "double"
+        
+        chosen_type = I32Type()
 
-            #ptr types
-            bool_ptr = BoolType().cast_ptr()
-            i8_ptr = I8Type().cast_ptr()
-            i32_ptr = I32Type().cast_ptr()
-            i64_ptr = I64Type().cast_ptr()
-            f32_ptr = F32Type().cast_ptr()
-            d64_ptr = D64Type().cast_ptr()
-            
-            while True:
-                match ir_type:
-                    case bool_ptr.value:
-                        return bool_ptr
-                    case i8_ptr.value:
-                        return i8_ptr
-                    case i32_ptr.value:
-                        return i32_ptr
-                    case i64_ptr.value:
-                        return i64_ptr
-                    case f32_ptr.value:
-                        return f32_ptr
-                    case d64_ptr.value:
-                        return d64_ptr
-                bool_ptr.cast_ptr()
-                i8_ptr.cast_ptr()
-                i32_ptr.cast_ptr()
-                i64_ptr.cast_ptr()
-                f32_ptr.cast_ptr()
-                d64_ptr.cast_ptr()
+        base_type = ir_type._to_string().lstrip("%").replace("\"", "").rstrip("*")
+
+        #print(f"base_type: {base_type}")
+        
+        if base_type == bool_:
+            chosen_type = BoolType()
+        elif base_type == i8:
+            chosen_type = I8Type()
+        elif base_type == i32:
+            chosen_type = I32Type()
+        elif base_type == i64:
+            chosen_type = I64Type()
+        elif base_type == f32:
+            chosen_type = F32Type()
+        elif base_type == d64:
+            chosen_type = D64Type()
+        else:
+            for val in module.structs.values():
+                found = False
+                for s_key, struct in val.struct_aliases.items():
+                    if base_type == s_key:
+                        chosen_type = struct.get_type(func)
+                        found = True
+                        break
+                if found: break
+                            
+        for _ in range(ptr_count):
+            chosen_type = chosen_type.cast_ptr()
+
+        #print(f"Original: {ir_type._to_string()}")
+        #print(f"Chosen: {chosen_type}")
+
+        return chosen_type
 
     def render_template(self):
         pass

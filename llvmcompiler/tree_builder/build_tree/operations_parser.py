@@ -153,7 +153,7 @@ class PotentialOperation:
             case tb.SyntaxToken.dereference_op:
                 return DereferenceOperation(values)
             case tb.SyntaxToken.sizeof_op:
-                print(f"EMIT SIZEOF OPERATION {values}")
+                #print(f"EMIT SIZEOF OPERATION {values}")
                 return TypeSizeOperation(values)
             case tb.SyntaxToken.not_op:
                 return NotOperation(values)

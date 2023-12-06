@@ -38,11 +38,11 @@ class CastOperation(Operation):
         elif self.arguments[0].type.size > self.arguments[1].size:
             # downcast
             cast = self.builder.cursor.trunc(arg1, arg2.value)
-            print("Downcast")
+            #print("Downcast")
         elif self.arguments[0].type.size < self.arguments[1].size:
             # upcast
             cast = self.builder.cursor.sext(arg1, arg2.value)
-            print("Upcast")
+            #print("Upcast")
         else:
             print("Error: Invalid cast")
         

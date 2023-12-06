@@ -8,9 +8,8 @@ class DereferenceOperation(Operation):
         self.builder.cursor.comment("OP::dereference START")
         self.arguments = self.get_variables()
         #process arg1
-        print(self.arguments[0])
         res = self.arguments[0].load()
         
         self.builder.cursor.comment("OP::dereference END")
 
-        return vari.Value(CompilerType.create_from(res.type), res, True)
+        return vari.Value(CompilerType.create_from(res.type, self.builder.module, self.builder.function), res, True)

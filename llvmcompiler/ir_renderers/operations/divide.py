@@ -14,4 +14,4 @@ class DivideOperation(Operation):
         res:ir.Instruction = self.builder.cursor.sdiv(arg1, arg2)
         self.builder.cursor.comment("OP::divide END")
 
-        return vari.Value(self.arguments[0].type, res.get_reference(), True)
+        return vari.Value(self.arguments[0].type, res, True)

@@ -42,6 +42,9 @@ class FunctionDefinition:
         Use `get_function` to retrieve/write and retrieve functions from/to this variable
         """
 
+    def __repr__(self) -> str:
+        return f"(FUNC : [{self.name}]{self.arguments})"
+
     def get_function(self, template_types:list[ct.CompilerType] = []):
         mangled_name = self.get_mangled_name(template_types)
         if mangled_name in self.function_aliases.keys():

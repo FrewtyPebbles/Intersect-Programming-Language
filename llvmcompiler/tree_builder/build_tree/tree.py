@@ -134,11 +134,11 @@ class TreeBuilder:
                 push_val(self.context_single_argument_op(tok, templates))
             elif tok.type == tb.SyntaxToken.parentheses_start:
                 push_val(self.context_order_of_operations(templates)[0])
-            elif tok.type == tb.SyntaxToken.sqr_bracket_start:
-                print(f"BRACKETS LAST OP VAL = {current_op[0][0]}")
+            elif tok.type == tb.SyntaxToken.sqr_bracket_start or tok.type == tb.SyntaxToken.access_op:
+                #print(f"BRACKETS LAST OP VAL = {current_op[0][0]}")
                 self.token_list.prepend(tok)
                 current_op[0][0] = tb.OpValue(self.context_label_trunk(current_op[0][0].get_value(), templates, 0))
-                print(f"BRACKETS VAL {current_op[0][0].get_value()}")
+                #print(f"BRACKETS VAL {current_op[0][0].get_value()}")
             elif tok.type.is_ending_token:
                 last_tok = tok
                 break
@@ -147,18 +147,18 @@ class TreeBuilder:
         if len(operations) == 0 and len(current_op[0]) == 1:
             # push a single value.
             result = current_op[0][0].get_value()
-            print(f"NO ORDERING {result}")
+            #print(f"NO ORDERING {result}")
             return (result, last_tok)
         
         if len(operations) != 0:
             op_order = tb.OperationsOrder([tb.PotentialOperation(*op) for op in operations])
             result = op_order.get_tree()
-            print(f"ORDERED {result}")
+            #print(f"ORDERED {result}")
             return (result, last_tok)
         return (None, last_tok)
     
     def context_single_argument_op(self, op:tb.Token, templates:list[str]):
-        print(f"CONTEXT_SINGLE_ARGUMENT {op}")
+        #print(f"CONTEXT_SINGLE_ARGUMENT {op}")
         def ret_operation(arg):
             match op.type:
                 case tb.SyntaxToken.dereference_op:
@@ -202,11 +202,11 @@ class TreeBuilder:
                 while ooo_ret[1].type != tb.SyntaxToken.parentheses_end:
                     ooo_ret = self.context_order_of_operations(templates)
                     function_args.append(ooo_ret[0])
-            print(f"""\nFUNCTION {{
-    LABEL     = {label_product}
-    ARGS      = {function_args}
-    TEMPLATES = {template_args}
-}}\n""")
+#             print(f"""\nFUNCTION {{
+#     LABEL     = {label_product}
+#     ARGS      = {function_args}
+#     TEMPLATES = {template_args}
+# }}\n""")
             return CallOperation(label_product, function_args, template_args)
         
         for itteration, tok in enumerate(self.token_list):
@@ -227,14 +227,14 @@ class TreeBuilder:
                         label_product = prepend_derefs(IndexOperation([label_product, *index_args]), dereferences)
                     
                     ooo_ret = self.context_order_of_operations(templates)
-                    print(f"ASSIGN OP {[label_product, ooo_ret[0]]}")
+                    #print(f"ASSIGN OP {[label_product, ooo_ret[0]]}")
                     return AssignOperation([label_product, ooo_ret[0]])
                 elif tok.type == tb.SyntaxToken.sqr_bracket_start:
-                    print("SQR BRACKETS IN LABEL")
+                    #print("SQR BRACKETS IN LABEL")
                     is_index = True
                     ooo_ret = self.context_order_of_operations(templates)
-        
-                    index_args.extend([ooo_ret[0]])
+
+                    index_args.append(ooo_ret[0])
                 elif tok.type == tb.SyntaxToken.access_op:
                     is_index = True
                     
@@ -250,7 +250,7 @@ class TreeBuilder:
                 elif (tok.type.is_ending_token or tok.type.is_lhs_rhs_operator) and is_index:
                     # this is for if we reach an ending token
                     self.token_list.prepend(tok)
-                    print(f"LABEL RET {[label_product, *index_args]}")
+                    #print(f"LABEL RET {[label_product, *index_args]}")
                     return prepend_derefs(IndexOperation([label_product, *index_args]), dereferences)
                 elif tok.type.is_ending_token or tok.type.is_lhs_rhs_operator:
                     self.token_list.prepend(tok)
@@ -398,6 +398,8 @@ class TreeBuilder:
                 case tb.SyntaxToken.less_than_op:
                     templates = self.context_template_definition()
                     break
+                case tb.SyntaxToken.scope_start:
+                    break
         
         
         self.struct_namespace.append(name)
@@ -451,6 +453,7 @@ class TreeBuilder:
                 pointer = 0
 
     def context_template(self, templates:list[str]):
+        #print(self.struct_namespace)
         pointer = 0
         type_templates:list[CompilerType] = []
         for tok in self.token_list:
@@ -466,7 +469,7 @@ class TreeBuilder:
 
     def context_type_struct(self, name:str, templates:list[str], pointer = 0) -> CompilerType:
         """
-        Returns when an assignment, delimiter, or line_end (;) operator is reached
+        The type hint context for structs.
         """
         
         for tok in self.token_list:
@@ -477,6 +480,8 @@ class TreeBuilder:
                 else:
                     return StructType(name, temps)
             else:
+                if tok.type == tb.SyntaxToken.greater_than_op:
+                    self.token_list.prepend(tok)
                 if pointer > 0:
                     return StructPointerType(name, ptr_count=pointer)
                 else:

@@ -63,7 +63,7 @@ class TemplatePointer(Template):
     def value(self):
         if self._value == None:
             self._value = deepcopy(self.get_template_type().value)
-            for pn in range(self.ptr_count):
+            for _ in range(self.ptr_count):
                 self._value = self._value.as_pointer()
         return self._value
     

@@ -15,4 +15,4 @@ class EqualToOperation(op.Operation):
         res:ir.Instruction = self.builder.cursor.icmp_signed('==', arg1, arg2)
         self.builder.cursor.comment("OP::equal_to END")
 
-        return vari.Value(ct.CompilerType.create_from(res.type), res.get_reference(), True)
+        return vari.Value(ct.CompilerType.create_from(res.type, self.builder.module, self.builder.function), res, True)

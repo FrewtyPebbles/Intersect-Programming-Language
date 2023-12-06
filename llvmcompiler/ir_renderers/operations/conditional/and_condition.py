@@ -15,4 +15,4 @@ class AndOperation(Operation):
         res:ir.Instruction = self.builder.cursor.and_(arg1, arg2)
         self.builder.cursor.comment("OP::and END")
 
-        return vari.Value(CompilerType.create_from(res.type), res.get_reference(), True)
+        return vari.Value(CompilerType.create_from(res.type, self.builder.module, self.builder.function), res, True)

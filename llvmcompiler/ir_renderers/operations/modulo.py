@@ -14,4 +14,4 @@ class ModuloOperation(Operation):
         res:ir.Instruction = self.builder.cursor.srem(arg1, arg2)
         self.builder.cursor.comment("OP::modulo END")
 
-        return vari.Value(self.arguments[0].type, res.get_reference(), True)
+        return vari.Value(self.arguments[0].type, res, True)

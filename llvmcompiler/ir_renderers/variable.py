@@ -96,7 +96,6 @@ class Value:
     @parent.setter
     def parent(self, par:fn.Function):
         self._parent = par
-        print(self)
         self.type.parent = par
         self.type.module = par.module
 

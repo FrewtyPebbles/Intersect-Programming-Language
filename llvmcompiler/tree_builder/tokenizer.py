@@ -163,6 +163,9 @@ class Tokenizer:
         elif self.keyword == ">,":
             self.append_token_only(SyntaxToken(">"))
             self.append_token_only(SyntaxToken(","))
+        elif self.keyword == ">"*len(self.keyword):
+            for _ in range(len(self.keyword)):
+                self.append_token_only(SyntaxToken(">"))
         elif self.keyword == "?<":
             self.append_token_only(SyntaxToken("?"))
             self.append_token_only(SyntaxToken("<"))

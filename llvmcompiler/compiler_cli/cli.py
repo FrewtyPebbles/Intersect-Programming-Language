@@ -40,21 +40,23 @@ class CLI:
             self.tokenizer = Tokenizer(src, self.arguments["output"])
 
     def run(self):
+        print("Tokenizing...")
         token_list = self.tokenizer.tokenize()
         
         tree = TreeBuilder(token_list, self.arguments["source"], self.arguments["salt"])
 
-        for token in token_list:
-            tw = ""
-            if token.type == SyntaxToken.string_literal:
-                tw = "\""
-            sys.stdout.write(f"{tw}{token.value}{tw}{' ' * (30 - len(str(token.value)))}{token.type.name}\n")
-
+        # for token in token_list:
+        #     tw = ""
+        #     if token.type == SyntaxToken.string_literal:
+        #         tw = "\""
+        #     sys.stdout.write(f"{tw}{token.value}{tw}{' ' * (30 - len(str(token.value)))}{token.type.name}\n")
+        print("Building Concrete Tree...")
         tree.parse_trunk()
 
         
         module = tree.get_module()
-
+        
+        print("Emitting LLVM IR...")
         module.write()
 
         if self.arguments["show_ir"]:
@@ -103,7 +105,7 @@ class CLI:
             t1 = time.time()
 
             runtime = t1-t0
-            print(ret_)
-            print(f"compiled runtime:{runtime*1000}ms")
+            print(f"Program returned: {ret_}")
+            print(f"Compiled runtime:{runtime*1000}ms")
 
         

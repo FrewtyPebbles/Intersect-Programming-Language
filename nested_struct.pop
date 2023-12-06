@@ -1,0 +1,69 @@
+func realloc<PtrType>(ptr:$PtrType, new_size:i32) ~> $PtrType {
+    return libc_realloc(ptr:$i8, sizeof $PtrType * new_size:i64):$PtrType;
+}
+
+struct I32Store {
+    data:i32;
+}
+
+struct Vector<ItemType> {
+    data:$ItemType;
+    capacity:i32;
+    length:i32;
+
+    func init(self:$Vector<ItemType>) {
+        self.data = libc_malloc(sizeof $ItemType):$ItemType;
+        self.capacity = 1;
+        self.length = 0;
+        return;
+    }
+
+    func push(self:$Vector<ItemType>, item:i32) {
+        ($self.data)[$self.capacity - 1].data = item;
+
+        self.capacity = $self.capacity + 1;
+        self.length = $self.length + 1;
+        
+        self.data = realloc?<ItemType>($self.data, $self.capacity);
+        return;
+    }
+
+    func pop(self:$Vector<ItemType>) {
+        self.capacity = $self.capacity - 1;
+        self.length = $self.length - 1;
+        self.data = realloc?<ItemType>($self.data, $self.capacity);
+        return;
+    }
+    
+    func get(self:$Vector<ItemType>, index:i32) ~> i32 {
+        return $(($self.data)[index].data);
+    }
+    func top(self:$Vector<ItemType>) ~> ItemType {
+        return $(($self.data)[$self.length-1]);
+    }
+
+    func del(self:$Vector<ItemType>) {
+        libc_free($self.data:$i8);
+        return;
+    }
+}
+
+
+export func test(num: i32) ~> i32 {
+    let vec:Vector<I32Store>;
+
+    vec.init();
+    libc_printf("Init called.\n":$c8);
+
+    vec.push(10)
+
+    libc_printf("get 0: %i\n":$c8, vec.get(0));
+
+    vec.push(20)
+
+    libc_printf("get 0 and 1: %i and %i\n":$c8, vec.get(0), vec.get(1));
+
+    vec.del();
+    libc_printf("end.\n":$c8);
+    return 0;
+}
