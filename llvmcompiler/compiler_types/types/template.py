@@ -7,7 +7,6 @@ if TYPE_CHECKING:
     import llvmcompiler.ir_renderers.struct as st
     import llvmcompiler.ir_renderers.function as fn
 
-from copy import deepcopy
 
 # I32
 class Template(ct.CompilerType):
@@ -18,7 +17,7 @@ class Template(ct.CompilerType):
         self.parent: fn.Function | st.Struct = parent
 
     def get_template_type(self):
-        return deepcopy(self.parent.get_template_type(self.name))
+        return self.parent.get_template_type(self.name)
 
     @property
     def value(self):
@@ -62,7 +61,7 @@ class TemplatePointer(Template):
     @property
     def value(self):
         if self._value == None:
-            self._value = deepcopy(self.get_template_type().value)
+            self._value = self.get_template_type().value
             for _ in range(self.ptr_count):
                 self._value = self._value.as_pointer()
         return self._value

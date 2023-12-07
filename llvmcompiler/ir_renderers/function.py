@@ -1,7 +1,7 @@
 from __future__ import annotations
 from typing import Dict, List, Union, TYPE_CHECKING
 from llvmlite import ir
-
+from functools import lru_cache
 
 if TYPE_CHECKING:
     import llvmcompiler.ir_renderers.operations as op
@@ -58,6 +58,7 @@ class FunctionDefinition:
         new_function = Function(template_types, self)
         return new_function.write()
 
+    @lru_cache(None, True)
     def get_template_index(self, name:str):
         return self.template_args.index(name)    
 
@@ -98,7 +99,7 @@ class Function:
             self.arguments[key].module = self.module
                 
 
-
+    @lru_cache(None, True)
     def get_template_type(self, name:str):
         try:
             typ = self.template_types[self.function_definition.get_template_index(name)]
@@ -144,6 +145,7 @@ class Function:
         self.write_scope()
         
         return self
+
 
     def get_function_template_signature(self):
         for key in self.arguments.keys():

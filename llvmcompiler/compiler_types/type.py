@@ -1,6 +1,6 @@
 from __future__ import annotations
 from llvmlite import ir
-from copy import deepcopy, copy
+from copy import deepcopy
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     import llvmcompiler.modules.module as md

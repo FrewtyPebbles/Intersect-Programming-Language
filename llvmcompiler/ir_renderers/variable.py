@@ -1,4 +1,5 @@
 from __future__ import annotations
+from functools import lru_cache
 
 from llvmlite import ir
 
@@ -112,7 +113,6 @@ class Value:
         self.type.parent = self._builder.function
         self.type.module = self._builder.module
         
-
     def get_value(self):
         if self.is_instruction and not isinstance(self.value, str):
             return self.value
