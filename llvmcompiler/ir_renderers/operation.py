@@ -3,7 +3,6 @@ from typing import TYPE_CHECKING, Self
 from enum import Enum
 from typing import List, Tuple, Union
 from llvmlite import ir
-from copy import deepcopy
 
 
 import llvmcompiler.compiler_types as ct
@@ -78,7 +77,7 @@ class Operation:
             if not self.arguments[a_n].is_instruction:
                 if isinstance(self.arguments[a_n].value, int) or\
                 self.arguments[a_n].value in {"true", "false"}:
-                    new_type = deepcopy(compare_arg.type)
+                    new_type = compare_arg.type
                     new_type.value = ir.IntType(new_type.size)
                     self.arguments[1].type = new_type
 

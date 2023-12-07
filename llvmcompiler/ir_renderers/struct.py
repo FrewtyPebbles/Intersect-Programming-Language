@@ -3,7 +3,6 @@ import llvmcompiler.compiler_types as ct
 import llvmcompiler.ir_renderers.function as fn
 import llvmcompiler.ir_renderers.variable as vari
 import llvmcompiler.modules as mod
-from copy import deepcopy
 
 class StructDefinition:
     """
@@ -214,7 +213,7 @@ class StructPointerType(StructType):
     @property
     def value(self):
         if self._value == None:
-            self._value = deepcopy(self.struct.ir_struct)
+            self._value = self.struct.ir_struct
             for pn in range(self.ptr_count):
                 self._value = self._value.as_pointer()
         return self._value

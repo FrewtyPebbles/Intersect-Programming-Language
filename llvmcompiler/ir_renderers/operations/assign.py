@@ -1,7 +1,6 @@
 from ..operation import Operation
 from llvmlite import ir
 import llvmcompiler.ir_renderers.variable as vari
-from copy import deepcopy
 
 class AssignOperation(Operation):
     def _write(self):

@@ -14,7 +14,6 @@ import llvmcompiler.compiler_types as ct
 from llvmcompiler.ir_renderers.builder_data import BuilderData
 from llvmcompiler.ir_renderers.scopes import IfBlock, ElseIfBlock, ElseBlock, Scope
 
-from copy import deepcopy
 
 
 
@@ -92,8 +91,8 @@ class Function:
         self.variables:Dict[str, Variable] = [{}]
         "This is all variables within the function scope."
 
-        self.arguments = deepcopy(self.function_definition.arguments)
-        self.return_type = deepcopy(self.function_definition.return_type)
+        self.arguments = self.function_definition.arguments
+        self.return_type = self.function_definition.return_type
         for key in self.arguments.keys():
             self.arguments[key].parent = self
             self.arguments[key].module = self.module
