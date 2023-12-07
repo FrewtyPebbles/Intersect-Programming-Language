@@ -1,3 +1,4 @@
+from functools import lru_cache
 from llvmcompiler.compiler_types import CompilerType, I64Type
 from ..operation import Operation
 from llvmlite import ir
@@ -7,6 +8,7 @@ class TypeSizeOperation(Operation):
     """
     Returns the size of a type as an llvm ir constant
     """
+    @lru_cache(32, True)
     def _write(self):
         self.builder.cursor.comment("OP::dereference START")
         self.arguments = self.get_variables()

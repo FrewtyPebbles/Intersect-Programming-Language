@@ -1,4 +1,5 @@
 from __future__ import annotations
+from functools import lru_cache
 from typing import TYPE_CHECKING, Self
 from enum import Enum
 from typing import List, Tuple, Union
@@ -35,6 +36,7 @@ class Operation:
         
         return new_args
 
+    @lru_cache(32, True)
     def get_variable(self, var_name:str):
         return self.builder.get_variable(var_name)
 
@@ -43,11 +45,13 @@ class Operation:
             self.arguments[a_n].parent = self.builder.function
             self.arguments[a_n].module = self.builder.module
 
+    @lru_cache(32, True)
     def process_arg(self, arg:arg_type):
         if isinstance(arg, str):
             arg = self.builder.get_variable(arg)
             arg.parent = self.builder.function
             arg.module = self.builder.module
+            return arg
         if isinstance(arg, Variable):
             arg.parent = self.builder.function
             arg.module = self.builder.module
@@ -59,6 +63,7 @@ class Operation:
         else:
             return arg
         
+    @lru_cache(32, True)
     def process_lhs_rhs_args(self):
         #process arg1
         arg1 = self.process_arg(self.arguments[0])
@@ -81,7 +86,7 @@ class Operation:
                     new_type.value = ir.IntType(new_type.size)
                     self.arguments[1].type = new_type
 
-
+    @lru_cache(32, True)
     def write_argument(self, raw_arg: arg_type):
         if isinstance(raw_arg, Operation):
             value = self.builder.function.create_operation(raw_arg).write()

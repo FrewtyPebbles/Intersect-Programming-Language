@@ -44,7 +44,6 @@ struct Vector<ItemType> {
     }
 }
 
-
 export func test(num: i32) ~> i32 {
     let vec:Vector<i32>;
 

@@ -1,3 +1,4 @@
+from functools import lru_cache
 import llvmcompiler.compiler_types as ct
 from ..operation import Operation, arg_type
 from llvmlite import ir
@@ -24,7 +25,6 @@ class IndexOperation(Operation):
         self.ret_func:fn.FunctionDefinition = None
         self.type = None
         
-
     def process_indexes(self):
 
 
@@ -80,13 +80,8 @@ class IndexOperation(Operation):
         
         return pointer
 
-    def cast_itter_i32(self, itter:list[ir.IntType]):
-        for i_n, item in enumerate(itter):
-            if item != ir.IntType(32):
-                try:
-                    itter[i_n] = self.builder.cursor.bitcast(item, ir.IntType(32))
-                except RuntimeError:
-                    print("Error: Cannot use i-type larger than 32 within the index operator.")
+
+    
     
     def gep(self, ptr:ir.Instruction, indexes:list, step_over_pointer = True):
         if step_over_pointer:
@@ -98,7 +93,7 @@ class IndexOperation(Operation):
             return self.builder.cursor.gep(ptr, [*indexes])
         
             
-
+    @lru_cache(32, True)
     def _write(self):
         self.builder.cursor.comment("OP::index START")
         self.arguments = self.get_variables()

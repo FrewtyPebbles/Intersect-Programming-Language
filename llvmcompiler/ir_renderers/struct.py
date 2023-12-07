@@ -1,4 +1,5 @@
 from __future__ import annotations
+from functools import lru_cache
 import llvmcompiler.compiler_types as ct
 import llvmcompiler.ir_renderers.function as fn
 import llvmcompiler.ir_renderers.variable as vari
@@ -25,6 +26,7 @@ class StructDefinition:
         Use `get_struct` to retrieve/write and retrieve structs from/to this variable
         """
 
+    
     def get_struct(self, template_types:list[ct.CompilerType] = None):
         template_types = [] if template_types == None else template_types
         mangled_name = self.get_mangled_name(template_types)
@@ -40,6 +42,7 @@ class StructDefinition:
         new_struct = Struct(template_types, self)
         return new_struct.write()
 
+    @lru_cache(32, True)
     def get_template_index(self, name:str):
         return self.templates.index(name)    
 
@@ -88,6 +91,7 @@ class Struct:
         self.template_types = template_types
         self.ir_struct = None
 
+    @lru_cache(32, True)
     def get_template_type(self, name:str):
         typ = self.template_types[self.struct_definition.get_template_index(name)]
         if isinstance(typ, ct.Template):
@@ -125,11 +129,13 @@ class Struct:
             #     if attr.struct.struct_definition.name == self.struct_definition.name:
             #         self.raw_attributes[key] = self.raw_attributes[key].create_ptr()
 
+    @lru_cache(32, True)
     def get_type(self, func:fn.Function):
         struct = StructType(self.name, self.template_types, self.module)
         struct.parent = func
         return struct
 
+    @lru_cache(32, True)
     def get_attribute(self, name:str, template_types:list[ct.CompilerType] = [], get_definition = False) -> fn.Function | vari.Value:
         """
         Gets an attribute on the struct.  (Includes member functions.)

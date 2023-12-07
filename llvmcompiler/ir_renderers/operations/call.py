@@ -1,3 +1,4 @@
+from functools import lru_cache
 from llvmcompiler.compiler_types.type import CompilerType
 from ..operation import Operation, arg_type
 from llvmlite import ir
@@ -12,6 +13,7 @@ class CallOperation(Operation):
         self.template_arguments = template_arguments
         self.function:str | FunctionDefinition | Operation = function
     
+    @lru_cache(32, True)
     def get_function(self):
         if isinstance(self.function, Operation):
             self.function: tuple[ir.Instruction, FunctionDefinition] = self.write_argument(self.function)
@@ -37,7 +39,7 @@ class CallOperation(Operation):
         f_to_c = function_obj.function
         return f_to_c
     
-
+    @lru_cache(32, True)
     def _write(self):
         self.builder.cursor.comment("OP::call START")
         # cast the arguments

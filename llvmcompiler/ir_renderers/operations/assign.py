@@ -1,3 +1,4 @@
+from functools import lru_cache
 from ..operation import Operation
 from llvmlite import ir
 import llvmcompiler.ir_renderers.variable as vari

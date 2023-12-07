@@ -1,4 +1,5 @@
 from __future__ import annotations
+from functools import lru_cache
 import llvmcompiler.ir_renderers.function as fn
 from llvmlite import ir
 import llvmcompiler.compiler_types as ty
@@ -40,7 +41,7 @@ class Module:
             elif isinstance(scope_line, st.StructDefinition):
                 self.append_struct(scope_line)
 
-
+    @lru_cache(32, True)
     def get_struct(self, name:str):
         """
         When checking "label" type names in the syntax tree builder, this is the function you should call.

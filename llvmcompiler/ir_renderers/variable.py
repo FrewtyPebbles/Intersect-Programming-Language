@@ -112,7 +112,8 @@ class Value:
         self._builder = value
         self.type.parent = self._builder.function
         self.type.module = self._builder.module
-        
+
+    @lru_cache(32, True)  
     def get_value(self):
         if self.is_instruction and not isinstance(self.value, str):
             return self.value
@@ -124,6 +125,7 @@ class Value:
             
         return self.type.value(self.value)
     
+
     def write(self) -> ir.AllocaInstr:
         if isinstance(self.value, ir.Instruction):
             return self.value

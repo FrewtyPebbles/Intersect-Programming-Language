@@ -16,6 +16,9 @@ class Template(ct.CompilerType):
         self._value = None
         self.parent: fn.Function | st.Struct = parent
 
+    def __hash__(self) -> int:
+        return hash(f"{self.name}{self._value}")
+
     def get_template_type(self):
         return self.parent.get_template_type(self.name)
 
@@ -53,6 +56,9 @@ class TemplatePointer(Template):
     def __init__(self, name="", parent: fn.Function | st.Struct = None, ptr_count = 0) -> None:
         super().__init__(name, parent)
         self.ptr_count = ptr_count
+
+    def __hash__(self) -> int:
+        return hash(f"{self.name}{self._value}{self.ptr_count}")
     
     def get_template_type(self):
         ptr = super().get_template_type()

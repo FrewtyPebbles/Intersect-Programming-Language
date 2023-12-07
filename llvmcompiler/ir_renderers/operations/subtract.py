@@ -1,9 +1,11 @@
+from functools import lru_cache
 from llvmcompiler.compiler_types.type import CompilerType
 from ..operation import Operation
 from llvmlite import ir
 import llvmcompiler.ir_renderers.variable as vari
 
 class SubtractOperation(Operation):
+    @lru_cache(32, True)
     def _write(self):
         self.builder.cursor.comment("OP::subtract START")
         self.arguments = self.get_variables()

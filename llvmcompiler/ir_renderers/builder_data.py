@@ -1,4 +1,5 @@
 from __future__ import annotations
+from functools import lru_cache
 
 from typing import Dict, List, Union
 from llvmlite import ir
@@ -131,6 +132,7 @@ class BuilderData:
                 self.cursor.store(value, variable.variable)
         return variable
 
+    @lru_cache(32, True)
     def get_variable(self, name:str) -> Variable:
         for layer in reversed(self.memory_stack):
             var = layer.get_variable(name)
@@ -216,6 +218,7 @@ class MemoryStackFrame:
     
         return self.exit
 
+    @lru_cache(32, True)
     def get_variable(self, name:str) -> Variable | None:
         for layer in reversed(self.variables_stack):
             if name in layer.keys():

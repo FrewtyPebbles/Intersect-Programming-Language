@@ -44,6 +44,7 @@ class FunctionDefinition:
     def __repr__(self) -> str:
         return f"(FUNC : [{self.name}]{self.arguments})"
 
+    
     def get_function(self, template_types:list[ct.CompilerType] = []):
         mangled_name = self.get_mangled_name(template_types)
         if mangled_name in self.function_aliases.keys():
@@ -58,7 +59,7 @@ class FunctionDefinition:
         new_function = Function(template_types, self)
         return new_function.write()
 
-    @lru_cache(None, True)
+    @lru_cache(32, True)
     def get_template_index(self, name:str):
         return self.template_args.index(name)    
 
@@ -99,7 +100,7 @@ class Function:
             self.arguments[key].module = self.module
                 
 
-    @lru_cache(None, True)
+    @lru_cache(32, True)
     def get_template_type(self, name:str):
         try:
             typ = self.template_types[self.function_definition.get_template_index(name)]
@@ -146,7 +147,7 @@ class Function:
         
         return self
 
-    @lru_cache(None, True)
+    @lru_cache(32, True)
     def get_function_template_signature(self):
         for key in self.arguments.keys():
             self.arguments[key].parent = self
