@@ -146,7 +146,7 @@ class Function:
         
         return self
 
-
+    @lru_cache(None, True)
     def get_function_template_signature(self):
         for key in self.arguments.keys():
             self.arguments[key].parent = self
