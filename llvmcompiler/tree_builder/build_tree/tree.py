@@ -151,7 +151,7 @@ class TreeBuilder:
                 push_val(self.context_single_argument_op(tok, templates))
             elif tok.type == tb.SyntaxToken.parentheses_start:
                 push_val(self.context_order_of_operations(templates)[0])
-            elif tok.type == tb.SyntaxToken.sqr_bracket_start or tok.type == tb.SyntaxToken.access_op:
+            elif tok.type == tb.SyntaxToken.sqr_bracket_start or tok.type == tb.SyntaxToken.access_op or tok.type == tb.SyntaxToken.dereference_access_op:
                 #print(f"BRACKETS LAST OP VAL = {current_op[0][0]}")
                 self.token_list.prepend(tok)
                 current_op[0][0] = tb.OpValue(self.context_label_trunk(current_op[0][0].get_value(), templates, 0))
@@ -207,6 +207,7 @@ class TreeBuilder:
         label_product = label
         is_index = False
         index_args = []
+        
 
         # helper function to call function
         def call_function(templates):
@@ -252,9 +253,12 @@ class TreeBuilder:
                     ooo_ret = self.context_order_of_operations(templates)
 
                     index_args.append(ooo_ret[0])
-                elif tok.type == tb.SyntaxToken.access_op:
+                elif tok.type in {tb.SyntaxToken.access_op, tb.SyntaxToken.dereference_access_op}:
                     is_index = True
-                    
+                    if tok.type == tb.SyntaxToken.dereference_access_op:
+                        label_product = DereferenceOperation([IndexOperation([label_product, *index_args])])
+                        index_args = []
+                        
                 elif tok.type == tb.SyntaxToken.label and is_index:
                     # is a label after an access operator
                     index_args.append(LookupLabel(tok.value))

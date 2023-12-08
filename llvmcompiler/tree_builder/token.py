@@ -56,7 +56,7 @@ class SyntaxToken(Enum):
     line_end = ";"
     return_op = "return"
     access_op = "."
-    reverse_dereference_access_op = "."
+    dereference_access_op = "->"
     post_increment_op = "++"
     post_decrement_op = "--"
     struct_keyword = "struct"

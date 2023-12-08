@@ -85,8 +85,6 @@ class IndexOperation(Operation):
     
     def gep(self, ptr:ir.Instruction, indexes:list, step_over_pointer = True):
         if step_over_pointer:
-            #print(ptr)
-            #print(indexes)
             return self.builder.cursor.gep(ptr, [ir.IntType(32)(0), *indexes])
         else:
             #print(indexes)

@@ -34,7 +34,7 @@ export func test(num: i32) ~> i32 {
     second.next = first;
 
     first.display();
-    ($(($first.next).next)).display();
+    first.next->next->display();
 
     return 0;
 }
