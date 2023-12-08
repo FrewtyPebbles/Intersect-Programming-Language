@@ -93,7 +93,8 @@ class Struct:
 
     @lru_cache(32, True)
     def get_template_type(self, name:str):
-        typ = self.template_types[self.struct_definition.get_template_index(name)]
+        index = self.struct_definition.get_template_index(name)
+        typ = self.template_types[index]
         if isinstance(typ, ct.Template):
             typ = typ.get_template_type()
         return typ

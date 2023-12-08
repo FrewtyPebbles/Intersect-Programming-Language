@@ -1,0 +1,27 @@
+func realloc<PtrType>(ptr:$PtrType, new_size:i32) ~> $PtrType {
+    return libc_realloc(ptr:$i8, sizeof $PtrType * new_size:i64):$PtrType;
+}
+func malloc<PtrType>(size:i32) ~> $PtrType {
+    return libc_malloc(sizeof $i8 * size:i64):$PtrType;
+}
+func free<PtrType>(ptr:$PtrType) {
+    libc_free(ptr:$i8);
+    return;
+}
+
+struct Node{
+    data:i32;
+    next:$Node;
+}
+
+export func test(num: i32) ~> i32 {
+    
+    let root:Node;
+
+    let second:Node;
+
+    root.next = second;
+
+    return 0;
+}
+

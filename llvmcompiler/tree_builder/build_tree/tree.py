@@ -56,6 +56,23 @@ class TokenIterator:
     def dbg_print(self, dbgmsg:str):
         print(f"{dbgmsg}{[tok.value for tok in self.prepended] + [tok.value for tok in self.tokens[self.index::]]}")
 
+class StructOption:
+    """
+    This is the type used in the struct namespace that is compared against when checking if a struct exists.
+    """
+    def __init__(self, name:str, templates:list[str]) -> None:
+        self.name = name
+        self.templates = templates
+
+    @property
+    def has_templates(self):
+        return len(self.templates) != 0
+
+    def __eq__(self, other):
+        if isinstance(other, str):
+            return other == self.name
+        return other == self
+
 class TreeBuilder:
     """
     This class is used to build the concrete syntax
@@ -270,22 +287,23 @@ class TreeBuilder:
         name = ""
         typ = None
         for tok in self.token_list:
-            match tok.type:
-                case tb.SyntaxToken.label:
-                    name = tok.value
-                case tb.SyntaxToken.cast_op:
-                    typ = self.context_type_trunk(templates)
+            if tok.type == tb.SyntaxToken.label:
+                name = tok.value
+            elif tok.type == tb.SyntaxToken.cast_op:
+                typ = self.context_type_trunk(templates)
 
-                case tb.SyntaxToken.assign_op:
-                    ooo_ret = self.context_order_of_operations(templates)
+            elif tok.type == tb.SyntaxToken.assign_op:
+                ooo_ret = self.context_order_of_operations(templates)
+                
+                print([name, ooo_ret[0]])
+                return DefineOperation([name, ooo_ret[0]])
 
-                    return DefineOperation([name, ooo_ret[0]])
-
-                case tb.SyntaxToken.line_end:
-                    # if there is no assignment operator, then the line_end token will
-                    # not be consumed and this block will execute.
-                    # This allocates a variable without assigning a value.
-                    return DefineOperation([name, Value(typ)])
+            elif tok.type.is_ending_token:
+                # if there is no assignment operator, then the line_end token will
+                # not be consumed and this block will execute.
+                # This allocates a variable without assigning a value.
+                print([name, Value(typ)])
+                return DefineOperation([name, Value(typ)])
 
     
     def context_scope_trunk(self, templates:list[str]):
@@ -303,6 +321,7 @@ class TreeBuilder:
                 case tb.SyntaxToken.scope_end:
                     break
                 case tb.SyntaxToken.let_keyword:
+                    
                     scope.append(self.context_define(templates))
 
                 case tb.SyntaxToken.label:
@@ -402,7 +421,7 @@ class TreeBuilder:
                     break
         
         
-        self.struct_namespace.append(name)
+        self.struct_namespace.append(StructOption(name, templates))
         
         # then parse the definition of the struct within the curly braces
 
@@ -419,7 +438,7 @@ class TreeBuilder:
                 case tb.SyntaxToken.scope_end:
                     break
 
-                    
+        #print(f"name: {name} attrs:{attributes}")
         return StructDefinition(name, attributes, functions, templates)
 
 
@@ -453,7 +472,6 @@ class TreeBuilder:
                 pointer = 0
 
     def context_template(self, templates:list[str]):
-        #print(self.struct_namespace)
         pointer = 0
         type_templates:list[CompilerType] = []
         for tok in self.token_list:
@@ -471,6 +489,16 @@ class TreeBuilder:
         """
         The type hint context for structs.
         """
+        struct_option:StructOption = None
+        for struct in self.struct_namespace:
+            if name == struct:
+                struct_option = struct
+
+        if not struct_option.has_templates:
+            if pointer > 0:
+                return StructPointerType(name, ptr_count=pointer)
+            else:
+                return StructType(name)
         
         for tok in self.token_list:
             if tok.type == tb.SyntaxToken.less_than_op:
