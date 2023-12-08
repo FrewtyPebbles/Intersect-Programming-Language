@@ -132,7 +132,7 @@ class Struct:
 
     @lru_cache(32, True)
     def get_type(self, func:fn.Function):
-        struct = StructType(self.name, self.template_types, self.module)
+        struct = StructType(self.struct_definition.name, self.template_types, self.module)
         struct.parent = func
         return struct
 

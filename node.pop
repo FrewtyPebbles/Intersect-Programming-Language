@@ -9,11 +9,11 @@ func free<PtrType>(ptr:$PtrType) {
     return;
 }
 
-struct Node{
-    data:i32;
-    next:$Node;
+struct Node<DType>{
+    data:DType;
+    next:$Node<DType>;
 
-    func display(self:$Node) {
+    func display(self:$Node<DType>) {
         libc_printf("node_value: %i\n":$c8, $self.data);
         return;
     }
@@ -21,9 +21,9 @@ struct Node{
 
 export func test(num: i32) ~> i32 {
     
-    let first:Node;
+    let first:Node<i32>;
 
-    let second:Node;
+    let second:Node<i32>;
     
     first.data = 1;
 
@@ -34,7 +34,7 @@ export func test(num: i32) ~> i32 {
     second.next = first;
 
     first.display();
-    first.next->next->display();
+    ($(($first.next).next)).display();
 
     return 0;
 }

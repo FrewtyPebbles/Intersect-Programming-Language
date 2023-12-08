@@ -47,6 +47,7 @@ class Module:
         When checking "label" type names in the syntax tree builder, this is the function you should call.
         If the function returns None, then the struct does not exist so throw an error.
         """
+        
         if name in self.structs.keys():
             return self.structs[name]
         else:
