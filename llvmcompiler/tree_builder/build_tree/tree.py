@@ -295,14 +295,12 @@ class TreeBuilder:
             elif tok.type == tb.SyntaxToken.assign_op:
                 ooo_ret = self.context_order_of_operations(templates)
                 
-                print([name, ooo_ret[0]])
                 return DefineOperation([name, ooo_ret[0]])
 
             elif tok.type.is_ending_token:
                 # if there is no assignment operator, then the line_end token will
                 # not be consumed and this block will execute.
                 # This allocates a variable without assigning a value.
-                print([name, Value(typ)])
                 return DefineOperation([name, Value(typ)])
 
     

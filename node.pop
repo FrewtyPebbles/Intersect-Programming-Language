@@ -12,15 +12,29 @@ func free<PtrType>(ptr:$PtrType) {
 struct Node{
     data:i32;
     next:$Node;
+
+    func display(self:$Node) {
+        libc_printf("node_value: %i\n":$c8, $self.data);
+        return;
+    }
 }
 
 export func test(num: i32) ~> i32 {
     
-    let root:Node;
+    let first:Node;
 
     let second:Node;
+    
+    first.data = 1;
 
-    root.next = second;
+    second.data = 2;
+
+    first.next = second;
+
+    second.next = first;
+
+    first.display();
+    first.next->next->display();
 
     return 0;
 }

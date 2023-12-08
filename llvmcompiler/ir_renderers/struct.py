@@ -35,11 +35,11 @@ class StructDefinition:
         else:
             # make a new struct that potentially has templates
             new_struct = self.write(template_types)
-            self.struct_aliases[new_struct.name] = new_struct
             return new_struct
     
     def write(self, template_types:list[ct.CompilerType] = []):
         new_struct = Struct(template_types, self)
+        self.struct_aliases[new_struct.name] = new_struct
         return new_struct.write()
 
     @lru_cache(32, True)
@@ -166,6 +166,7 @@ class StructType(ct.CompilerType):
         self.name = name
         self.template_types = template_types
         self.templates_linked = False
+        self._struct = None
 
     @property
     def struct(self) -> Struct:
@@ -174,8 +175,10 @@ class StructType(ct.CompilerType):
                 tt.module = self.module
                 tt.parent = self.parent
                 self.templates_linked = True
-        return self.module.get_struct(self.name)\
-            .get_struct(self.template_types)
+        if self._struct == None:
+            self._struct = self.module.get_struct(self.name)\
+                .get_struct(self.template_types)
+        return self._struct
 
     @property
     def size(self):

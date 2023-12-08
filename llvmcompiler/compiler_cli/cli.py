@@ -40,7 +40,7 @@ class CLI:
             self.tokenizer = Tokenizer(src, self.arguments["output"])
 
     def run(self):
-        print("Tokenizing...")
+        if self.arguments["debug"]:print("Tokenizing...")
         token_list = self.tokenizer.tokenize()
         
         tree = TreeBuilder(token_list, self.arguments["source"], self.arguments["salt"])
@@ -50,13 +50,13 @@ class CLI:
         #     if token.type == SyntaxToken.string_literal:
         #         tw = "\""
         #     sys.stdout.write(f"{tw}{token.value}{tw}{' ' * (30 - len(str(token.value)))}{token.type.name}\n")
-        print("Building Concrete Tree...")
+        if self.arguments["debug"]:print("Building Concrete Tree...")
         tree.parse_trunk()
 
         
         module = tree.get_module()
         
-        print("Emitting LLVM IR...")
+        if self.arguments["debug"]:print("Emitting LLVM IR...")
         module.write()
 
         if self.arguments["show_ir"]:
@@ -92,7 +92,7 @@ class CLI:
 
 
         # use this https://github.com/numba/llvmlite/issues/181 to figure out how to compile
-        print("PROGRAM RUNNING:")
+        if self.arguments["debug"]:print("PROGRAM RUNNING:")
         with llvm.create_mcjit_compiler(llvm_module, tm) as ee:
             ee.finalize_object()
             fptr = ee.get_function_address("test")
@@ -105,7 +105,7 @@ class CLI:
             t1 = time.time()
 
             runtime = t1-t0
-            print(f"Program returned: {ret_}")
-            print(f"Compiled runtime:{runtime*1000}ms")
+            if self.arguments["debug"]:print(f"Program returned: {ret_}")
+            if self.arguments["debug"]:print(f"Compiled runtime:{runtime*1000}ms")
 
         

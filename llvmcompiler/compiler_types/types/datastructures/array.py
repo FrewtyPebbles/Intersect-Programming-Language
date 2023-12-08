@@ -9,18 +9,24 @@ class ArrayType(ct.CompilerType):
         self.type = item_type
         self._parent = None
         self.module = None
+        self._size = None
+        self._value = None
 
     @property    
     def size(self):
-        self.type.parent = self.parent
-        self.type.module = self.module
-        return self.type.size * self.count
+        if self._size == None:
+            self.type.parent = self.parent
+            self.type.module = self.module
+            self._size = self.type.size * self.count
+        return self._size
         
     @property
     def value(self):
-        self.type.parent = self.parent
-        self.type.module = self.module
-        return ir.ArrayType(self.type.value, self.count)
+        if self._value == None:
+            self.type.parent = self.parent
+            self.type.module = self.module
+            self._value = ir.ArrayType(self.type.value, self.count)
+        return self._value
 
     @property
     def parent(self):

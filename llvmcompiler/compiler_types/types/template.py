@@ -15,6 +15,8 @@ class Template(ct.CompilerType):
         self.name = name
         self._value = None
         self.parent: fn.Function | st.Struct = parent
+        self._size = None
+        self._count = None
 
     def __hash__(self) -> int:
         return hash(f"{self.name}{self._value}")
@@ -35,18 +37,22 @@ class Template(ct.CompilerType):
     
     @property
     def size(self):
-        return self.get_template_type().size
+        if self._size == None:
+            self._size = self.get_template_type().size
+        return self._size
     
     @property
     def count(self):
-        return self.get_template_type().count
+        if self._count == None:
+            self._count = self.get_template_type().count
+        return self._count
 
 
     def __eq__(self, __value: Template | str) -> bool:
         if isinstance(__value, Template):
-            return self._value == __value.value
+            return self.value == __value.value
         else:
-            return self._value == __value
+            return self.value == __value
     
     def __repr__(self) -> str:
         return f"(Template : {self.name})"
