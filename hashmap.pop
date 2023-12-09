@@ -58,11 +58,11 @@ export func test(num: i32) ~> i32 {
     let vec:Vector<i32>;
 
     vec.init();
-    libc_printf("Init called.\n":$c8);
+    libc_printf("Init called.\n\n":$c8);
 
 
-    while $vec.length != 3 {
-        vec.push(100);
+    while $vec.length != 100 {
+        vec.push(num * );
     }
     
 
@@ -73,16 +73,17 @@ export func test(num: i32) ~> i32 {
         libc_printf("3 pushed data: %i, %i, %i\n":$c8, vec.get(0), vec.get(1), vec.get(2));
     }
     else {
-        libc_printf("4 pushed data: %i, %i, %i, %i\n":$c8, vec.get(0), vec.get(1), vec.get(2), vec.get(3));
+        libc_printf("more than 4 pushed data: %i, %i, %i, %i...\n":$c8, vec.get(0), vec.get(1), vec.get(2), vec.get(3));
     } 
 
+    libc_printf("\n":$c8);
 
     libc_printf("vector top: %i\n":$c8, vec.top());
 
     libc_printf("capacity: %i\n":$c8, $vec.capacity);
 
     vec.del();
-    libc_printf("end.\n":$c8);
+    libc_printf("\nend\n":$c8);
 
     return 0;
 }
