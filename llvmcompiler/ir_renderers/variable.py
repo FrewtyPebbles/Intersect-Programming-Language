@@ -76,7 +76,7 @@ class Variable:
         return self.type.value.is_pointer
     
 class Value:
-    def __init__(self, value_type:ct.CompilerType, raw_value:Union[str, any] = None, is_instruction = False, heap = False, dbg_tag = "") -> None:
+    def __init__(self, value_type:ct.CompilerType, raw_value:Union[str, any] = None, is_instruction = False, heap = False, dbg_tag = "", is_literal = False) -> None:
         self._builder:BuilderData = None
         self.type = value_type
         self.value = raw_value
@@ -85,7 +85,7 @@ class Value:
         self._parent:fn.Function = None
         self.dbg_tag = dbg_tag
         self.module = None
-
+        self.is_literal = is_literal
     
 
     @property

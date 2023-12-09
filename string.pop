@@ -54,36 +54,42 @@ struct Vector<ItemType> {
     }
 }
 
+struct String {
+    data:Vector<c8>;
+    length:i32;
+    func new(self:$String, new_str:$c8) {
+        self.data.init();
+        
+        let character:c8;
+        character = $new_str;
+
+        let index = 0;
+
+        self.length = 0;
+        
+        while $character != 0 {
+            self.data.push($character);
+            index = $index + 1;
+            character = $(new_str[$index]);
+        }
+
+        self.length = $index + 1;
+        return;
+    }
+    func get(self:$String) ~> $c8 {
+        self.data.push(0);
+        return $self.data.data;
+    }
+    func del(self:$String) {
+        self.data.del();
+        return;
+    }
+}
+
 export func test(num: i32) ~> i32 {
-    let vec:Vector<i32>;
-
-    vec.init();
-    libc_printf("Init called.\n\n":$c8);
-
-
-    while $vec.length != 100 {
-        vec.push(num * );
-    }
-    
-
-    if $vec.length < 3 {
-        libc_printf("2 pushed data: %i, %i\n":$c8, vec.get(0), vec.get(1));
-    }
-    elif $vec.length == 3 {
-        libc_printf("3 pushed data: %i, %i, %i\n":$c8, vec.get(0), vec.get(1), vec.get(2));
-    }
-    else {
-        libc_printf("more than 4 pushed data: %i, %i, %i, %i...\n":$c8, vec.get(0), vec.get(1), vec.get(2), vec.get(3));
-    } 
-
-    libc_printf("\n":$c8);
-
-    libc_printf("vector top: %i\n":$c8, vec.top());
-
-    libc_printf("capacity: %i\n":$c8, $vec.capacity);
-
-    vec.del();
-    libc_printf("\nend\n":$c8);
-
+    let my_str:String;
+    my_str.new("Hello World\n":$c8);
+    libc_printf(my_str.get());
+    my_str.del();
     return 0;
 }

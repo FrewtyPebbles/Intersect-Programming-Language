@@ -216,13 +216,13 @@ class Token:
                 # this is for variables
                 return self.value
             case SyntaxToken.integer_literal:
-                return Value(I32Type(), self.value)
+                return Value(I32Type(), self.value, is_literal=True)
             case SyntaxToken.precision_literal:
-                return Value(F32Type(), self.value)
+                return Value(F32Type(), self.value, is_literal=True)
             case SyntaxToken.bool_literal:
-                return Value(BoolType(), self.value)
+                return Value(BoolType(), self.value, is_literal=True)
             case SyntaxToken.string_literal:
-                return Value(ArrayType(C8Type(), len(self.value)), self.value)
+                return Value(ArrayType(C8Type(), len(self.value)), self.value, is_literal=True)
         return None
 
     @staticmethod

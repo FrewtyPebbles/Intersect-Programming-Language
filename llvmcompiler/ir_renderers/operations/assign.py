@@ -15,12 +15,8 @@ class AssignOperation(Operation):
             self.builder.cursor.store(self.process_arg(self.arguments[1]), self.arguments[0].value)
             
             var = self.arguments[0]
-        elif self.arguments[1].is_instruction:
-            if self.arguments[0].type.value == self.arguments[1].type.value:
-                var = self.builder.declare_variable(vari.Variable(self.builder, *self.arguments))
-            else:
-                print("Error: Function return type does not match assigning type.")
         elif isinstance(self.arguments[0], vari.Variable):
+            #print(f"ASSIGN [{self.arguments[0]} = {self.arguments[1]}]")
             var = self.builder.set_variable(self.arguments[0], self.arguments[1])
 
         self.builder.cursor.comment("OP::assign END")

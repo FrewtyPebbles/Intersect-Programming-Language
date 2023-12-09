@@ -3,6 +3,7 @@ from llvmcompiler.compiler_types.type import CompilerType
 from ..operation import Operation, arg_type
 from llvmlite import ir
 import llvmcompiler.ir_renderers.variable as vari
+from .cast import CastOperation
 from typing import TYPE_CHECKING, Any
 if TYPE_CHECKING:
     from llvmcompiler.ir_renderers.function import FunctionDefinition
@@ -12,6 +13,7 @@ class CallOperation(Operation):
         super().__init__(arguments)
         self.template_arguments = template_arguments
         self.function:str | FunctionDefinition | Operation = function
+        self.is_member_function = False
     
     @lru_cache(32, True)
     def get_function(self):
@@ -31,7 +33,7 @@ class CallOperation(Operation):
             """
             self.arguments.insert(0, self.function.get_value()[0])
             function_obj = self.function.get_value()[1].get_function(self.template_arguments)
-            
+            self.is_member_function = True
         else:
             function_obj = self.function.get_function(self.template_arguments)
 
@@ -49,18 +51,25 @@ class CallOperation(Operation):
         f_to_c = self.get_function()
 
 
-
         if len(self.arguments) > 0:
             for a_n, argument in enumerate(self.get_variables(self.arguments, True)):
                 
                 arg = argument
 
-                if isinstance(argument, vari.Variable):
+                
+                if isinstance(arg, vari.Variable):
                     arg = argument.variable
-                elif isinstance(argument, vari.Value):
+                elif isinstance(arg, vari.Value):
+                    if arg.is_literal:
+                        arg.type = CompilerType.create_from(
+                            f_to_c.args[a_n].type,
+                            self.builder.module,
+                            self.builder.function
+                            )
+                    
                     arg = argument.get_value()
-                
-                
+
+
 
                 arg = self.process_arg(argument)
                 arguments.append(arg)

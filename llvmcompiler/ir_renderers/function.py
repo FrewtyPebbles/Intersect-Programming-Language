@@ -90,6 +90,7 @@ class Function:
         self.name = self.function_definition.get_mangled_name(template_types)
         "Name is mangled."
 
+        self.function:ir.Function = None
         self.variables:Dict[str, Variable] = [{}]
         "This is all variables within the function scope."
 
@@ -99,6 +100,9 @@ class Function:
             self.arguments[key].parent = self
             self.arguments[key].module = self.module
                 
+
+    def __repr__(self) -> str:
+        return str(self.function)
 
     @lru_cache(32, True)
     def get_template_type(self, name:str):

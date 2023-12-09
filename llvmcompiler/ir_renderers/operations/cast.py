@@ -45,6 +45,7 @@ class CastOperation(Operation):
             #print("Upcast")
         else:
             print("Error: Invalid cast")
+            raise RuntimeError("invalid cast")
         
 
         self.builder.cursor.comment("OP::cast END")

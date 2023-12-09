@@ -16,3 +16,4 @@ class FunctionReturnOperation(Operation):
             arg = self.process_arg(self.arguments[0])
             self.builder.cursor.ret(arg)
         self.builder.cursor.comment("OP::return END")
+        
