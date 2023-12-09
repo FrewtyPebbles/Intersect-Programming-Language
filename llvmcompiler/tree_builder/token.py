@@ -12,6 +12,7 @@ class SyntaxToken(Enum):
     func_keyword = "func"
     operator_func_keyword = "OPERATOR"
     for_keyword = "for"
+    while_keyword = "while"
     let_keyword = "let"
     heap_keyword = "heap"
     fn_specifier_op = "~>"
@@ -55,6 +56,7 @@ class SyntaxToken(Enum):
     cast_op = ":"
     line_end = ";"
     return_op = "return"
+    break_op = "break"
     access_op = "."
     dereference_access_op = "->"
     post_increment_op = "++"
@@ -108,7 +110,7 @@ class SyntaxToken(Enum):
     @property
     def is_ending_token(self):
         return self in {SyntaxToken.line_end, SyntaxToken.parentheses_end,\
-                    SyntaxToken.delimiter, SyntaxToken.sqr_bracket_end}
+                    SyntaxToken.delimiter, SyntaxToken.sqr_bracket_end, SyntaxToken.scope_start}
 
     @property
     def priority(self):

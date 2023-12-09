@@ -1,6 +1,13 @@
 func realloc<PtrType>(ptr:$PtrType, new_size:i32) ~> $PtrType {
     return libc_realloc(ptr:$i8, sizeof $PtrType * new_size:i64):$PtrType;
 }
+func malloc<PtrType>(size:i32) ~> $PtrType {
+    return libc_malloc(sizeof PtrType * size:i64):$PtrType;
+}
+func free<PtrType>(ptr:$PtrType) {
+    libc_free(ptr:$i8);
+    return;
+}
 
 struct Vector<ItemType> {
     data:$ItemType;
@@ -8,7 +15,7 @@ struct Vector<ItemType> {
     length:i32;
 
     func init(self:$Vector<ItemType>) {
-        self.data = libc_malloc(sizeof $ItemType):$ItemType;
+        self.data = malloc?<ItemType>(1);
         self.capacity = 1;
         self.length = 0;
         return;
@@ -42,7 +49,7 @@ struct Vector<ItemType> {
     }
 
     func del(self:$Vector<ItemType>) {
-        libc_free($self.data:$i8);
+        free?<ItemType>($self.data);
         return;
     }
 }
@@ -53,16 +60,21 @@ export func test(num: i32) ~> i32 {
     vec.init();
     libc_printf("Init called.\n":$c8);
 
-    vec.push(10);
-    libc_printf("push %i, len %i\n":$c8, vec.get(0), $vec.length);
-    vec.push(7878);
-    libc_printf("push %i, len %i\n":$c8, vec.get(1), $vec.length);
-    vec.push(26);
-    libc_printf("push %i, len %i\n":$c8, vec.get(2), $vec.length);
 
-    if $vec.length <= 3 {
-        libc_printf("pushed data: %i, %i, %i\n":$c8, vec.get(0), vec.get(1), vec.get(2));
+    while $vec.length != 3 {
+        vec.push(100);
     }
+    
+
+    if $vec.length < 3 {
+        libc_printf("2 pushed data: %i, %i\n":$c8, vec.get(0), vec.get(1));
+    }
+    elif $vec.length == 3 {
+        libc_printf("3 pushed data: %i, %i, %i\n":$c8, vec.get(0), vec.get(1), vec.get(2));
+    }
+    else {
+        libc_printf("4 pushed data: %i, %i, %i, %i\n":$c8, vec.get(0), vec.get(1), vec.get(2), vec.get(3));
+    } 
 
 
     libc_printf("vector top: %i\n":$c8, vec.top());

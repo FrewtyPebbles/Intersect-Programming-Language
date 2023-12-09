@@ -47,7 +47,7 @@ class Tokenizer:
                 self.parse_keystring_and_append_token(SyntaxToken(char))
                 
                 return
-            case r"[~<>=*\-/+\?%]":
+            case r"[!~<>=*\-/+\?%]":
                 
                 self.keyword += char
                 self.operator_context()

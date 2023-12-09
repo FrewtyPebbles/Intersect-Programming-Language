@@ -7,7 +7,8 @@ from llvmcompiler import StructDefinition, CompilerType,\
     StructPointerType, VoidType, Template, Module, FunctionDefinition,\
     FunctionReturnOperation, DefineOperation, Value, Operation, CallOperation,\
     AssignOperation, IndexOperation, TemplatePointer, CastOperation, DereferenceOperation,\
-    TypeSizeOperation, FreeOperation, BreakOperation
+    TypeSizeOperation, FreeOperation, BreakOperation, IfBlock, ElseIfBlock, ElseBlock, WhileLoop,\
+    BreakOperation
 from llvmcompiler.ir_renderers.operations import *
 from more_itertools import peekable
 
@@ -258,7 +259,7 @@ class TreeBuilder:
                     if tok.type == tb.SyntaxToken.dereference_access_op:
                         label_product = DereferenceOperation([IndexOperation([label_product, *index_args])])
                         index_args = []
-                        
+
                 elif tok.type == tb.SyntaxToken.label and is_index:
                     # is a label after an access operator
                     index_args.append(LookupLabel(tok.value))
@@ -286,7 +287,7 @@ class TreeBuilder:
         """
         This is the context trunk for the left hand side of an assignment operator.
 
-        NOTE: This is not used for `let` statements.
+        NOTE: This is used for `let` statements.
         """
         name = ""
         typ = None
@@ -307,6 +308,35 @@ class TreeBuilder:
                 # This allocates a variable without assigning a value.
                 return DefineOperation([name, Value(typ)])
 
+    def context_conditional_statement(self, statement_type: tb.SyntaxToken, templates:list[str]):
+        
+        condition = None
+        scope = []
+        for tok in self.token_list:
+            match tok.type:
+                case tb.SyntaxToken.let_keyword:
+                    condition = self.context_define(templates)
+                case tb.SyntaxToken.scope_start:
+                    scope = self.context_scope_trunk(templates)
+                    break
+                case _:
+                    self.token_list.prepend(tok)
+                    
+                    oop_ret = self.context_order_of_operations(templates)
+                    condition =  oop_ret[0]
+                    if oop_ret[1].type == tb.SyntaxToken.scope_start:
+                        scope = self.context_scope_trunk(templates)
+                        break
+        match statement_type:
+            case tb.SyntaxToken.if_keyword:
+                return IfBlock(condition=[condition], scope=scope)
+            case tb.SyntaxToken.elif_keyword:
+                return ElseIfBlock(condition=[condition], scope=scope)
+            case tb.SyntaxToken.else_keyword:
+                return ElseBlock(scope=scope)
+            case tb.SyntaxToken.while_keyword:
+                return WhileLoop(condition=[condition], scope=scope)
+                
     
     def context_scope_trunk(self, templates:list[str]):
         """
@@ -326,6 +356,9 @@ class TreeBuilder:
                     
                     scope.append(self.context_define(templates))
 
+                case tb.SyntaxToken.if_keyword | tb.SyntaxToken.elif_keyword | tb.SyntaxToken.else_keyword | tb.SyntaxToken.while_keyword:
+                    scope.append(self.context_conditional_statement(tok.type, templates))
+
                 case tb.SyntaxToken.label:
                     scope.append(self.context_label_trunk(tok.value, templates, deref))
                     deref = 0
@@ -338,7 +371,10 @@ class TreeBuilder:
                         scope.append(FunctionReturnOperation())
                     else:
                         scope.append(FunctionReturnOperation([ret_val[0]]))
-        
+                case tb.SyntaxToken.break_op:
+                    scope.append(BreakOperation())
+                    #skip the ; token
+                    next(self.token_list)
         return scope
 
 
