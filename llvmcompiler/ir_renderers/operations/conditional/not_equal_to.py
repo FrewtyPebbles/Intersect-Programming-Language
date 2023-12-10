@@ -11,6 +11,7 @@ class NotEqualToOperation(Operation):
             
         #process args
         arg1, arg2 = self.process_lhs_rhs_args()
+        
 
         res:ir.Instruction = self.builder.cursor.icmp_signed('!=', arg1, arg2)
         self.builder.cursor.comment("OP::not_equal_to END")

@@ -76,8 +76,12 @@ struct String {
         self.length = $index + 1;
         return;
     }
-    func get(self:$String) ~> $c8 {
-        self.data.push(0);
+    func push(self:$String, char:c8) {
+        self.data.push(char);
+        self.length = $self.data.length;
+        return;
+    }
+    func get_ptr(self:$String) ~> $c8 {
         return $self.data.data;
     }
     func del(self:$String) {
@@ -86,10 +90,35 @@ struct String {
     }
 }
 
+func print(msg:$String) {
+    let index = 0;
+    while $index != $msg.length {
+        libc_putchar($(($msg.data.data)[$index]));
+        index = $index + 1;
+    }
+    libc_putchar(10);
+    return;
+}
+
+func input() ~> String {
+    let char:c8;
+    let _input:String;
+    _input.new("":$c8);
+    while $(char = libc_getchar();) != 10 {
+        _input.push($char);
+    }
+
+    return $_input;
+}
+
 export func test(num: i32) ~> i32 {
     let my_str:String;
-    my_str.new("Hello World\n":$c8);
-    libc_printf(my_str.get());
+    
+    my_str = input();
+    
+    print(my_str);
+
     my_str.del();
+    
     return 0;
 }

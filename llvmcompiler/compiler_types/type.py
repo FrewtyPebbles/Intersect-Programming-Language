@@ -67,8 +67,7 @@ class CompilerType:
         for _ in range(ptr_count):
             chosen_type = chosen_type.cast_ptr()
 
-        #print(f"Original: {ir_type._to_string()}")
-        #print(f"Chosen: {chosen_type}")
+        
 
         return chosen_type
 
@@ -97,7 +96,8 @@ class CompilerType:
         result = cls.__new__(cls)
         memo[id(self)] = result
         for k, v in self.__dict__.items():
-            if k in {"parent", "module", "builder"}:
+            if k in {"parent", "module", "builder", "value",
+                "_value", "_count", "count", "_size", "size"}:
                 setattr(result, k, v)
                 continue
             setattr(result, k, deepcopy(v, memo))

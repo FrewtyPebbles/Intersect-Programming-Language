@@ -18,7 +18,9 @@ class Module:
             "libc_malloc": fn.CFunctionDefinition(self._std_malloc()),
             "libc_realloc": fn.CFunctionDefinition(self._std_realloc()),
             "libc_memcpy": fn.CFunctionDefinition(self._std_memcpy()),
-            "libc_free": fn.CFunctionDefinition(self._std_free())
+            "libc_free": fn.CFunctionDefinition(self._std_free()),
+            "libc_putchar": fn.CFunctionDefinition(self._std_putchar()),
+            "libc_getchar": fn.CFunctionDefinition(self._std_getchar())
             #"input":"input" # will be getting input function from c dll/so file via this method https://stackoverflow.com/questions/36658726/link-c-in-llvmlite
         }
         self.structs:dict[str, st.StructDefinition] = {}
@@ -106,9 +108,23 @@ class Module:
         return realloc
     
     def _std_realloc(self) -> ir.Function:
-        # this creates the IR for malloc
+        # this creates the IR for realloc
         voidptr_ty = ir.IntType(8).as_pointer()
         realloc_ty = ir.FunctionType(voidptr_ty, [voidptr_ty, bd.SIZE_T], var_arg=False)
         realloc = ir.Function(self.module, realloc_ty, name="realloc")
+        return realloc
+
+    def _std_putchar(self) -> ir.Function:
+        # this creates the IR for putchar
+        char_ty = ir.IntType(8)
+        realloc_ty = ir.FunctionType(char_ty, [char_ty], var_arg=False)
+        realloc = ir.Function(self.module, realloc_ty, name="putchar")
+        return realloc
+    
+    def _std_getchar(self) -> ir.Function:
+        # this creates the IR for putchar
+        char_ty = ir.IntType(8)
+        realloc_ty = ir.FunctionType(char_ty, [], var_arg=False)
+        realloc = ir.Function(self.module, realloc_ty, name="getchar")
         return realloc
     

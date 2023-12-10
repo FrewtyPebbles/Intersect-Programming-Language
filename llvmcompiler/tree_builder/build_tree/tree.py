@@ -160,7 +160,7 @@ class TreeBuilder:
             elif tok.type.is_ending_token:
                 last_tok = tok
                 break
-
+        
         
         if len(operations) == 0 and len(current_op[0]) == 1:
             # push a single value.
@@ -171,7 +171,7 @@ class TreeBuilder:
         if len(operations) != 0:
             op_order = tb.OperationsOrder([tb.PotentialOperation(*op) for op in operations])
             result = op_order.get_tree()
-            #print(f"ORDERED {result}")
+            #print(result)
             return (result, last_tok)
         return (None, last_tok)
     
@@ -182,7 +182,6 @@ class TreeBuilder:
                 case tb.SyntaxToken.dereference_op:
                     return DereferenceOperation([arg])
                 case tb.SyntaxToken.sizeof_op:
-                    self.token_list.dbg_print("CREATE SIZE OF")
                     return TypeSizeOperation([arg])
                 case tb.SyntaxToken.not_op:
                     return NotOperation([arg])
@@ -317,6 +316,7 @@ class TreeBuilder:
                 case tb.SyntaxToken.let_keyword:
                     condition = self.context_define(templates)
                 case tb.SyntaxToken.scope_start:
+                    #print(condition)
                     scope = self.context_scope_trunk(templates)
                     break
                 case _:

@@ -53,16 +53,13 @@ export func test(num: i32) ~> i32 {
     vec.init();
     libc_printf("Init called.\n":$c8);
 
-    vec.push(10);
-    libc_printf("push %i, len %i\n":$c8, vec.get(0), $vec.length);
-    vec.push(7878);
-    libc_printf("push %i, len %i\n":$c8, vec.get(1), $vec.length);
-    vec.push(26);
-    libc_printf("push %i, len %i\n":$c8, vec.get(2), $vec.length);
-
-    if $vec.length <= 3 {
-        libc_printf("pushed data: %i, %i, %i\n":$c8, vec.get(0), vec.get(1), vec.get(2));
+    let index = 0;
+    while $vec.length != 9999999 {
+        vec.push($index);
+        index = $index+1;
     }
+
+    libc_printf("pushed data: %i, %i, %i\n":$c8, vec.get(0), vec.get(1), vec.get(2));
 
 
     libc_printf("vector top: %i\n":$c8, vec.top());

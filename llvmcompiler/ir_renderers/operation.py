@@ -76,8 +76,9 @@ class Operation:
     def convert_literal_types(self):
         compare_arg = self.arguments[0]
         for a_n in range(len(self.arguments)):
-            if self.arguments[a_n].is_instruction:
-                compare_arg = self.arguments[a_n]
+            compare_arg = self.arguments[a_n]
+            if compare_arg.is_instruction:
+                break
         for a_n in range(len(self.arguments)):
             if not self.arguments[a_n].is_instruction:
                 if isinstance(self.arguments[a_n].value, int) or\
@@ -85,6 +86,7 @@ class Operation:
                     new_type = compare_arg.type
                     new_type.value = ir.IntType(new_type.size)
                     self.arguments[1].type = new_type
+            
 
     @lru_cache(32, True)
     def write_argument(self, raw_arg: arg_type):

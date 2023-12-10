@@ -87,7 +87,7 @@ class SyntaxToken(Enum):
             SyntaxToken.equal_to_op, SyntaxToken.not_equal_to_op,
             SyntaxToken.add_op, SyntaxToken.subtract_op,
             SyntaxToken.multiply_op, SyntaxToken.modulo_op,
-            SyntaxToken.cast_op, SyntaxToken.divide_op
+            SyntaxToken.cast_op, SyntaxToken.divide_op, SyntaxToken.assign_op
             }
     
     @property

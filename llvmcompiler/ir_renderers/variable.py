@@ -122,7 +122,7 @@ class Value:
             isinstance(self.type.type, ct.Template) else \
             isinstance(self.type.type, ct.C8Type):
                 return ir.Constant(self.type.value, bytearray(self.value.encode()))
-            
+        
         return self.type.value(self.value)
     
 
