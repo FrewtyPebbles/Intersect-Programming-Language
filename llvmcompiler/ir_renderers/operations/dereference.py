@@ -9,9 +9,8 @@ class DereferenceOperation(Operation):
     def _write(self):
         self.builder.cursor.comment("OP::dereference START")
         self.arguments = self.get_variables()
-        #process arg1
         res = self.arguments[0].load()
         
         self.builder.cursor.comment("OP::dereference END")
-
-        return vari.Value(CompilerType.create_from(res.type, self.builder.module, self.builder.function), res, True)
+        deref = not self.arguments[0].function_argument if hasattr(self.arguments[0], "function_argument") else True
+        return vari.Value(CompilerType.create_from(res.type, self.builder.module, self.builder.function), res, True, deref = deref)

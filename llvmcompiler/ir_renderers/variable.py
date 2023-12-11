@@ -76,7 +76,8 @@ class Variable:
         return self.type.value.is_pointer
     
 class Value:
-    def __init__(self, value_type:ct.CompilerType, raw_value:Union[str, any] = None, is_instruction = False, heap = False, dbg_tag = "", is_literal = False) -> None:
+    def __init__(self, value_type:ct.CompilerType, raw_value:Union[str, any] = None, is_instruction = False,
+                 heap = False, dbg_tag = "", is_literal = False, address = False, is_call = False, deref = False) -> None:
         self._builder:BuilderData = None
         self.type = value_type
         self.value = raw_value
@@ -86,7 +87,9 @@ class Value:
         self.dbg_tag = dbg_tag
         self.module = None
         self.is_literal = is_literal
-    
+        self.address = address
+        self.is_call = is_call
+        self.deref = deref
 
     @property
     def parent(self):
@@ -115,6 +118,10 @@ class Value:
 
     @lru_cache(32, True)  
     def get_value(self):
+        if self.address:
+            return self.value
+        if self.deref:
+            return self.load()
         if self.is_instruction and not isinstance(self.value, str):
             return self.value
         if isinstance(self.type, ct.ArrayType):

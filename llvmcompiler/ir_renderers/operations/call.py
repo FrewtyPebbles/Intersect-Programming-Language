@@ -57,21 +57,17 @@ class CallOperation(Operation):
                 arg = argument
 
                 
-                if isinstance(arg, vari.Variable):
-                    arg = argument.variable
-                elif isinstance(arg, vari.Value):
+                if isinstance(arg, vari.Value):
                     if arg.is_literal:
                         arg.type = CompilerType.create_from(
                             f_to_c.args[a_n].type,
                             self.builder.module,
                             self.builder.function
                             )
-                    
-                    arg = argument.get_value()
 
 
 
-                arg = self.process_arg(argument)
+                arg = self.process_arg(arg)
                 arguments.append(arg)
         
         #print(f_to_c.name)
@@ -79,11 +75,11 @@ class CallOperation(Operation):
         #print(arguments)
         
         func_call = self.builder.cursor.call(f_to_c, arguments)
-        #print(func_call.type)
+        #print(func_call)
 
         self.builder.cursor.comment("OP::call end")
 
-        return vari.Value(CompilerType.create_from(func_call.type, self.builder.module, self.builder.function), func_call, True)
+        return vari.Value(CompilerType.create_from(func_call.type, self.builder.module, self.builder.function), func_call, True, is_call=True)
     
     def __repr__(self) -> str:
         return f"({self.__class__.__name__} : {{function: {self.function}, arguments: {self.arguments}}})"

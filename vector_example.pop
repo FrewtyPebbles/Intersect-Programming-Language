@@ -15,34 +15,34 @@ struct Vector<ItemType> {
     }
 
     func push(self:$Vector<ItemType>, item:ItemType) {
-        ($self.data)[$self.length] = item;
+        ($self.data)[self.length] = item;
         
-        self.length = $self.length + 1;
+        self.length = self.length + 1;
         
-        if $self.length == $self.capacity {
-            self.capacity = $self.capacity * 2;
+        if self.length == self.capacity {
+            self.capacity = self.capacity * 2;
         }
         
-        self.data = realloc?<ItemType>($self.data, $self.capacity);
+        self.data = realloc?<ItemType>(self.data, self.capacity);
         return;
     }
 
     func pop(self:$Vector<ItemType>) {
-        self.length = $self.length - 1;
-        self.capacity = $self.length;
-        self.data = realloc?<ItemType>($self.data, $self.capacity);
+        self.length = self.length - 1;
+        self.capacity = self.length;
+        self.data = realloc?<ItemType>(self.data, self.capacity);
         return;
     }
     
     func get(self:$Vector<ItemType>, index:i32) ~> ItemType {
-        return $(($self.data)[index]);
+        return ($self.data)[index];
     }
     func top(self:$Vector<ItemType>) ~> ItemType {
-        return $(($self.data)[$self.length-1]);
+        return ($self.data)[self.length-1];
     }
 
     func del(self:$Vector<ItemType>) {
-        libc_free($self.data:$i8);
+        libc_free(self.data:$i8);
         return;
     }
 }
@@ -54,9 +54,9 @@ export func test(num: i32) ~> i32 {
     libc_printf("Init called.\n":$c8);
 
     let index = 0;
-    while $vec.length != 9999999 {
-        vec.push($index);
-        index = $index+1;
+    while vec.length != 9999999 {
+        vec.push(index);
+        index = index + 1;
     }
 
     libc_printf("pushed data: %i, %i, %i\n":$c8, vec.get(0), vec.get(1), vec.get(2));
@@ -64,7 +64,7 @@ export func test(num: i32) ~> i32 {
 
     libc_printf("vector top: %i\n":$c8, vec.top());
 
-    libc_printf("capacity: %i\n":$c8, $vec.capacity);
+    libc_printf("capacity: %i\n":$c8, vec.capacity);
 
     vec.del();
     libc_printf("end.\n":$c8);

@@ -42,7 +42,7 @@ class Tokenizer:
     
     def parse_char(self, char:str):
         match regex_in(char):
-            case r"[{}():;,\[\]$.]":
+            case r"[{}():;,\[\]$&.]":
                 
                 self.parse_keystring_and_append_token(SyntaxToken(char))
                 

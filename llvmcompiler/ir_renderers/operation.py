@@ -46,7 +46,7 @@ class Operation:
             self.arguments[a_n].module = self.builder.module
 
     @lru_cache(32, True)
-    def process_arg(self, arg:arg_type):
+    def process_arg(self, arg:arg_type, dont_load = False):
         if isinstance(arg, str):
             arg = self.builder.get_variable(arg)
             arg.parent = self.builder.function
@@ -55,7 +55,10 @@ class Operation:
         if isinstance(arg, Variable):
             arg.parent = self.builder.function
             arg.module = self.builder.module
-            return arg.variable
+            if arg.function_argument or dont_load:
+                return arg.variable
+            else:
+                return arg.load()
         elif isinstance(arg, Value):
             arg.parent = self.builder.function
             arg.module = self.builder.module
@@ -64,7 +67,7 @@ class Operation:
             return arg
         
     @lru_cache(32, True)
-    def process_lhs_rhs_args(self):
+    def process_lhs_rhs_args(self, dont_load = False):
         #process arg1
         arg1 = self.process_arg(self.arguments[0])
         

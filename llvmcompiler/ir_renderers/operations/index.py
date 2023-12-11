@@ -99,7 +99,7 @@ class IndexOperation(Operation):
 
 
         if self.ret_func == None:
-            return vari.Value(self.type, res, True, self.arguments[0].heap)
+            return vari.Value(self.type, res, True, self.arguments[0].heap, deref=True)
         else:
             return vari.Value(self.type, (res, self.ret_func), True, self.arguments[0].heap)
         

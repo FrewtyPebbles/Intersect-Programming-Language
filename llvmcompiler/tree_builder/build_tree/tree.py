@@ -8,7 +8,7 @@ from llvmcompiler import StructDefinition, CompilerType,\
     FunctionReturnOperation, DefineOperation, Value, Operation, CallOperation,\
     AssignOperation, IndexOperation, TemplatePointer, CastOperation, DereferenceOperation,\
     TypeSizeOperation, FreeOperation, BreakOperation, IfBlock, ElseIfBlock, ElseBlock, WhileLoop,\
-    BreakOperation
+    BreakOperation, AddressOperation
 from llvmcompiler.ir_renderers.operations import *
 from more_itertools import peekable
 
@@ -185,6 +185,8 @@ class TreeBuilder:
                     return TypeSizeOperation([arg])
                 case tb.SyntaxToken.not_op:
                     return NotOperation([arg])
+                case tb.SyntaxToken.address_op:
+                    return AddressOperation([arg])
         
         if op.type == tb.SyntaxToken.sizeof_op:
             return TypeSizeOperation([self.context_type_trunk(templates)])

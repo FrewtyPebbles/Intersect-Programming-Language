@@ -22,34 +22,34 @@ struct Vector<ItemType> {
     }
 
     func push(self:$Vector<ItemType>, item:ItemType) {
-        ($self.data)[$self.length] = item;
+        ($self.data)[self.length] = item;
         
-        self.length = $self.length + 1;
+        self.length = self.length + 1;
         
-        if $self.length == $self.capacity {
-            self.capacity = $self.capacity * 2;
+        if self.length == self.capacity {
+            self.capacity = self.capacity * 2;
         }
         
-        self.data = realloc?<ItemType>($self.data, $self.capacity);
+        self.data = realloc?<ItemType>(self.data, self.capacity);
         return;
     }
 
     func pop(self:$Vector<ItemType>) {
-        self.length = $self.length - 1;
-        self.capacity = $self.length;
-        self.data = realloc?<ItemType>($self.data, $self.capacity);
+        self.length = self.length - 1;
+        self.capacity = self.length;
+        self.data = realloc?<ItemType>(self.data, self.capacity);
         return;
     }
     
     func get(self:$Vector<ItemType>, index:i32) ~> ItemType {
-        return $(($self.data)[index]);
+        return ($self.data)[index];
     }
     func top(self:$Vector<ItemType>) ~> ItemType {
-        return $(($self.data)[$self.length-1]);
+        return ($self.data)[self.length-1];
     }
 
     func del(self:$Vector<ItemType>) {
-        free?<ItemType>($self.data);
+        free?<ItemType>(self.data);
         return;
     }
 }
@@ -67,22 +67,22 @@ struct String {
 
         self.length = 0;
         
-        while $character != 0 {
-            self.data.push($character);
-            index = $index + 1;
-            character = $(new_str[$index]);
+        while character != 0 {
+            self.data.push(character);
+            index = index + 1;
+            character = new_str[index];
         }
 
-        self.length = $index + 1;
+        self.length = index + 1;
         return;
     }
     func push(self:$String, char:c8) {
         self.data.push(char);
-        self.length = $self.data.length;
+        self.length = self.data.length;
         return;
     }
     func get_ptr(self:$String) ~> $c8 {
-        return $self.data.data;
+        return self.data.data;
     }
     func del(self:$String) {
         self.data.del();
@@ -92,9 +92,9 @@ struct String {
 
 func print(msg:$String) {
     let index = 0;
-    while $index != $msg.length {
-        libc_putchar($(($msg.data.data)[$index]));
-        index = $index + 1;
+    while index != msg.length {
+        libc_putchar(($msg.data.data)[index]);
+        index = index + 1;
     }
     libc_putchar(10);
     return;
@@ -104,11 +104,11 @@ func input() ~> String {
     let char:c8;
     let _input:String;
     _input.new("":$c8);
-    while $(char = libc_getchar();) != 10 {
-        _input.push($char);
+    while (char = libc_getchar();) != 10 {
+        _input.push(char);
     }
 
-    return $_input;
+    return _input;
 }
 
 export func test(num: i32) ~> i32 {
@@ -116,7 +116,7 @@ export func test(num: i32) ~> i32 {
     
     my_str = input();
     
-    print(my_str);
+    print(&my_str);
 
     my_str.del();
     
