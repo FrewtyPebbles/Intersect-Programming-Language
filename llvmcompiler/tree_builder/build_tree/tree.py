@@ -34,6 +34,17 @@ class TokenIterator:
                 raise StopIteration
         return result
     
+    def peek_next(self):
+        result = None
+        if len(self.prepended) > 0:
+            result = self.prepended[-1]
+        else:
+            try:
+                result = self.tokens[self.index+1]
+            except IndexError:
+                raise StopIteration
+        return result
+    
     def prepend(self, val:tb.Token):
         self.prepended.append(val)
     
@@ -95,22 +106,25 @@ class TreeBuilder:
         """
         Returns the file as a module.
         """
-        
         return Module(self.file_name, scope=self.module_scope, mangle_salt=self.program_salt)
 
     def parse_trunk(self):
         exporting = False
         for tok in self.token_list:
+            
             match tok.type:
                 case tb.SyntaxToken.struct_keyword:
                     self.module_scope.append(self.context_struct_definition())
 
                 case tb.SyntaxToken.func_keyword | tb.SyntaxToken.export_keyword:
                     if tok.type == tb.SyntaxToken.export_keyword:
+                        
                         exporting = True
                         continue
                     else:
-                        self.module_scope.append(self.context_function_statement_definition([], exporting))
+                        func = self.context_function_statement_definition([], exporting)
+                        # print(func)
+                        self.module_scope.append(func)
                         exporting = False
 
     def context_order_of_operations(self, templates:list[str]) -> (Operation, tb.Token):
@@ -329,6 +343,7 @@ class TreeBuilder:
                     if oop_ret[1].type == tb.SyntaxToken.scope_start:
                         scope = self.context_scope_trunk(templates)
                         break
+        
         match statement_type:
             case tb.SyntaxToken.if_keyword:
                 return IfBlock(condition=[condition], scope=scope)
@@ -340,7 +355,7 @@ class TreeBuilder:
                 return WhileLoop(condition=[condition], scope=scope)
                 
     
-    def context_scope_trunk(self, templates:list[str]):
+    def context_scope_trunk(self, templates:list[str], documentation = None):
         """
         This is where lines of code/scopes are parsed from.
         """
@@ -362,7 +377,9 @@ class TreeBuilder:
                     scope.append(self.context_conditional_statement(tok.type, templates))
 
                 case tb.SyntaxToken.label:
-                    scope.append(self.context_label_trunk(tok.value, templates, deref))
+                    l=self.context_label_trunk(tok.value, templates, deref)
+                    #print(l)
+                    scope.append(l)
                     deref = 0
                 case tb.SyntaxToken.parentheses_start:
                     scope.append(self.context_label_trunk((self.context_order_of_operations(templates)[0]), templates, deref))
@@ -377,6 +394,8 @@ class TreeBuilder:
                     scope.append(BreakOperation())
                     #skip the ; token
                     next(self.token_list)
+                case tb.SyntaxToken.string_literal:
+                    documentation["purpose"] = tok.value
         return scope
 
 
@@ -421,7 +440,9 @@ class TreeBuilder:
         scope = []
         return_type:CompilerType = VoidType()
         arguments:dict[str,CompilerType] = {}
+        documentation = {"purpose":None,"implementation": None,"args": {}}
         for tok in self.token_list:
+            
             match tok.type:
                 case tb.SyntaxToken.label:
                     name = tok.value
@@ -436,16 +457,20 @@ class TreeBuilder:
                     return_type = self.context_type_trunk([*templates, *template_definition])
 
                 case tb.SyntaxToken.scope_start:
-                    scope = self.context_scope_trunk([*templates, *template_definition])
+                    scope = self.context_scope_trunk([*templates, *template_definition], documentation)
+                    #print(name)
+                    #print(scope)
                     break
-
-        return FunctionDefinition(name, arguments, return_type, False, template_definition, scope, extern=extern)
+        
+        # print(f"{'extern ' if extern else ''}func {name}<{template_definition}>({arguments}) ~> {return_type} {{{scope}}}")
+        return FunctionDefinition(name, arguments, return_type, False, template_definition, scope, extern=extern, documentation=documentation)
     
     def context_struct_definition(self):
         name = ""
         attributes = {}
         functions = []
         templates:list[str] = []
+        documentation = {"purpose":""}
 
         # first parse the statement before the curly brackets to add struct
         # to the namespace and get the struct template names
@@ -459,8 +484,9 @@ class TreeBuilder:
                     break
                 case tb.SyntaxToken.scope_start:
                     break
+                
         
-        
+        #print(name)
         self.struct_namespace.append(StructOption(name, templates))
         
         # then parse the definition of the struct within the curly braces
@@ -474,12 +500,15 @@ class TreeBuilder:
                     attributes[attribute_label_buffer] = self.context_type_trunk(templates)
                     attribute_label_buffer = ""
                 case tb.SyntaxToken.func_keyword:
-                    functions.append(self.context_function_statement_definition(templates))
+                    mf = self.context_function_statement_definition(templates)
+                    functions.append(mf)
                 case tb.SyntaxToken.scope_end:
                     break
-
-        #print(f"name: {name} attrs:{attributes}")
-        return StructDefinition(name, attributes, functions, templates)
+                case tb.SyntaxToken.string_literal:
+                    documentation["purpose"] = tok.value
+        #print(f"STRUCT := name: {name}<{', '.join(templates)}> attrs:{attributes}")
+        #print(functions)
+        return StructDefinition(name, attributes, functions, templates, documentation=documentation)
 
 
     def context_type_list(self, templates:list[str]) -> CompilerType:
@@ -519,7 +548,7 @@ class TreeBuilder:
                 pointer += 1
             elif tok.type == tb.SyntaxToken.greater_than_op:
                 break
-            else:
+            elif not tok.type == tb.SyntaxToken.delimiter:
                 type_templates.append(self.get_type(tok, templates, pointer))
                 pointer = 0
         
@@ -582,11 +611,15 @@ class TreeBuilder:
 
         match tok.type:
             case tb.SyntaxToken.sqr_bracket_start:
-                return get_ptr(self.context_type_list(templates))
+                l = self.context_type_list(templates)
+                #print(self.token_list)
+                return get_ptr(l)
             
             case tb.SyntaxToken.label:
                 if tok.value in self.struct_namespace:
-                    return self.context_type_struct(tok.value, templates, pointer)
+                    struc = self.context_type_struct(tok.value, templates, pointer)
+                    #print(struc)
+                    return struc
                 elif tok.value in templates:
                     if pointer > 0:
                         return TemplatePointer(tok.value, ptr_count=pointer)

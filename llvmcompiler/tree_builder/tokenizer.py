@@ -85,7 +85,10 @@ class Tokenizer:
                     escape = True
                     continue
                 if char == tok:
-                    self.append_token(SyntaxToken.string_literal, string + "\0")
+                    if tok == "'":
+                        self.append_token(SyntaxToken.integer_literal, ord(string))
+                    else:
+                        self.append_token(SyntaxToken.string_literal, string + "\0")
                     return
                 string += char
             

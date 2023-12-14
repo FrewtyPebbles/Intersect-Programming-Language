@@ -14,3 +14,4 @@ class LookupLabel(ct.CompilerType):
     def __init__(self, name:str) -> None:
         super().__init__()
         self.value = name
+        self.name = name

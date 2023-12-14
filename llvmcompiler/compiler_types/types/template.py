@@ -55,7 +55,7 @@ class Template(ct.CompilerType):
             return self.value == __value
     
     def __repr__(self) -> str:
-        return f"(Template : {self.name})"
+        return self.name
     
 class TemplatePointer(Template):
     
@@ -83,4 +83,4 @@ class TemplatePointer(Template):
         self._value = value
 
     def __repr__(self) -> str:
-        return f"(TemplatePTR : {{{self.name}, {self.ptr_count}}})"
+        return f"{'$'*self.ptr_count}{self.name}"

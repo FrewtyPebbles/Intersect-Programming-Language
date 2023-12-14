@@ -6,6 +6,7 @@ class VoidType(ct.CompilerType):
     def __init__(self) -> None:
         self._size = 0
         self.value = ir.VoidType()
+        self.name = "void"
 
 
     def cast_ptr(self):

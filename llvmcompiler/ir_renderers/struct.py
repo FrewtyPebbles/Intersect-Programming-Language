@@ -1,4 +1,5 @@
 from __future__ import annotations
+from copy import deepcopy
 from functools import lru_cache
 import llvmcompiler.compiler_types as ct
 import llvmcompiler.ir_renderers.function as fn
@@ -9,12 +10,12 @@ class StructDefinition:
     """
     This is the definition of the struct.
     """
-    def __init__(self, name:str, attributes:dict[str, ct.CompilerType] = {},
-        functions:dict[fn.FunctionDefinition] = None, templates:list[str] = None,
-        module:mod.Module = None, packed = False
+    def __init__(self, name:str, attributes:dict[str, ct.CompilerType] = None,
+        functions:list[fn.FunctionDefinition] = None, templates:list[str] = None,
+        module:mod.Module = None, packed = False, documentation = None
     ) -> None:
         self.name = name
-        self.attributes = attributes
+        self.attributes = {} if attributes == None else attributes
         self.functions = [] if functions == None else functions
         self.templates = [] if templates == None else templates
         self.module = module
@@ -25,6 +26,32 @@ class StructDefinition:
         This dict contains the mangled aliases.
         Use `get_struct` to retrieve/write and retrieve structs from/to this variable
         """
+        self.documentation = {"purpose":""} if documentation == None else documentation
+
+        #print(self.get_documentation())
+
+    def get_documentation(self) -> str:
+        ret_val = f"<div><h1 id=\"GOTO-STRUCT-{self.name}\">{self.name}"
+        if self.templates != []:
+            ret_val += f" < {', '.join(self.templates)} >"
+        ret_val += "</h1>"
+        ret_val += self.documentation["purpose"]
+        ret_val += "<h3>Attributes</h3>"
+        ret_val += "<ul>"
+        for name, typ in self.attributes.items():
+            type_str = f"<a href=\"#GOTO-STRUCT-{typ.name}\">{typ}</a>" if isinstance(typ, StructType) else f"{typ}"
+            ret_val += f"<li id=\"GOTO-STRUCT-{self.name}-ATTR-{name}\">{name}: {type_str}</li>"
+        ret_val += "</ul>"
+
+        ret_val += "<h3>Methods</h3>"
+        ret_val += "<ul>"
+        for func in self.functions:
+            ret_val += f"<li>{func.get_documentation()}</li>"
+        ret_val += "</ul>"
+        
+        ret_val += "</div>"
+
+        return ret_val
 
     
     def get_struct(self, template_types:list[ct.CompilerType] = None):
@@ -46,8 +73,9 @@ class StructDefinition:
     def get_template_index(self, name:str):
         return self.templates.index(name)    
 
-    def get_mangled_name(self, template_types:list[ct.CompilerType] = []):
-        mangled_name = f"{self.name}"
+    def get_mangled_name(self, template_types:list[ct.CompilerType] = None):
+        template_types = [] if template_types == None else template_types
+        mangled_name = self.name
         if len(template_types) == 0:
             return mangled_name
         
@@ -67,18 +95,27 @@ class Struct:
         """
         Name is mangled.
         """
+        #print(f"NAME : {self.name}")
 
         self.functions:dict[str, fn.FunctionDefinition] = {}
         """
         This contains all of the `FunctionDefinition`(s) for the struct.
         """
-        for func in [*self.struct_definition.functions]:
+        #print(self.struct_definition.name)
+        for func in deepcopy(self.struct_definition.functions):
             func.struct = self
             func.module = self.struct_definition.module
             self.functions[func.name] = func
+            
+            #print(f"{self.name}->{func.name}")
+
             func.name = f"{self.name}_memberfunction_{func.name}"
 
-        self.raw_attributes:dict[str, ct.CompilerType] = {**self.struct_definition.attributes}
+            
+
+        
+
+        self.raw_attributes:dict[str, ct.CompilerType] = deepcopy(self.struct_definition.attributes)
         """
         These are the attributes and their compiler types.
         """
@@ -137,13 +174,17 @@ class Struct:
         return struct
 
     @lru_cache(32, True)
-    def get_attribute(self, name:str, template_types:list[ct.CompilerType] = [], get_definition = False) -> fn.Function | vari.Value:
+    def get_attribute(self, name:str, template_types:list[ct.CompilerType] = None, get_definition = False) -> fn.Function | vari.Value:
         """
         Gets an attribute on the struct.  (Includes member functions.)
 
         The attribute type is a Value.
         """
+        template_types = [] if template_types == None else template_types
+
+        
         attrs = {**self.attributes, **self.functions}
+        # print(f"STRUCT METHS {self.functions.keys()}")
         try:
             attr = attrs[name]
             if isinstance(attr, fn.FunctionDefinition):
@@ -155,7 +196,8 @@ class Struct:
                 return attr
         except KeyError:
             definition_attrs = {"attributes":self.struct_definition.attributes, "functions":self.struct_definition.functions}
-            print(f"Error: {name} is not a valid attribute of {self.struct_definition.name}!\n The valid attributes are:\n{definition_attrs}")
+            print(f"Error: {name} is not a valid attribute of {self.struct_definition.name}!\n")
+    
 
 class StructType(ct.CompilerType):
     """
@@ -174,7 +216,7 @@ class StructType(ct.CompilerType):
             for tt in self.template_types:
                 tt.module = self.module
                 tt.parent = self.parent
-                self.templates_linked = True
+            self.templates_linked = True
         if self._struct == None:
             self._struct = self.module.get_struct(self.name)\
                 .get_struct(self.template_types)
@@ -209,7 +251,10 @@ class StructType(ct.CompilerType):
     
     
     def __repr__(self) -> str:
-        return f"(STRUCT TYPE : {{name: {self.name}, templates_types: {self.template_types}}})"
+        ret_str = self.name
+        if self.template_types != []:
+            ret_str += f"<{', '.join([f'{t_t}' for t_t in self.template_types])}>"
+        return ret_str
     
 class StructPointerType(StructType):
     """
@@ -237,5 +282,9 @@ class StructPointerType(StructType):
         return self
     
     def __repr__(self) -> str:
-        return f"(STRUCT PTR TYPE : {{name: {self.name}, templates_types: {self.template_types}, pointers: {self.ptr_count}}})"
+        ret_str = "$" * self.ptr_count
+        ret_str += self.name
+        if self.template_types != []:
+            ret_str += f"<{', '.join([f'{t_t}' for t_t in self.template_types])}>"
+        return ret_str
         

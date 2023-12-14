@@ -51,8 +51,9 @@ class IndexOperation(Operation):
                         step_over_ptr = True
                     is_struct = IndType.Struct
 
-                nxt = prev_struct.struct.get_attribute(argument.value, get_definition=True)
-
+                nxt = (prev_struct.type if isinstance(prev_struct, ct.ArrayType) else prev_struct).struct.get_attribute(argument.value, get_definition=True)
+                
+                
                 if isinstance(nxt, fn.FunctionDefinition):
                     self.ret_func = nxt
                     break
@@ -67,6 +68,9 @@ class IndexOperation(Operation):
                     is_struct = IndType.Array
                     step_over_ptr = False
 
+                if isinstance(prev_struct, ct.ArrayType):
+                    prev_struct = prev_struct.type
+                    step_over_ptr = True
                 #print(f"ARGU = {argument}")
                 processed_arg = self.process_arg(argument)
                 #print(f"PROCESSED ARGU = {processed_arg}")

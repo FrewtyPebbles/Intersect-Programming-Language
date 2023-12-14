@@ -7,6 +7,7 @@ class BoolType(ct.CompilerType):
         self.count = 1
         self._size = 1
         self.value = ir.IntType(1)
+        self.name = "bool"
 
     
 
@@ -15,4 +16,5 @@ class BoolPointerType(ct.CompilerType):
         self.count = 1
         self._size = 1
         self.value = ir.IntType(1).as_pointer()
+        self.name = "bool"
     

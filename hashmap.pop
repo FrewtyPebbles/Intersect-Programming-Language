@@ -126,15 +126,46 @@ func input() ~> String {
     return _input;
 }
 
+struct KVPair<KeyType, ValueType> {
+    key: KeyType;
+    value: ValueType;
+}
+
+struct HashMap<KeyType, ValueType> {
+    data: [Vector<KVPair<KeyType, ValueType>> x 100];
+    capacity: i32;
+    
+    func init(self:$HashMap<KeyType, ValueType>) {
+        self.capacity = 100;
+        let index = 0;
+        while index < self.capacity {
+            self.data[index].init();
+            
+            index = index + 1;
+        }
+        return;
+    }
+
+
+    func del(self:$HashMap<KeyType, ValueType>) {
+        let index = 0;
+        while index < self.capacity {
+            self.data[index].del();
+            
+            index = index + 1;
+        }
+        return;
+    }
+}
+
 export func test(num: i32) ~> i32 {
 
-    let my_str:String;
-    
-    my_str = input();
-    
-    print(&my_str);
+    let my_map:HashMap<String, i32>;
 
-    my_str.del();
+    my_map.init();
+
+
+    my_map.del();
     
     return 0;
 }

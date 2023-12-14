@@ -15,6 +15,8 @@ class CompilerType:
     value:ir.Type
     parent: None
     module: None
+    name: str
+    "This is the name used in the original source file."
     @staticmethod
     def create_from(ir_type:ir.Type | ir.IdentifiedStructType, module:md.Module = None, func = None):
         """
@@ -97,12 +99,14 @@ class CompilerType:
         memo[id(self)] = result
         for k, v in self.__dict__.items():
             if k in {"parent", "module", "builder", "value",
-                "_value", "_count", "count", "_size", "size"}:
+                "_value", "_count", "count", "_size", "size", "name"}:
                 setattr(result, k, v)
                 continue
             setattr(result, k, deepcopy(v, memo))
         return result
 
     def __repr__(self) -> str:
-        return f"{{{self.value}}}"
+        if hasattr(self, "ptr_count"):
+            return f"{'$'*self.ptr_count}{self.name}"
+        return self.name
     

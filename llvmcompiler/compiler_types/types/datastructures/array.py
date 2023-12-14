@@ -27,6 +27,13 @@ class ArrayType(ct.CompilerType):
             self.type.module = self.module
             self._value = ir.ArrayType(self.type.value, self.count)
         return self._value
+    
+    @value.setter
+    def value(self, val):
+        if self._value == None:
+            self.type.parent = self.parent
+            self.type.module = self.module
+        self._value = val
 
     @property
     def parent(self):
@@ -44,6 +51,9 @@ class ArrayType(ct.CompilerType):
 
     def cast_ptr(self):
         return ArrayPointerType(self.type, self.count)
+
+    def __repr__(self) -> str:
+        return f"[{self.type} x {self.count}]"
     
 class ArrayPointerType(ArrayType):
     def __init__(self, item_type:ct.CompilerType, count:int) -> None:

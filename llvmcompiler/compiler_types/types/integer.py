@@ -8,10 +8,11 @@ class IntegerType(ct.CompilerType):
     """
     This is where integer specific type methods are added.
     """
-    def __init__(self, size:int) -> None:
+    def __init__(self, size:int, name = "i") -> None:
         self.count = 1
         self._size = size
         self.value = ir.IntType(self._size)
+        self.name = name
 
 
     
@@ -22,6 +23,7 @@ class I32Type(IntegerType):
         self.count = 1
         self._size = 32
         self.value = ir.IntType(self._size)
+        self.name = "i32"
 
     
 
@@ -30,6 +32,7 @@ class I8Type(IntegerType):
         self.count = 1
         self._size = 8
         self.value = ir.IntType(self._size)
+        self.name = "i8"
 
     
 
@@ -38,6 +41,7 @@ class I64Type(IntegerType):
         self.count = 1
         self._size = 64
         self.value = ir.IntType(self._size)
+        self.name = "i64"
 
 
 

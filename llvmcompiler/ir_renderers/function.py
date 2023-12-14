@@ -2,6 +2,7 @@ from __future__ import annotations
 from typing import Dict, List, Union, TYPE_CHECKING
 from llvmlite import ir
 from functools import lru_cache
+from copy import deepcopy
 
 if TYPE_CHECKING:
     import llvmcompiler.ir_renderers.operations as op
@@ -20,8 +21,12 @@ from llvmcompiler.ir_renderers.scopes import IfBlock, ElseIfBlock, ElseBlock, Sc
 class FunctionDefinition:
     def __init__(self, name:str, arguments:Dict[str, ct.CompilerType],
             return_type:ct.CompilerType, variable_arguments:bool = False, template_args:list[str] = [],
-            scope:list[Scope | op.Operation] = [], struct:st.Struct = None, module:Module = None, extern = False):
+            scope:list[Scope | op.Operation] = [], struct:st.Struct = None, module:Module = None, extern = False, documentation = None):
         self.name = name
+        if "_memberfunction_" in self.name:
+            self.clean_name = self.name.split("_memberfunction_")[1]
+        else:
+            self.clean_name = self.name
         self.arguments = arguments
         self.return_type = return_type
         self.variable_arguments = variable_arguments
@@ -30,6 +35,11 @@ class FunctionDefinition:
         self.struct = struct
         self.module = module
         self.extern = extern
+        self.doc_data:dict[str, str | dict[str,str] | None] = {
+            "purpose": None, # How this function should be used
+            "implementation": None, # description of the implementation details of this function
+            "args": {} # a description for each argument of the docstring
+        } if documentation == None else documentation
         """
         This marks a function for external use for things like dlls.
         Just like extern "c" in c++.
@@ -41,11 +51,59 @@ class FunctionDefinition:
         Use `get_function` to retrieve/write and retrieve functions from/to this variable
         """
 
+    def __deepcopy__(self, memo):
+        cls = self.__class__
+        result = cls.__new__(cls)
+        memo[id(self)] = result
+        for k, v in self.__dict__.items():
+            if k in {"module", "doc_data", "arguments", "return_type", "template_args", "scope"}:
+                setattr(result, k, v)
+                continue
+            setattr(result, k, deepcopy(v, memo))
+        return result
+
+    def get_documentation(self) -> str:
+        ret_val = "<div><h2>"
+        if self.struct != None:
+            ret_val += f"<a href=\"#GOTO-STRUCT-{self.struct.struct_definition.name}\">{self.struct.struct_definition.name}</a> . "
+        ret_val += self.clean_name
+
+        if t_a_len := len(self.template_args):
+            ret_val += "< "
+            for t_n, t_a in enumerate(self.template_args):
+                ret_val += f"{t_a}"
+                if t_n+1 != t_a_len:
+                    ret_val += ", "
+            ret_val += " >"
+        
+        ret_val += "("
+        for a_name, arg in self.arguments.items():
+            ret_val += f" {a_name}: {arg}"
+            ret_val += ", "
+        if len(self.arguments):
+            ret_val = ret_val[:-2] + " "
+        ret_val += f") ~> {self.return_type}</h2>"
+        if self.doc_data['purpose'] != None:
+            ret_val += f"<p>{self.doc_data['purpose']}</p>"
+        if self.doc_data['args'] != {}:
+            ret_val += "<h4>Arguments</h4><ul>"
+            for key, val in self.doc_data['args'].items():
+                ret_val += f"<li><b>{key}</b></br>"
+                ret_val += f"{val}</li>"
+            ret_val += "</ul>"
+        if self.doc_data['implementation'] != None:
+            ret_val += f"<p>{self.doc_data['implementation']}</p>"
+        ret_val += "</div>"
+        return ret_val
+
+
     def __repr__(self) -> str:
         return f"(FUNC : [{self.name}]{self.arguments})"
 
     
-    def get_function(self, template_types:list[ct.CompilerType] = []):
+    def get_function(self, template_types:list[ct.CompilerType] = None):
+        template_types = [] if template_types == None else template_types
+
         mangled_name = self.get_mangled_name(template_types)
         if mangled_name in self.function_aliases.keys():
             return self.function_aliases[mangled_name]
@@ -55,7 +113,8 @@ class FunctionDefinition:
             self.function_aliases[new_function.name] = new_function
             return new_function
 
-    def write(self, template_types:list[ct.CompilerType] = []) -> Function:
+    def write(self, template_types:list[ct.CompilerType] = None) -> Function:
+        template_types = [] if template_types == None else template_types
         new_function = Function(template_types, self)
         return new_function.write()
 
@@ -63,7 +122,8 @@ class FunctionDefinition:
     def get_template_index(self, name:str):
         return self.template_args.index(name)    
 
-    def get_mangled_name(self, template_types:list[ct.CompilerType] = []):
+    def get_mangled_name(self, template_types:list[ct.CompilerType] = None):
+        template_types = [] if template_types == None else template_types
         mangled_name = f"{self.name}"
         if len(template_types) == 0:
             return mangled_name
@@ -76,7 +136,8 @@ class CFunctionDefinition(FunctionDefinition):
         self.ir_function = ir_function
         self.name = self.ir_function.name
     
-    def get_function(self, template_types:list[ct.CompilerType] = []):
+    def get_function(self, template_types:list[ct.CompilerType] = None):
+        template_types = [] if template_types == None else template_types
         return CFunction(self)
     
 
