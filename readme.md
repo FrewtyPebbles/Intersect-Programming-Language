@@ -144,6 +144,10 @@ entry:
 
 ## TODO
 
+### Refactor member function namespace/name mangling to all be within the module class.
+
+Or figure out a way to make current solution work.
+
 ### Implement Algorithm for Building Order Of Operations Trees:
 
 See description of algorithm in file:

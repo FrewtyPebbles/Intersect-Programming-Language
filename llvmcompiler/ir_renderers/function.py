@@ -56,7 +56,7 @@ class FunctionDefinition:
         result = cls.__new__(cls)
         memo[id(self)] = result
         for k, v in self.__dict__.items():
-            if k in {"module", "doc_data", "arguments", "return_type", "template_args", "scope"}:
+            if k in {"module", "doc_data", "builder", "struct"}:
                 setattr(result, k, v)
                 continue
             setattr(result, k, deepcopy(v, memo))
@@ -233,7 +233,7 @@ class Function:
 
     def write_scope(self):
         last_scope_line = None
-        for scope_line in self.function_definition.scope:
+        for scope_line in deepcopy(self.function_definition.scope):
             scope_line.builder = self.builder
 
             if any([isinstance(last_scope_line, iftype1) for iftype1 in [IfBlock, ElseIfBlock]])\

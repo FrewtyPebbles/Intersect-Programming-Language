@@ -95,7 +95,7 @@ class TreeBuilder:
         self.module_scope = []
         self.file_name = file_name
         self.program_salt = program_salt
-        self.struct_namespace:list[str] = []
+        self.struct_namespace:list[StructOption] = []
         """
         `struct_namespace` stores the names of any structs when their name is read in their definition.
         This is so when the type trunk reaches a label it can reference it against the current templates
@@ -370,8 +370,9 @@ class TreeBuilder:
                 case tb.SyntaxToken.scope_end:
                     break
                 case tb.SyntaxToken.let_keyword:
-                    
-                    scope.append(self.context_define(templates))
+                    let = self.context_define(templates)
+                    #print(let)
+                    scope.append(let)
 
                 case tb.SyntaxToken.if_keyword | tb.SyntaxToken.elif_keyword | tb.SyntaxToken.else_keyword | tb.SyntaxToken.while_keyword:
                     scope.append(self.context_conditional_statement(tok.type, templates))

@@ -2,10 +2,12 @@ func realloc<PtrType>(ptr:$PtrType, new_size:i32) ~> $PtrType {
     "This is a wrapper arround libc_realloc."
     return libc_realloc(ptr:$i8, sizeof $PtrType * new_size:i64):$PtrType;
 }
+
 func malloc<PtrType>(size:i32) ~> $PtrType {
     "This is a wrapper arround libc_malloc."
     return libc_malloc(sizeof PtrType * size:i64):$PtrType;
 }
+
 func free<PtrType>(ptr:$PtrType) {
     "This is a wrapper arround libc_free."
     libc_free(ptr:$i8);
@@ -13,7 +15,7 @@ func free<PtrType>(ptr:$PtrType) {
 }
 
 struct Vector<ItemType> {
-    "This is an implementation of a variable length heterogenious array."
+    "This is an implementation of a variable length homogenious array."
     data:$ItemType;
     capacity:i32;
     length:i32;
@@ -127,15 +129,18 @@ func input() ~> String {
 }
 
 struct KVPair<KeyType, ValueType> {
+    "A key value pair for use in `HashMap`s"
     key: KeyType;
     value: ValueType;
 }
 
 struct HashMap<KeyType, ValueType> {
+    "An implementation of a homogenious hashmap."
     data: [Vector<KVPair<KeyType, ValueType>> x 100];
     capacity: i32;
     
     func init(self:$HashMap<KeyType, ValueType>) {
+        "Allocates the hashmap."
         self.capacity = 100;
         let index = 0;
         while index < self.capacity {
@@ -146,12 +151,23 @@ struct HashMap<KeyType, ValueType> {
         return;
     }
 
+    func hash(self:$HashMap<KeyType, ValueType>, item:$String) ~> i32 {
+        "This is the hashing function used to hash the provided item."
+        let hashindex = 0;
+        let c_n = 0;
+        while c_n < item.length {
+            hashindex = hashindex + (item.data.get(c_n):i32) + c_n;
+            c_n = c_n + 1;
+        }
+        return hashindex;
+    }
 
     func del(self:$HashMap<KeyType, ValueType>) {
+        "Deallocates the hashmap."
         let index = 0;
         while index < self.capacity {
             self.data[index].del();
-            
+
             index = index + 1;
         }
         return;
@@ -160,12 +176,19 @@ struct HashMap<KeyType, ValueType> {
 
 export func test(num: i32) ~> i32 {
 
-    let my_map:HashMap<String, i32>;
+    let map:HashMap<String, i32>;
 
-    my_map.init();
+    map.init();
 
+    let key:String;
 
-    my_map.del();
+    key = input();
+
+    libc_printf("hash test: %i\n":$c8, map.hash(&key));
+
+    key.del();
+
+    map.del();
     
     return 0;
 }

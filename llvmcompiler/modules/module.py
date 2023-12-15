@@ -10,6 +10,7 @@ from typing import Dict, List, Union
 
 class Module:
     def __init__(self, name:str = '', scope:list[fn.FunctionDefinition | st.StructDefinition] = None, mangle_salt = "MMAANNGGLLEE") -> None:
+        self.name = name
         self.module = ir.Module(name=name)
         self.functions:Dict[str, ir.Function | fn.FunctionDefinition] = {
             # The key is the name that is parsed from source code,
@@ -32,7 +33,16 @@ class Module:
         Point a value to this when it is freed
         """
         self.null.initializer = ir.IntType(8)(ord("\0"))
-        
+
+        self.mangled_members:set[str] = set()
+
+    def get_documentation(self):
+        ret_val = f"<div><h1>{self.name}</h1>"
+        for interface in self.scope:
+            ret_val += interface.get_documentation()
+
+        ret_val += "</div>"
+        return ret_val
     
     def write(self):
         for scope_line in self.scope:

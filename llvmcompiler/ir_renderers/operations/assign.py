@@ -12,6 +12,7 @@ class AssignOperation(Operation):
         var = None
         
         if isinstance(self.arguments[0], vari.Value):
+            # print([self.arguments[1], self.arguments[0].value])
             self.builder.cursor.store(self.process_arg(self.arguments[1]), self.arguments[0].value)
             
             var = self.arguments[0]

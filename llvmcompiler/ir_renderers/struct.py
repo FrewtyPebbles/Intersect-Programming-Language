@@ -43,11 +43,12 @@ class StructDefinition:
             ret_val += f"<li id=\"GOTO-STRUCT-{self.name}-ATTR-{name}\">{name}: {type_str}</li>"
         ret_val += "</ul>"
 
-        ret_val += "<h3>Methods</h3>"
-        ret_val += "<ul>"
-        for func in self.functions:
-            ret_val += f"<li>{func.get_documentation()}</li>"
-        ret_val += "</ul>"
+        if len(self.functions):
+            ret_val += "<h3>Methods</h3>"
+            ret_val += "<ul>"
+            for func in self.functions:
+                ret_val += f"<li>{func.get_documentation()}</li>"
+            ret_val += "</ul>"
         
         ret_val += "</div>"
 
@@ -101,7 +102,7 @@ class Struct:
         """
         This contains all of the `FunctionDefinition`(s) for the struct.
         """
-        #print(self.struct_definition.name)
+        # TODO: BUG: Figure out how to mangle name without mangling original function definition, yet still retain information 
         for func in deepcopy(self.struct_definition.functions):
             func.struct = self
             func.module = self.struct_definition.module
@@ -127,6 +128,17 @@ class Struct:
         self.size = 0
         self.template_types = template_types
         self.ir_struct = None
+
+    def __deepcopy__(self, memo):
+        cls = self.__class__
+        result = cls.__new__(cls)
+        memo[id(self)] = result
+        for k, v in self.__dict__.items():
+            if k in {"module", "struct_definition"}:
+                setattr(result, k, v)
+                continue
+            setattr(result, k, deepcopy(v, memo))
+        return result
 
     @lru_cache(32, True)
     def get_template_type(self, name:str):
@@ -253,7 +265,7 @@ class StructType(ct.CompilerType):
     def __repr__(self) -> str:
         ret_str = self.name
         if self.template_types != []:
-            ret_str += f"<{', '.join([f'{t_t}' for t_t in self.template_types])}>"
+            ret_str += f"&lt;{', '.join([f'{t_t}' for t_t in self.template_types])}&gt;"
         return ret_str
     
 class StructPointerType(StructType):
@@ -285,6 +297,6 @@ class StructPointerType(StructType):
         ret_str = "$" * self.ptr_count
         ret_str += self.name
         if self.template_types != []:
-            ret_str += f"<{', '.join([f'{t_t}' for t_t in self.template_types])}>"
+            ret_str += f"&lt;{', '.join([f'{t_t}' for t_t in self.template_types])}&gt;"
         return ret_str
         

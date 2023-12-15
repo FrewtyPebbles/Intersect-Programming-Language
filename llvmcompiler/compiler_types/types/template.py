@@ -26,9 +26,7 @@ class Template(ct.CompilerType):
 
     @property
     def value(self):
-        if self._value == None:
-            self._value = self.get_template_type().value
-        return self._value
+        return self.get_template_type().value
     
     @value.setter
     def value(self, value):
@@ -37,15 +35,11 @@ class Template(ct.CompilerType):
     
     @property
     def size(self):
-        if self._size == None:
-            self._size = self.get_template_type().size
-        return self._size
+        return self.get_template_type().size
     
     @property
     def count(self):
-        if self._count == None:
-            self._count = self.get_template_type().count
-        return self._count
+        return self.get_template_type().count
 
 
     def __eq__(self, __value: Template | str) -> bool:
@@ -72,10 +66,9 @@ class TemplatePointer(Template):
     
     @property
     def value(self):
-        if self._value == None:
-            self._value = self.get_template_type().value
-            for _ in range(self.ptr_count):
-                self._value = self._value.as_pointer()
+        self._value = self.get_template_type().value
+        for _ in range(self.ptr_count):
+            self._value = self._value.as_pointer()
         return self._value
     
     @value.setter

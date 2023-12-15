@@ -9,7 +9,10 @@ class CLI:
             "output":"./program",
             "salt": "MMAANNGGLLEE",
             "show_ir": False,
-            "optimize": 3
+            "optimize": 3,
+            "document": False,
+            "run": False,
+            "compile": False,
         }
         flag = ""
         for raw_argument in sys.argv:
@@ -18,10 +21,16 @@ class CLI:
             "-sal", "-mangle", "-mang", "-source", "-s",
             "-opt", "-optimize", "-opt_level"}:
                 flag = argument
-            elif argument in {"--debug", "--dbg", "--d"}:
+            elif argument in {"--debug", "--dbg"}:
                 self.arguments["debug"] = True
             elif argument in {"--show_ir", "--ir", "--llvm_ir"}:
                 self.arguments["show_ir"] = True
+            elif argument in {"--d", "--doc", "--document", "--documentation"}:
+                self.arguments["document"] = True
+            elif argument in {"--r", "--run", "--execute", "--play"}:
+                self.arguments["run"] = True
+            elif argument in {"--c", "--compile", "--build", "--b"}:
+                self.arguments["compile"] = True
             elif flag in {"-output", "-o"}:
                 self.arguments["output"] = argument
                 flag = ""
@@ -52,18 +61,24 @@ class CLI:
                     tw = "\""
                 sys.stdout.write(f"{tw}{token.value}{tw}{' ' * (30 - len(str(token.value)))}{token.type.name}\n")
         if self.arguments["debug"]:print("Building Concrete Tree...")
+        
         tree.parse_trunk()
 
         
         module = tree.get_module()
+
+        if self.arguments["document"]:
+            with open("./docs.html", "w") as fp:
+                fp.write(module.get_documentation())
         
-        if self.arguments["debug"]:print("Emitting LLVM IR...")
-        module.write()
+        if self.arguments["compile"]:
+            if self.arguments["debug"]:print("Emitting LLVM IR...")
+            module.write()
 
-        if self.arguments["show_ir"]:
-            module.dbg_print()
-
-        self.compile(module)
+            if self.arguments["show_ir"]:
+                module.dbg_print()
+            if self.arguments["run"]:
+                self.compile(module)
 
     def compile(self, module):
         import llvmlite.binding as llvm

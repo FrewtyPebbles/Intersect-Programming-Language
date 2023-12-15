@@ -1,4 +1,5 @@
 from __future__ import annotations
+from copy import deepcopy
 from functools import lru_cache
 from typing import TYPE_CHECKING, Self
 from enum import Enum
@@ -23,6 +24,8 @@ class Operation:
         self.builder:BuilderData = None
         self.raw_arguments = arguments
         self.arguments = arguments
+    
+    
 
     def get_variables(self, arguments: list[arg_type] = [], no_default_action = False):
         if len(arguments) == 0 and not no_default_action:
