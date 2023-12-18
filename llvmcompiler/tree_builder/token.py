@@ -33,10 +33,10 @@ class SyntaxToken(Enum):
     greater_than_or_equal_to_op = ">="
     parentheses_start = "("
     parentheses_end = ")"
-    string_literal = "string"
-    integer_literal = "integer"
-    precision_literal = "precision"
-    bool_literal = "boolean"
+    string_literal = 0
+    integer_literal = 1
+    precision_literal = 2
+    bool_literal = 3
     null_literal = "null"
     i64_type = "i64"
     i32_type = "i32"
@@ -45,8 +45,7 @@ class SyntaxToken(Enum):
     f32_type = "f32"
     d64_type = "d64"
     bool_type = "bool"
-    str_type = "str"
-    label = "label"
+    label = 4
     sqr_bracket_start = "["
     sqr_bracket_end = "]"
     comment_start = "#:"
@@ -76,7 +75,7 @@ class SyntaxToken(Enum):
             SyntaxToken.c8_type, SyntaxToken.i8_type,
             SyntaxToken.d64_type, SyntaxToken.f32_type,
             SyntaxToken.i32_type, SyntaxToken.i64_type,
-            SyntaxToken.str_type, SyntaxToken.bool_type            
+            SyntaxToken.bool_type            
             }
 
     @property
@@ -245,4 +244,4 @@ class Token:
             print("Error: Unable to determine type of token.")
 
     def __repr__(self) -> str:
-        return f"(TOKEN : {{type: {self.type}, value: {self.value}}})"
+        return f"(TOKEN : {{type: {self.type}, value: \"{self.value}\"}})"

@@ -221,6 +221,19 @@ class StructType(ct.CompilerType):
         self.template_types = template_types
         self.templates_linked = False
         self._struct = None
+        self._value = None
+        self.ptr_count = 0
+
+    def __deepcopy__(self, memo):
+        cls = self.__class__
+        result = cls.__new__(cls)
+        memo[id(self)] = result
+        for k, v in self.__dict__.items():
+            if k in {"module", "template_types", "_struct"}:
+                setattr(result, k, v)
+                continue
+            setattr(result, k, deepcopy(v, memo))
+        return result
 
     @property
     def struct(self) -> Struct:
@@ -250,16 +263,23 @@ class StructType(ct.CompilerType):
                 tt.module = self.module
                 tt.parent = self.parent
                 self.templates_linked = True
-        return self.struct.ir_struct
+        if not self._value:
+            self._value = self.struct.ir_struct
+        return self._value
     
     @value.setter
     def value(self, val):
-        self.struct.ir_struct = val
+        self._value = val
 
     def cast_ptr(self):
         struct = StructPointerType(self.name, self.template_types, self.module, 1)
         struct.parent = self.parent
         return struct
+
+    def create_deref(self):
+        self_cpy = deepcopy(self)
+        self_cpy.ptr_count -= 1
+        return self_cpy
     
     
     def __repr__(self) -> str:
@@ -279,10 +299,9 @@ class StructPointerType(StructType):
     
     @property
     def value(self):
-        if self._value == None:
-            self._value = self.struct.ir_struct
-            for pn in range(self.ptr_count):
-                self._value = self._value.as_pointer()
+        self._value = self.struct.ir_struct
+        for pn in range(self.ptr_count):
+            self._value = self._value.as_pointer()
         return self._value
     
     @value.setter

@@ -25,7 +25,7 @@ class CLI:
                 self.arguments["debug"] = True
             elif argument in {"--show_ir", "--ir", "--llvm_ir"}:
                 self.arguments["show_ir"] = True
-            elif argument in {"--d", "--doc", "--document", "--documentation"}:
+            elif argument in {"--d", "--doc", "--docs", "--document", "--documentation"}:
                 self.arguments["document"] = True
             elif argument in {"--r", "--run", "--execute", "--play"}:
                 self.arguments["run"] = True

@@ -20,10 +20,10 @@ class Operation:
     """
     All operations inherit from this operation
     """
-    def __init__(self, arguments:list[arg_type] = []) -> None:
+    def __init__(self, arguments:list[arg_type] = None) -> None:
         self.builder:BuilderData = None
-        self.raw_arguments = arguments
-        self.arguments = arguments
+        self.raw_arguments = [] if arguments == None else arguments
+        self.arguments = [] if arguments == None else arguments
     
     
 

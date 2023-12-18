@@ -30,7 +30,7 @@ struct Vector<ItemType> {
 
     func push(self:$Vector<ItemType>, item:ItemType) {
         "Pushes an item to the vector."
-        ($self.data)[self.length] = item;
+        self.data[self.length] = item;
         
         self.length = self.length + 1;
         
@@ -52,11 +52,11 @@ struct Vector<ItemType> {
     
     func get(self:$Vector<ItemType>, index:i32) ~> ItemType {
         "Returns an item from the vector."
-        return ($self.data)[index];
+        return self.data[index];
     }
     func top(self:$Vector<ItemType>) ~> ItemType {
         "Returns the end item of the vector."
-        return ($self.data)[self.length-1];
+        return self.data[self.length-1];
     }
 
     func del(self:$Vector<ItemType>) {
@@ -70,36 +70,56 @@ struct String {
     "An implementation of a string class with useful string handling methods."
     data:Vector<c8>;
     length:i32;
+
     func new(self:$String, new_str:$c8) {
         "This creates a new string instance."
         self.data.init();
         
         let character:c8;
-        character = $new_str;
 
-        let index = 0;
+        character = $new_str;
 
         self.length = 0;
         
         while character != '\0' {
             self.data.push(character);
-            index = index + 1;
-            character = new_str[index];
+            self.length = self.length + 1;
+            character = new_str&[self.length];
         }
 
-        self.length = index + 1;
+        
         return;
     }
+
     func push(self:$String, char:c8) {
         "Pushes a new char to the string."
         self.data.push(char);
         self.length = self.data.length;
         return;
     }
+    
     func get_ptr(self:$String) ~> $c8 {
         "Gets the charpointer to the string."
         return self.data.data;
     }
+    
+    func eq(self:$String, other:$String) ~> bool {
+        "Checks if 2 strings are equal."
+
+        if self.length != other.length {
+            return false;
+        }
+
+        let ind = 0;
+        while ind < self.length {
+            if self.data.get(ind) != other.data.get(ind) {
+                return false;
+            }
+            ind = ind + 1;
+        }
+        return true;
+    }
+    
     func del(self:$String) {
         "Frees the string data."
         self.data.del();
@@ -110,7 +130,7 @@ struct String {
 func print(msg:$String) {
     let index = 0;
     while index != msg.length {
-        libc_putchar(($msg.data.data)[index]);
+        libc_putchar(msg.data.get(index));
         index = index + 1;
     }
     libc_putchar(10);
@@ -144,22 +164,47 @@ struct HashMap<KeyType, ValueType> {
         self.capacity = 100;
         let index = 0;
         while index < self.capacity {
-            self.data[index].init();
+            self.data[index].init(); #bug with loading self.data before indexing, ERROR: AttributeError: 'LoadInstr' object has no attribute 'constant'
             
             index = index + 1;
         }
         return;
     }
 
-    func hash(self:$HashMap<KeyType, ValueType>, item:$String) ~> i32 {
+    func hash(self:$HashMap<KeyType, ValueType>, key:$String) ~> i32 {
         "This is the hashing function used to hash the provided item."
         let hashindex = 0;
         let c_n = 0;
-        while c_n < item.length {
-            hashindex = hashindex + (item.data.get(c_n):i32) + c_n;
+        while c_n < key.length {
+            hashindex = hashindex + (key.data.get(c_n):i32) + c_n;
             c_n = c_n + 1;
         }
-        return hashindex;
+        return hashindex % self.capacity;
+    }
+
+    func insert(self:$HashMap<KeyType, ValueType>, key:$KeyType, value:ValueType) {
+        "This is used to insert items into the hashmap"
+        let h_index = self.hash(&key);
+        let item:KVPair<KeyType, ValueType>;
+        item.key = $key;
+        item.value = value;
+        self.data[h_index].push(item);
+        return;
+    }
+
+    func get(self:$HashMap<KeyType, ValueType>, key:$KeyType) ~> ValueType {
+        "Used to get data at a hash key."
+        let h_key = self.hash(&key);
+        let collision_list = self.data[h_key];
+        let index = 0;
+        let current_kv:KVPair<KeyType, ValueType>;
+        while index < collision_list.length {
+            current_kv = collision_list.get(index); # -> operator does not work correctly with get function
+            if current_kv.key.eq(&key) {
+                return current_kv.value;
+            }
+        }
+        return 999;
     }
 
     func del(self:$HashMap<KeyType, ValueType>) {
@@ -182,9 +227,21 @@ export func test(num: i32) ~> i32 {
 
     let key:String;
 
-    key = input();
+    key.new("thing":$c8);
 
-    libc_printf("hash test: %i\n":$c8, map.hash(&key));
+    #map.insert(&key, 1);
+    
+    #let _str:String;
+    #_str.new("thing":$c8);
+    #if key.eq(&_str) {
+    #    libc_printf("matches\n":$c8);
+    #}
+    #else {
+    #    libc_printf("doesn't match\n":$c8);
+    #}
+    #_str.del();
+
+    #libc_printf("input = %i\n":$c8, map.get(&key)); #BROKEN: check get function for details
 
     key.del();
 

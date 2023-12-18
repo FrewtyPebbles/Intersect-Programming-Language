@@ -6,7 +6,7 @@ class FunctionReturnOperation(Operation):
     def _write(self):
         self.builder.cursor.comment("OP::return START")
         self.arguments = self.get_variables()
-        self.builder.pop_variables()
+        # self.builder.pop_variables()
         if len(self.arguments) == 0:
             # if type of function is not void then throw an error
             self.builder.cursor.ret_void()

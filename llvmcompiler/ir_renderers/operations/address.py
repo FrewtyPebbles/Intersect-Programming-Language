@@ -12,6 +12,11 @@ class AddressOperation(Operation):
     def _write(self):
         self.builder.cursor.comment("OP::address START")
         self.arguments = self.get_variables()
-        res = self.arguments[0].variable
+        res = None
+        if isinstance(self.arguments[0], vari.Value):
+            res = self.arguments[0].value
+            self.builder.module.dbg_print()
+        else:
+            res = self.arguments[0].variable
         self.builder.cursor.comment("OP::address END")
         return vari.Value(CompilerType.create_from(res.type, self.builder.module, self.builder.function), res, True, address = True)

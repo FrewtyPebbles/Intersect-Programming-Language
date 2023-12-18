@@ -9,9 +9,9 @@ if TYPE_CHECKING:
     from llvmcompiler.ir_renderers.function import FunctionDefinition
 
 class CallOperation(Operation):
-    def __init__(self, function:str | Operation | Any, arguments: list[arg_type] = [], template_arguments:list[CompilerType] = []) -> None:
+    def __init__(self, function:str | Operation | Any, arguments: list[arg_type] = None, template_arguments:list[CompilerType] = None) -> None:
         super().__init__(arguments)
-        self.template_arguments = template_arguments
+        self.template_arguments = [] if template_arguments == None else template_arguments
         self.function:str | FunctionDefinition | Operation = function
         self.is_member_function = False
     
@@ -59,6 +59,7 @@ class CallOperation(Operation):
                 
                 if isinstance(arg, vari.Value):
                     if arg.is_literal:
+                        #print(argument)
                         arg.type = CompilerType.create_from(
                             f_to_c.args[a_n].type,
                             self.builder.module,
@@ -70,12 +71,14 @@ class CallOperation(Operation):
                 arg = self.process_arg(arg)
                 arguments.append(arg)
         
-        #print(f_to_c.name)
+        print("\n\n\nFUNC")
+
+        print(f_to_c.name)
         
-        #print(arguments)
+        print(arguments)
         
         func_call = self.builder.cursor.call(f_to_c, arguments)
-        #print(func_call)
+        print(func_call)
 
         self.builder.cursor.comment("OP::call end")
 

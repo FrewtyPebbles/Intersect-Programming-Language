@@ -132,6 +132,8 @@ class PotentialOperation:
                 return DivideOperation(values)
             case tb.SyntaxToken.modulo_op:
                 return ModuloOperation(values)
+            case tb.SyntaxToken.assign_op:
+                return ModuloOperation(values)
             case tb.SyntaxToken.less_than_op:
                 return LessThanOperation(values)
             case tb.SyntaxToken.greater_than_op:

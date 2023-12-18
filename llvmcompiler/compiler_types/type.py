@@ -88,9 +88,18 @@ class CompilerType:
         self.value = self.value.as_pointer()
         return self
     
+    def deref_ptr(self):
+        self.value = self.value.pointee
+        return self
+    
     def create_ptr(self):
         self_cpy = deepcopy(self)
         self_cpy.value = self_cpy.value.as_pointer()
+        return self_cpy
+
+    def create_deref(self):
+        self_cpy = deepcopy(self)
+        self_cpy.value = self_cpy.value.pointee
         return self_cpy
 
     def __deepcopy__(self, memo):

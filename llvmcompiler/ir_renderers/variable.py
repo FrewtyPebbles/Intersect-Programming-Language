@@ -34,7 +34,7 @@ class Variable:
         self.module = self.builder.module
 
         # declare the variable
-        if not self.function_argument and not self.value.is_instruction:
+        if not self.function_argument:
             self.allocate()
         else:
             self.variable = self.value.value
@@ -66,6 +66,7 @@ class Variable:
         self.builder.set_variable(self, value)
 
     def load(self):
+        #print(self.variable)
         return self.builder.cursor.load(self.variable)
     
     def __repr__(self) -> str:
@@ -118,7 +119,7 @@ class Value:
 
     @lru_cache(32, True)  
     def get_value(self):
-        if self.address:
+        if self.address or self.is_call:
             return self.value
         if self.deref:
             return self.load()

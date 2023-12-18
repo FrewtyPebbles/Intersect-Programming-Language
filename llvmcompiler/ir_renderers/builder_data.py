@@ -130,8 +130,7 @@ class BuilderData:
             # print(f" - [(stack)] : setting value of : [{variable.name}] : to : [{value.value}]")
             if isinstance(value, HeapValue):
                 variable.value = value
-                if not value.is_instruction:
-                    self.cursor.store(value.get_value(), variable.variable)
+                self.cursor.store(value.get_value(), variable.variable)
             elif isinstance(value, Value):
                 variable.value = value
                 self.cursor.store(value.get_value(), variable.variable)

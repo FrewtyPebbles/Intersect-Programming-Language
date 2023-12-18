@@ -1,3 +1,4 @@
+from copy import deepcopy
 from llvmlite import ir
 from typing import TYPE_CHECKING
 import llvmcompiler.compiler_types as ct
@@ -11,6 +12,7 @@ class ArrayType(ct.CompilerType):
         self.module = None
         self._size = None
         self._value = None
+        self.ptr_count = 0
 
     @property    
     def size(self):
@@ -25,7 +27,9 @@ class ArrayType(ct.CompilerType):
         if self._value == None:
             self.type.parent = self.parent
             self.type.module = self.module
-            self._value = ir.ArrayType(self.type.value, self.count)
+        self._value = ir.ArrayType(self.type.value, self.count)
+        for pn in range(self.ptr_count):
+            self._value = self._value.as_pointer()
         return self._value
     
     @value.setter
@@ -50,10 +54,17 @@ class ArrayType(ct.CompilerType):
         return self.type
 
     def cast_ptr(self):
-        return ArrayPointerType(self.type, self.count)
+        self.value = self.value.as_pointer()
+        self.ptr_count += 1
+        return self
+
+    def create_deref(self):
+        self_cpy = deepcopy(self)
+        self_cpy.ptr_count -= 1
+        return self_cpy
 
     def __repr__(self) -> str:
-        return f"[{self.type} x {self.count}]"
+        return f"{'$' * self.ptr_count}[{self.type} x {self.count}]"
     
 class ArrayPointerType(ArrayType):
     def __init__(self, item_type:ct.CompilerType, count:int) -> None:
