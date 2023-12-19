@@ -20,7 +20,7 @@ class CallOperation(Operation):
         if isinstance(self.function, Operation):
             #print(self.function)
             self.function: tuple[ir.Instruction, FunctionDefinition] = self.write_argument(self.function)
-            print(self.function)
+            #print(self.function)
         # link all templates to their functions.
         for t_a in range(len(self.template_arguments)):
             self.template_arguments[t_a].parent = self.builder.function
