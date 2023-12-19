@@ -1,4 +1,5 @@
 from __future__ import annotations
+from copy import deepcopy
 from llvmlite import ir
 from typing import TYPE_CHECKING
 import llvmcompiler.compiler_types as ct
@@ -37,7 +38,9 @@ class Template(ct.CompilerType):
     
     @property
     def size(self):
-        return self.get_template_type().size
+        if not self._size:
+            self._size = self.get_template_type().size
+        return self._size
         
     
     @property

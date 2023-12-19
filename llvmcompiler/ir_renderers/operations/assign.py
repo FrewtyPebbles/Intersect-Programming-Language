@@ -8,16 +8,17 @@ class AssignOperation(Operation):
         # self.arguments: 0 = variable, 1 = value
         self.builder.cursor.comment("OP::assign START")
         self.arguments = self.get_variables()
+        
         self.convert_literal_types()
         var = None
         
         if isinstance(self.arguments[0], vari.Value):
-            print(f"\nASSIGN VAL [{self.arguments[0]} = {self.arguments[1]}]")
+            #print(f"\nASSIGN VAL [{self.arguments[0]} = {self.arguments[1]}]")
             self.builder.cursor.store(self.process_arg(self.arguments[1]), self.arguments[0].value)
             
             var = self.arguments[0]
         elif isinstance(self.arguments[0], vari.Variable):
-            print(f"\nASSIGN [{self.arguments[0]} = {self.arguments[1]}]")
+            #print(f"\nASSIGN [{self.arguments[0]} = {self.arguments[1]}]")
             var = self.builder.set_variable(self.arguments[0], self.arguments[1])
 
         self.builder.cursor.comment("OP::assign END")

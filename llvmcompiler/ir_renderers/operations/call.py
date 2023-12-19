@@ -18,7 +18,9 @@ class CallOperation(Operation):
     @lru_cache(32, True)
     def get_function(self):
         if isinstance(self.function, Operation):
+            #print(self.function)
             self.function: tuple[ir.Instruction, FunctionDefinition] = self.write_argument(self.function)
+            print(self.function)
         # link all templates to their functions.
         for t_a in range(len(self.template_arguments)):
             self.template_arguments[t_a].parent = self.builder.function
@@ -71,14 +73,14 @@ class CallOperation(Operation):
                 arg = self.process_arg(arg)
                 arguments.append(arg)
         
-        print("\n\n\nFUNC")
+        #print("\n\n\nFUNC")
 
-        print(f_to_c.name)
+        #print(f_to_c.name)
         
-        print(arguments)
+        #print(arguments)
         
         func_call = self.builder.cursor.call(f_to_c, arguments)
-        print(func_call)
+        #print(func_call)
 
         self.builder.cursor.comment("OP::call end")
 

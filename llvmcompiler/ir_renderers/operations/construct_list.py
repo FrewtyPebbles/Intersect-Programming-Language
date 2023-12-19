@@ -4,9 +4,7 @@ from ..operation import Operation, arg_type
 from llvmlite import ir
 import llvmcompiler.ir_renderers.variable as vari
 from typing import TYPE_CHECKING
-if TYPE_CHECKING:
-    from llvmcompiler.ir_renderers.function import FunctionDefinition
-from llvmcompiler.ir_renderers.struct import StructType
+
 
 class ConstructListOperation(Operation):
     """

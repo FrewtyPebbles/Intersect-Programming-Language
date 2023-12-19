@@ -164,7 +164,7 @@ struct HashMap<KeyType, ValueType> {
         self.capacity = 100;
         let index = 0;
         while index < self.capacity {
-            self.data[index].init(); #bug with loading self.data before indexing, ERROR: AttributeError: 'LoadInstr' object has no attribute 'constant'
+            self.data&[index].init(); #bug with loading self.data before indexing, ERROR: AttributeError: 'LoadInstr' object has no attribute 'constant'
             
             index = index + 1;
         }

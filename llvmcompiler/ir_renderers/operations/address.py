@@ -15,7 +15,7 @@ class AddressOperation(Operation):
         res = None
         if isinstance(self.arguments[0], vari.Value):
             res = self.arguments[0].value
-            self.builder.module.dbg_print()
+            #self.builder.module.dbg_print()
         else:
             res = self.arguments[0].variable
         self.builder.cursor.comment("OP::address END")

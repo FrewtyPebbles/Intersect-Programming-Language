@@ -14,6 +14,7 @@ class DefineOperation(Operation):
         self.arguments[1].module = self.builder.module
         if self.force_type != None:
             self.arguments[1].type = self.force_type
+        
         var = self.builder.declare_variable(vari.Variable(self.builder, *self.arguments))
         self.builder.cursor.comment("OP::define(stack) END")
         return var

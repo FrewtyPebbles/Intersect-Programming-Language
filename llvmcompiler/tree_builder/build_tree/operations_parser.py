@@ -1,4 +1,5 @@
 from __future__ import annotations
+from types import NoneType
 from llvmcompiler import Value, I32Type, F32Type,\
     D64Type, BoolType, C8Type, ArrayType
 from llvmcompiler.ir_renderers.operations import *
@@ -172,14 +173,17 @@ class OpValue:
         self.value = value
 
     def __repr__(self) -> str:
-        if all([not isinstance(self.value, typ) for typ in {Operation, Value, str, CompilerType}]):
+        if all([not isinstance(self.value, typ) for typ in {Operation, Value, str, CompilerType, NoneType}]):
+            #print("val.val")
             return f"(OPVAL : {self.value.value})"
         elif isinstance(self.value, str):
+            #print("val")
             return f"(OPVAL : {self.value})"
         else:
             return f"(OPVAL : {type(self.value)})"
 
     def get_value(self):
+        #print(self.value)
         if any([isinstance(self.value, typ) for typ in {Operation, Value, CompilerType, str}]):
             return self.value
         return get_value_from_token(self.value)

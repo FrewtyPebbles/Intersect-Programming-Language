@@ -56,7 +56,7 @@ class FunctionDefinition:
         result = cls.__new__(cls)
         memo[id(self)] = result
         for k, v in self.__dict__.items():
-            if k in {"module", "doc_data", "builder", "struct"}:
+            if k in {"module", "doc_data", "builder"}:
                 setattr(result, k, v)
                 continue
             setattr(result, k, deepcopy(v, memo))
@@ -109,6 +109,7 @@ class FunctionDefinition:
             return self.function_aliases[mangled_name]
         else:
             # make a new function that is potentially a template
+            
             new_function = self.write(template_types)
             self.function_aliases[new_function.name] = new_function
             return new_function
@@ -168,12 +169,14 @@ class Function:
     @lru_cache(32, True)
     def get_template_type(self, name:str):
         try:
+            #print(f"FUNC TEMP {self.name} :: {name}")
             typ = self.template_types[self.function_definition.get_template_index(name)]
             if isinstance(typ, ct.Template):
                 typ = typ.get_template_type()
             return typ
         except ValueError:
             try:
+                #print(f"STRUCT TEMP {self.name} :: {name}")
                 typ = self.function_definition.struct.get_template_type(name)
                 if isinstance(typ, ct.Template):
                     typ = typ.get_template_type()

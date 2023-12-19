@@ -123,7 +123,7 @@ class NewIndexOperation(Operation):
         
     def process_indexes(self):
 
-        print(f"\nINDEX = {self.arguments}")
+        #print(f"\nINDEX = {self.arguments}")
         indexes:indexes_type = []
         # process all arguments to get indexes
         pointer = None
@@ -138,19 +138,18 @@ class NewIndexOperation(Operation):
                 
             if prev_type.is_pointer:
                 prev_type = prev_type.create_deref()
-                print(f"PTR {prev_type}")
+                #print(f"PTR {prev_type}")
             elif isinstance(prev_type, ct.ArrayType):
                 prev_type = prev_type.type
-                print(f"ARRAY {prev_type}")
-            else:
-                print("Error: Cannot index scalar type.")
+                #print(f"ARRAY {prev_type}")
+            
             processed_arg = self.process_arg(argument)
             
             indexes.append(processed_arg)
 
 
         self.type = prev_type
-        print(f"ind_type = {self.type}")
+        #print(f"ind_type = {self.type}")
 
         pointer = self.gep(pointer, indexes)
 
@@ -165,10 +164,10 @@ class NewIndexOperation(Operation):
     
     def gep(self, ptr:ir.Instruction, indexes:list):
         if isinstance(ptr.type, ir.ArrayType):
-            print(f"ARRAY INDS:\n{ptr}\nINDS:\n{indexes}")
+            #print(f"\nARRAY INDS:\n\t{ptr}\nINDS:\n\t{indexes}")
             return self.builder.cursor.gep(ptr, [ir.IntType(32)(0), *indexes])
         else:
-            print(f"PTR INDS:\n{ptr}\nINDS:\n{indexes}")
+            #print(f"\nPTR INDS:\n\t{ptr}\nINDS:\n\t{indexes}")
             return self.builder.cursor.gep(ptr, [*indexes])
         
         
@@ -192,7 +191,7 @@ class AccessOperation(Operation):
         
     def process_indexes(self):
 
-        print(f"\nACCESS = {self.arguments}")
+        #print(f"\nACCESS = {self.arguments}")
         indexes:indexes_type = []
         # process all arguments to get indexes
         pointer = None
@@ -202,27 +201,30 @@ class AccessOperation(Operation):
             pointer = self.arguments[0].value
         prev_struct:st.StructType = self.arguments[0].type
         self.type = prev_struct
-        #print(f"INDEX ARGS {self.arguments}")
+        #print(f"ACCESS ARGS {self.arguments}")
         for argument in self.arguments[1:]:
             p_struct = prev_struct
             if isinstance(p_struct, ct.Template):
                 p_struct = p_struct.get_template_type()
+            #print(f"\n\tPREV P_STRUCT {p_struct}")
             
             nxt = p_struct.struct.get_attribute(argument.value, get_definition=True)
             
             
             if isinstance(nxt, fn.FunctionDefinition):
                 self.ret_func = nxt
+                #print(f"\n\tPREV IF {nxt}\n {indexes} ;;;;")
                 break
             else:
                 indexes.append(nxt.get_value())
                 prev_struct = prev_struct.struct.raw_attributes[argument.value]
+                #print(f"\n\tPREV ELSE {prev_struct}")
                 self.type = prev_struct
                 
 
         pointer = self.gep(pointer, indexes)
 
-        print(f"acc_type = {self.type}")
+        #print(f"acc_type = {self.type}")
         self.type.parent = self.builder.function
         self.type.module = self.builder.module
         
@@ -240,6 +242,7 @@ class AccessOperation(Operation):
     def _write(self):
         self.builder.cursor.comment("OP::index START")
         self.arguments = self.get_variables()
+        #print(f"ARGS {self.arguments}")
         res = self.process_indexes()
         self.builder.cursor.comment("OP::index END")
 

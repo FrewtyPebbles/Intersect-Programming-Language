@@ -1,10 +1,13 @@
 func realloc<PtrType>(ptr:$PtrType, new_size:i32) ~> $PtrType {
+    "This is a wrapper arround libc_realloc."
     return libc_realloc(ptr:$i8, sizeof $PtrType * new_size:i64):$PtrType;
 }
 func malloc<PtrType>(size:i32) ~> $PtrType {
-    return libc_malloc(sizeof $i8 * size:i64):$PtrType;
+    "This is a wrapper arround libc_malloc."
+    return libc_malloc(sizeof PtrType * size:i64):$PtrType;
 }
 func free<PtrType>(ptr:$PtrType) {
+    "This is a wrapper arround libc_free."
     libc_free(ptr:$i8);
     return;
 }
@@ -14,7 +17,7 @@ struct Node<DType>{
     next:$Node<DType>;
 
     func display(self:$Node<DType>) {
-        libc_printf("node_value: %i\n":$c8, $self.data);
+        libc_printf("node_value: %i\n":$c8, self.data);
         return;
     }
 }
@@ -29,12 +32,12 @@ export func test(num: i32) ~> i32 {
 
     second.data = 2;
 
-    first.next = second;
+    first.next = &second;
 
-    second.next = first;
+    second.next = &first;
 
     first.display();
-    first.next->next->display();
+    first.next->next->next->display();
 
     return 0;
 }

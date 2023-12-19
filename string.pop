@@ -94,8 +94,6 @@ struct String {
     }
     func eq(self:$String, other:$String) ~> bool {
         "Checks if 2 strings are equal."
-        libc_printf("s.l: %i\n":$c8, self.length);
-        libc_printf("o.l: %i\n":$c8, other.length);
         if self.length != other.length {
             return false;
         }

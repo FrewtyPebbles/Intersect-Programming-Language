@@ -1,21 +1,34 @@
 func realloc<PtrType>(ptr:$PtrType, new_size:i32) ~> $PtrType {
+    "This is a wrapper arround libc_realloc."
     return libc_realloc(ptr:$i8, sizeof $PtrType * new_size:i64):$PtrType;
+}
+func malloc<PtrType>(size:i32) ~> $PtrType {
+    "This is a wrapper arround libc_malloc."
+    return libc_malloc(sizeof PtrType * size:i64):$PtrType;
+}
+func free<PtrType>(ptr:$PtrType) {
+    "This is a wrapper arround libc_free."
+    libc_free(ptr:$i8);
+    return;
 }
 
 struct Vector<ItemType> {
+    "This is an implementation of a variable length heterogenious array."
     data:$ItemType;
     capacity:i32;
     length:i32;
 
     func init(self:$Vector<ItemType>) {
-        self.data = libc_malloc(sizeof $ItemType):$ItemType;
+        "Allocates the vector."
+        self.data = malloc?<ItemType>(1);
         self.capacity = 1;
         self.length = 0;
         return;
     }
 
     func push(self:$Vector<ItemType>, item:ItemType) {
-        ($self.data)[self.length] = item;
+        "Pushes an item to the vector."
+        self.data[self.length] = item;
         
         self.length = self.length + 1;
         
@@ -28,6 +41,7 @@ struct Vector<ItemType> {
     }
 
     func pop(self:$Vector<ItemType>) {
+        "Pops an item from the end of the vector."
         self.length = self.length - 1;
         self.capacity = self.length;
         self.data = realloc?<ItemType>(self.data, self.capacity);
@@ -35,14 +49,17 @@ struct Vector<ItemType> {
     }
     
     func get(self:$Vector<ItemType>, index:i32) ~> ItemType {
-        return ($self.data)[index];
+        "Returns an item from the vector."
+        return self.data[index];
     }
     func top(self:$Vector<ItemType>) ~> ItemType {
-        return ($self.data)[self.length-1];
+        "Returns the end item of the vector."
+        return self.data[self.length-1];
     }
 
     func del(self:$Vector<ItemType>) {
-        libc_free(self.data:$i8);
+        "Frees the vector."
+        free?<ItemType>(self.data);
         return;
     }
 }

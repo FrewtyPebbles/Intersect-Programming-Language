@@ -10,7 +10,6 @@ from llvmcompiler import StructDefinition, CompilerType,\
     TypeSizeOperation, FreeOperation, BreakOperation, IfBlock, ElseIfBlock, ElseBlock, WhileLoop,\
     BreakOperation, AddressOperation
 from llvmcompiler.ir_renderers.operations import *
-from more_itertools import peekable
 
 # TODO BUG: FIX BUG WITH `None`s showing up in scopes
 
@@ -103,6 +102,10 @@ class TreeBuilder:
         This is so when the type trunk reaches a label it can reference it against the current templates
         and defined struct names and properly produce a type.
         """
+        self.dbg_scope_padding = 0
+
+    def dbg_print(self, msg:str):
+        pass#print(f"{'    '*self.dbg_scope_padding}{msg}")
 
     def get_module(self):
         """
@@ -116,7 +119,10 @@ class TreeBuilder:
             
             match tok.type:
                 case tb.SyntaxToken.struct_keyword:
+                    self.dbg_print("STRUCT:")
+                    self.dbg_scope_padding += 1
                     self.module_scope.append(self.context_struct_definition())
+                    self.dbg_scope_padding -= 1
 
                 case tb.SyntaxToken.func_keyword | tb.SyntaxToken.export_keyword:
                     if tok.type == tb.SyntaxToken.export_keyword:
@@ -124,7 +130,10 @@ class TreeBuilder:
                         exporting = True
                         continue
                     else:
+                        self.dbg_print("FUNCTION:")
+                        self.dbg_scope_padding += 1
                         func = self.context_function_statement_definition([], exporting)
+                        self.dbg_scope_padding -= 1
                         # print(func)
                         self.module_scope.append(func)
                         exporting = False
@@ -135,6 +144,7 @@ class TreeBuilder:
 
         returns a tuple containting (operation/value, last_token:Token)
         """
+        self.dbg_scope_padding += 1
         operations = []
         current_op = [[],None]
         op_val_len = 2
@@ -152,14 +162,14 @@ class TreeBuilder:
             current_op[1] = op
             op_val_len = _op_val_len
 
-        #print(f"OOO .current {self.token_list.current()}")
+        self.dbg_print(f"OOO .current {self.token_list.current()}")
         last_tok = None
         for tok in self.token_list:
-            #print(f"\tOOO > {tok}")
+            self.dbg_print(f"\tOOO > {tok}")
             if tok.type == tb.SyntaxToken.label:
                 
                 label_ret = self.context_label_trunk(tok.value, templates)
-                #print(f"OOO label {label_ret}")
+                self.dbg_print(f"\t\tOOO label {label_ret}")
                 push_val(label_ret)
             elif tok.type.is_literal or tok.type.is_type:
                 push_val(tok)
@@ -178,12 +188,9 @@ class TreeBuilder:
                 last_tok = tok
                 break
         
-        
+        self.dbg_scope_padding -= 1
         if len(operations) == 0 and len(current_op[0]) == 1:
             # push a single value.
-            if isinstance(current_op[0][0], str):
-                return (current_op[0][0], last_tok)
-
             result = current_op[0][0].get_value()
             #print(f"NO ORDERING {result}")
             return (result, last_tok)
@@ -242,6 +249,8 @@ class TreeBuilder:
                 self.token_list.prepend(tok)
                 ooo_res = self.context_order_of_operations(templates)
                 indexes.append(ooo_res[0])
+                if ooo_res[1].type != tb.SyntaxToken.delimiter and ooo_res[1].type.is_ending_token:
+                    break
         
         return NewIndexOperation(indexes)
     
@@ -268,7 +277,7 @@ class TreeBuilder:
             else:
                 self.token_list.prepend(tok)
                 break
-        print(indexes)
+        #print(indexes)
         if len(indexes) == 1:
             if isinstance(indexes[0], CallOperation):
                 return indexes[0]
@@ -291,26 +300,29 @@ class TreeBuilder:
                     case _:
                         print("Error: Expected template argument types in call.")
         function_args = []
-        print(f"FUNC ARGS STARTING TOK {self.token_list.current()}")
+        #print(f"FUNC ARGS STARTING TOK {self.token_list.current()}")
         if self.token_list.current().type == tb.SyntaxToken.parentheses_start:
             next(self.token_list) # skip the ( token
         
         for tok in self.token_list:
+            #print(f"Call ARG token: {tok}")
             if tok.type == tb.SyntaxToken.delimiter:
                 continue
             elif tok.type == tb.SyntaxToken.parentheses_end:
                 break
             else:
                 self.token_list.prepend(tok)
-                print(f"FA TOK {self.token_list.current()} : {function}")
+                self.dbg_print(f"FA TOK {self.token_list.current()} : {function}")
                 ooo_ret = self.context_order_of_operations(templates)
                 if ooo_ret[0] != None:
                     function_args.append(ooo_ret[0])
                 if ooo_ret[1] != None:
                     if ooo_ret[1].type == tb.SyntaxToken.parentheses_end:
                         break
+
+        #print(f"END CALL")
         
-        print(f"\nF CLOSE {function}")
+        #print(f"\nF CLOSE {function}")
         return CallOperation(function, function_args, template_args)
 
     def context_label_trunk(self, label:str, templates:list[str], dereferences = 0):
@@ -319,11 +331,13 @@ class TreeBuilder:
             if tok.type == tb.SyntaxToken.function_call_template_op:
                 # is a template function
                 self.token_list.prepend(tok)
+                self.dbg_print(f"TF {ret_val}, {templates}, {dereferences}")
                 ret_val = self.context_call(ret_val, templates, dereferences)
                 
             elif tok.type == tb.SyntaxToken.parentheses_start:
                 # is a function that may be a template function
                 self.token_list.prepend(tok)
+                self.dbg_print(f"F  {ret_val}, {templates}, {dereferences}")
                 ret_val = self.context_call(ret_val, templates, dereferences)
             elif tok.type == tb.SyntaxToken.access_op:
                 ret_val = self.context_access(ret_val, templates, dereferences)
@@ -337,7 +351,7 @@ class TreeBuilder:
                 if tok.type == tb.SyntaxToken.assign_op:
                     
                     ooo_ret = self.context_order_of_operations(templates)
-                    #print(f"ASSIGN OP {[label_product, ooo_ret[0]]}")
+                    self.dbg_print(f"ASSIGN OP {[ret_val, ooo_ret[0]]}")
                     self.token_list.prepend(ooo_ret[1])
                     return AssignOperation([prepend_derefs(ret_val, dereferences), ooo_ret[0]])
                 else:
@@ -503,7 +517,9 @@ class TreeBuilder:
                     scope.append(let)
 
                 case tb.SyntaxToken.if_keyword | tb.SyntaxToken.elif_keyword | tb.SyntaxToken.else_keyword | tb.SyntaxToken.while_keyword:
+                    self.dbg_scope_padding += 1
                     scope.append(self.context_conditional_statement(tok.type, templates))
+                    self.dbg_scope_padding -= 1
 
                 case tb.SyntaxToken.label:
                     l=self.context_label_trunk(tok.value, templates, deref)

@@ -71,7 +71,7 @@ class CLI:
             with open("./docs.html", "w") as fp:
                 fp.write(module.get_documentation())
         
-        if self.arguments["compile"]:
+        if self.arguments["compile"] or self.arguments["run"]:
             if self.arguments["debug"]:print("Emitting LLVM IR...")
             module.write()
 
