@@ -164,7 +164,7 @@ struct HashMap<KeyType, ValueType> {
         self.capacity = 100;
         let index = 0;
         while index < self.capacity {
-            self.data&[index].init(); #bug with loading self.data before indexing, ERROR: AttributeError: 'LoadInstr' object has no attribute 'constant'
+            self.data&[index].init();
             
             index = index + 1;
         }
@@ -188,18 +188,18 @@ struct HashMap<KeyType, ValueType> {
         let item:KVPair<KeyType, ValueType>;
         item.key = $key;
         item.value = value;
-        self.data[h_index].push(item);
+        self.data&[h_index].push(item);
         return;
     }
 
     func get(self:$HashMap<KeyType, ValueType>, key:$KeyType) ~> ValueType {
         "Used to get data at a hash key."
         let h_key = self.hash(&key);
-        let collision_list = self.data[h_key];
+        let collision_list = self.data&[h_key];
         let index = 0;
         let current_kv:KVPair<KeyType, ValueType>;
         while index < collision_list.length {
-            current_kv = collision_list.get(index); # -> operator does not work correctly with get function
+            current_kv = collision_list.get(index);
             if current_kv.key.eq(&key) {
                 return current_kv.value;
             }
@@ -211,7 +211,7 @@ struct HashMap<KeyType, ValueType> {
         "Deallocates the hashmap."
         let index = 0;
         while index < self.capacity {
-            self.data[index].del();
+            self.data&[index].del();
 
             index = index + 1;
         }
@@ -229,19 +229,9 @@ export func test(num: i32) ~> i32 {
 
     key.new("thing":$c8);
 
-    #map.insert(&key, 1);
-    
-    #let _str:String;
-    #_str.new("thing":$c8);
-    #if key.eq(&_str) {
-    #    libc_printf("matches\n":$c8);
-    #}
-    #else {
-    #    libc_printf("doesn't match\n":$c8);
-    #}
-    #_str.del();
+    map.insert(&key, 1);
 
-    #libc_printf("input = %i\n":$c8, map.get(&key)); #BROKEN: check get function for details
+    libc_printf("input = %i\n":$c8, map.get(&key));
 
     key.del();
 

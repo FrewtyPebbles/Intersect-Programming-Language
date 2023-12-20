@@ -10,8 +10,7 @@ func free<PtrType>(ptr:$PtrType) {
 }
 
 export func test(num: i32) ~> i32 {
-    let pointer:$i32;
-    pointer = malloc?<i32>(1);
+    let pointer:$i32 = malloc?<i32>(1);
     pointer[0] = 100;
     libc_printf("malloc %i\n":$c8, pointer[0])
     pointer = realloc?<i32>(pointer, 2);

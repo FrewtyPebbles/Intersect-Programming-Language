@@ -2,26 +2,29 @@ function testfile {
 	param (
 		[string]$file,
 		[string]$input_str,
-		[switch]$time
+		[switch]$time,
+		[switch]$ir
 	)
 	$out = ""
-	
+	$show_ir = ""
+	if ($ir) {
+		$show_ir = "--ir"
+	}
 	if ($time) {
 		$m = ""
-		if ([string]::IsNullOrEmpty($input)) {
-			$m = Measure-Command {$out = ( $input_str | & py main.py -s $file --run)}
+		if ([string]::IsNullOrEmpty($input_str)) {
+			$m = Measure-Command {$out = ( $input_str | & py main.py -s $file --run $show_ir)}
 		} else {
-			$m = Measure-Command {$out = (& py main.py -s $file --run)}
+			$m = Measure-Command {$out = (& py main.py -s $file --run $show_ir)}
 		}
 		$out
 		"Time:"
 		$m.TotalSeconds
-	}
-	else {
+	} else {
 		if ([string]::IsNullOrEmpty($input)) {
-			$out = ( $input_str | & py main.py -s $file --run)
+			$out = ( $input_str | & py main.py -s $file --run $show_ir)
 		} else {
-			$out = (& py main.py -s $file --run)
+			$out = (& py main.py -s $file --run $show_ir)
 		}
 		return $out
 	}
@@ -47,9 +50,22 @@ function TestAll {
 		(
 			"node.pop",
 			"node_value: 1`nnode_value: 2"
+		),
+		(
+			"nested_struct.pop",
+			"Init called.`nget 0: 10`nget 0 and 1: 10 and 20`nend."
+		),
+		(
+			"struct.pop",
+			"value: 5"
+		),
+		(
+			"hashmap.pop",
+			"input = 1"
 		)
 	)
 	$passed_tests = 0
+	$char_width = $(Get-Host).UI.RawUI.WindowSize.Width
 	foreach ($currtest in $files) {
 		if ($currtest.Length -eq 3) {
 			$out = (testfile -file $currtest[0] -input_str $currtest[2]) -join "`n"
@@ -57,15 +73,15 @@ function TestAll {
 				"`nTest [" + $currtest[0] + "] passed"
 				$passed_tests += 1
 			} else {
-				"__________________________________"
+				"_" * $char_width
 				"Test [" + $currtest[0] + "] failed"
-				"=================================="
+				"=" * $char_width
 				"Expected:"
 				$currtest[1]
-				"----------------------------------"
+				"-" * $char_width
 				"Recieved:"
 				$out
-				"=================================="
+				"=" * $char_width
 			}
 		} else {
 			$out = (testfile -file $currtest[0]) -join "`n"
@@ -73,13 +89,25 @@ function TestAll {
 				"`nTest [" + $currtest[0] + "] passed"
 				$passed_tests += 1
 			} else {
+				""
+				"X" * $char_width
+				"X" * $char_width
 				"Test [" + $currtest[0] + "] failed"
-				"`tExpected:"
+				"=" * $char_width
+				"Expected:"
 				$currtest[1]
-				"`tRecieved:"
+				"~" * $char_width
+				"Recieved:"
 				$out
+				"=" * $char_width
+				"X" * $char_width
+				"X" * $char_width
 			}
 		}
 	}
-	"`n-------------------`nPassed Tests: " + $passed_tests + " / " + $files.Length + "`n-------------------"
+	""
+	$passed_tests_str = "| Passed Tests: " + $passed_tests + " / " + $files.Length + " |"
+	"-" * $passed_tests_str.Length
+	$passed_tests_str
+	"-" * $passed_tests_str.Length
 }

@@ -14,7 +14,9 @@ class DefineOperation(Operation):
         self.arguments[1].module = self.builder.module
         if self.force_type != None:
             self.arguments[1].type = self.force_type
-        
+        elif self.arguments[1].type.is_pointer:
+            self.arguments[1].type = self.arguments[1].type.create_deref()
+        #print(self.arguments)
         var = self.builder.declare_variable(vari.Variable(self.builder, *self.arguments))
         self.builder.cursor.comment("OP::define(stack) END")
         return var

@@ -5,14 +5,14 @@ import llvmcompiler.compiler_types as ct
 
 # Array
 class ArrayType(ct.CompilerType):
-    def __init__(self, item_type:ct.CompilerType, count:int) -> None:
+    def __init__(self, item_type:ct.CompilerType, count:int, ptr_count = 0) -> None:
         self.count = count
         self.type = item_type
         self._parent = None
         self.module = None
         self._size = None
         self._value = None
-        self.ptr_count = 0
+        self.ptr_count = ptr_count
 
     @property    
     def size(self):
@@ -54,7 +54,6 @@ class ArrayType(ct.CompilerType):
         return self.type
 
     def cast_ptr(self):
-        self.value = self.value.as_pointer()
         self.ptr_count += 1
         return self
 
@@ -67,14 +66,18 @@ class ArrayType(ct.CompilerType):
         return f"{'$' * self.ptr_count}[{self.type} x {self.count}]"
     
 class ArrayPointerType(ArrayType):
-    def __init__(self, item_type:ct.CompilerType, count:int) -> None:
+    def __init__(self, item_type:ct.CompilerType, count:int, ptr_count = 0) -> None:
         self.count = count
         self.type = item_type
         self._parent = None
         self.module = None
+        self.ptr_count = ptr_count
     
     @property
     def value(self):
         self.type.parent = self.parent
         self.type.module = self.module
-        return ir.ArrayType(self.type.value, self.count).as_pointer()
+        val = ir.ArrayType(self.type.value, self.count)
+        for _ in range(self.ptr_count):
+            val = val.as_pointer()
+        return val

@@ -239,9 +239,9 @@ class TreeBuilder:
             elif tok.type == tb.SyntaxToken.sqr_bracket_start:
                 continue
             elif tok.type == tb.SyntaxToken.access_op:
-                return self.context_access(NewIndexOperation(indexes), templates, dereferences)
+                return self.context_access(IndexOperation(indexes), templates, dereferences)
             elif tok.type == tb.SyntaxToken.dereference_access_op:
-                return self.context_access(DereferenceOperation([NewIndexOperation(indexes)]), templates, dereferences)
+                return self.context_access(DereferenceOperation([IndexOperation(indexes)]), templates, dereferences)
             elif tok.type.is_ending_token or tok.type.is_lhs_rhs_operator:
                 self.token_list.prepend(tok)
                 break
@@ -252,7 +252,7 @@ class TreeBuilder:
                 if ooo_res[1].type != tb.SyntaxToken.delimiter and ooo_res[1].type.is_ending_token:
                     break
         
-        return NewIndexOperation(indexes)
+        return IndexOperation(indexes)
     
     def context_access(self, beginning:Operation, templates:list[str], dereferences = 0):
         "This is for the `.` operator."
@@ -358,86 +358,6 @@ class TreeBuilder:
                     self.token_list.prepend(tok)
                 return prepend_derefs(ret_val, dereferences)
                 
-    def old_context_label_trunk(self, label:str, templates:list[str], dereferences = 0):
-        template_args:list[tb.Token] = []
-        function_args = []
-        is_function = False
-        label_product = label
-        is_index = False
-        index_args = []
-        
-
-        # helper function to call function
-        def call_function(templates):
-            
-            # is a function but not a memeber function
-            ooo_ret = self.context_order_of_operations(templates)
-            if ooo_ret[0] != None:
-                function_args.append(ooo_ret[0])
-                
-                while ooo_ret[1].type != tb.SyntaxToken.parentheses_end:
-                    ooo_ret = self.context_order_of_operations(templates)
-                    function_args.append(ooo_ret[0])
-#             print(f"""\nFUNCTION {{
-#     LABEL     = {label_product}
-#     ARGS      = {function_args}
-#     TEMPLATES = {template_args}
-# }}\n""")
-            return CallOperation(label_product, function_args, template_args)
-        
-        for itteration, tok in enumerate(self.token_list):
-            if tok.type == tb.SyntaxToken.function_call_template_op:
-                # is a template function
-                is_function = True
-            elif (is_function or itteration == 0)\
-            and tok.type == tb.SyntaxToken.parentheses_start:
-                # is a function that may be a template function
-                return prepend_derefs(call_function(templates), dereferences)
-            elif is_function and tok.type == tb.SyntaxToken.less_than_op:
-                # Get the templates
-                template_args = self.context_template(templates)
-            elif not is_function:
-                # is not a function
-                if tok.type == tb.SyntaxToken.assign_op:
-                    if is_index:
-                        label_product = prepend_derefs(IndexOperation([label_product, *index_args]), dereferences)
-                    
-                    ooo_ret = self.context_order_of_operations(templates)
-                    #print(f"ASSIGN OP {[label_product, ooo_ret[0]]}")
-                    return AssignOperation([label_product, ooo_ret[0]])
-                elif tok.type == tb.SyntaxToken.sqr_bracket_start:
-                    #print("SQR BRACKETS IN LABEL")
-                    is_index = True
-                    ooo_ret = self.context_order_of_operations(templates)
-
-                    index_args.append(ooo_ret[0])
-                elif tok.type in {tb.SyntaxToken.access_op, tb.SyntaxToken.dereference_access_op}:
-                    is_index = True
-                    if tok.type == tb.SyntaxToken.dereference_access_op:
-                        label_product = DereferenceOperation([IndexOperation([label_product, *index_args])])
-                        index_args = []
-
-                elif tok.type == tb.SyntaxToken.label and is_index:
-                    # is a label after an access operator
-                    index_args.append(LookupLabel(tok.value))
-                elif tok.type == tb.SyntaxToken.parentheses_start:
-                    # call member function without templates
-                    if is_index:
-                        label_product = IndexOperation([label_product, *index_args])
-                    
-                    return prepend_derefs(call_function(templates), dereferences)
-                elif (tok.type.is_ending_token or tok.type.is_lhs_rhs_operator) and is_index:
-                    # this is for if we reach an ending token
-                    self.token_list.prepend(tok)
-                    #print(f"LABEL RET {[label_product, *index_args]}")
-                    return prepend_derefs(IndexOperation([label_product, *index_args]), dereferences)
-                elif tok.type.is_ending_token or tok.type.is_lhs_rhs_operator:
-                    self.token_list.prepend(tok)
-                    return prepend_derefs(label_product, dereferences)
-                elif tok.type == tb.SyntaxToken.cast_op and is_index:
-                    return prepend_derefs(CastOperation([IndexOperation([label_product, *index_args]), self.context_type_trunk(templates)]), dereferences)
-                else:
-                    return prepend_derefs(label_product, dereferences)
 
 
     def context_define(self, templates:list[str]):
@@ -456,7 +376,7 @@ class TreeBuilder:
 
             elif tok.type == tb.SyntaxToken.assign_op:
                 ooo_ret = self.context_order_of_operations(templates)
-
+                #print([name, ooo_ret[0]])
                 return DefineOperation([name, ooo_ret[0]], force_type=typ)
 
             elif tok.type.is_ending_token:

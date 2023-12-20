@@ -25,9 +25,8 @@ class CompilerType:
         compiler type from an llvmlite.ir Type instance.
         """
         from .types import ArrayType, VoidType, BoolType, I32Type, I8Type, I64Type, F32Type, D64Type
-        # check datastructures
-        if isinstance(ir_type, ir.ArrayType):
-            return ArrayType(CompilerType.create_from(ir_type.element, module, func), ir_type.count)
+        
+        #print(f"ORIG TYPE {ir_type}")
 
         ptr_count = ir_type._to_string().count("*")
         
@@ -41,10 +40,15 @@ class CompilerType:
         chosen_type = I32Type()
 
         base_type = ir_type._to_string().lstrip("%").replace("\"", "").rstrip("*")
-
-        #print(f"base_type: {base_type}")
-        
-        if base_type == bool_:
+        # get pointee
+        type_pointee = ir_type
+        while hasattr(type_pointee, "pointee"):
+            type_pointee = type_pointee.pointee
+        # check datastructures
+        if all([s in base_type for s in "[x]"]):
+            #print(type_pointee.element)
+            chosen_type = ArrayType(CompilerType.create_from(type_pointee.element, module, func), type_pointee.count)
+        elif base_type == bool_:
             chosen_type = BoolType()
         elif base_type == i8:
             chosen_type = I8Type()
@@ -60,6 +64,8 @@ class CompilerType:
             for val in module.structs.values():
                 found = False
                 for s_key, struct in val.struct_aliases.items():
+                    s_key = s_key.replace(f'\\22', '')
+                    #print(f"GET TYPE {s_key} == {base_type}")
                     if base_type == s_key:
                         chosen_type = struct.get_type(func)
                         found = True
@@ -70,7 +76,7 @@ class CompilerType:
             chosen_type = chosen_type.cast_ptr()
 
         
-
+        #print(f"CTYPE {chosen_type}")
         return chosen_type
 
     def render_template(self):

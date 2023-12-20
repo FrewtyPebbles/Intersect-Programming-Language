@@ -5,9 +5,9 @@ from llvmlite import ir
 import llvmcompiler.ir_renderers.variable as vari
 
 class AddressOperation(Operation):
-    """
-    Wraps 
-    """
+    def write(self):
+        #print(f"ADDRESS OP {self.arguments}")
+        return super().write()
     @lru_cache(32, True)
     def _write(self):
         self.builder.cursor.comment("OP::address START")

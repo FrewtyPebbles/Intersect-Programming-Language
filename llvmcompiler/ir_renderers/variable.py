@@ -41,7 +41,7 @@ class Variable:
     
         self.builder.declare_variable(self)
 
-        if not self.function_argument and not self.value.is_instruction:
+        if not self.function_argument:# and not self.value.is_instruction:
             if self.value.value != None:
                 self.set(self.value)
         
@@ -119,12 +119,15 @@ class Value:
 
     @lru_cache(32, True)  
     def get_value(self):
+        
         if self.address or self.is_call:
             return self.value
         if self.deref:
+            #print(f"GET VALUE {self}")
             return self.load()
         if self.is_instruction and not isinstance(self.value, str):
             return self.value
+        
         if isinstance(self.type, ct.ArrayType):
             if isinstance(self.type.type.get_template_type(), ct.C8Type) if \
             isinstance(self.type.type, ct.Template) else \

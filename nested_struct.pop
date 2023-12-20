@@ -19,31 +19,31 @@ struct Vector<ItemType> {
     }
 
     func push(self:$Vector<ItemType>, item:i32) {
-        ($self.data)[$self.capacity - 1].data = item;
+        self.data[self.capacity - 1].data = item;
 
-        self.capacity = $self.capacity + 1;
-        self.length = $self.length + 1;
+        self.capacity = self.capacity + 1;
+        self.length = self.length + 1;
         
-        self.data = realloc?<ItemType>($self.data, $self.capacity);
+        self.data = realloc?<ItemType>(self.data, self.capacity);
         return;
     }
 
     func pop(self:$Vector<ItemType>) {
-        self.capacity = $self.capacity - 1;
-        self.length = $self.length - 1;
-        self.data = realloc?<ItemType>($self.data, $self.capacity);
+        self.capacity = self.capacity - 1;
+        self.length = self.length - 1;
+        self.data = realloc?<ItemType>(self.data, self.capacity);
         return;
     }
     
     func get(self:$Vector<ItemType>, index:i32) ~> i32 {
-        return $(($self.data)[index].data);
+        return self.data[index].data;
     }
     func top(self:$Vector<ItemType>) ~> ItemType {
-        return $(($self.data)[$self.length-1]);
+        return self.data[self.length-1];
     }
 
     func del(self:$Vector<ItemType>) {
-        libc_free($self.data:$i8);
+        libc_free(self.data:$i8);
         return;
     }
 }
@@ -55,11 +55,11 @@ export func test(num: i32) ~> i32 {
     vec.init();
     libc_printf("Init called.\n":$c8);
 
-    vec.push(10)
+    vec.push(10);
 
     libc_printf("get 0: %i\n":$c8, vec.get(0));
 
-    vec.push(20)
+    vec.push(20);
 
     libc_printf("get 0 and 1: %i and %i\n":$c8, vec.get(0), vec.get(1));
 

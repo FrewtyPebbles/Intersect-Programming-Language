@@ -2,12 +2,12 @@ struct Storage<ItemType> {
     data:ItemType;
 
     func set(self:$Storage<ItemType>, val:ItemType) {
-        self.data[0] = val;
+        self.data = val;
         return;
     }
 
     func get(self:$Storage<ItemType>) ~> ItemType {
-        return $self.data;
+        return self.data;
     }
 }
 
@@ -16,6 +16,6 @@ export func test(num: i32) ~> i32 {
     let store:Storage<i32>;
 
     store.set(5);
-
-    return store.get();
+    libc_printf("value: %i\n":$c8, store.get());
+    return 0;
 }

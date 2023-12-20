@@ -27,9 +27,7 @@ class Template(ct.CompilerType):
 
     @property
     def value(self):
-        if not self._value:
-            self._value = self.get_template_type().value
-        return self._value
+        return self.get_template_type().value
     
     @value.setter
     def value(self, value):
@@ -38,9 +36,8 @@ class Template(ct.CompilerType):
     
     @property
     def size(self):
-        if not self._size:
-            self._size = self.get_template_type().size
-        return self._size
+
+        return self.get_template_type().size
         
     
     @property

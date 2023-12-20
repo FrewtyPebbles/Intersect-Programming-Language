@@ -5,12 +5,16 @@ from llvmlite import ir
 import llvmcompiler.ir_renderers.variable as vari
 
 class DereferenceOperation(Operation):
+    def write(self):
+        #print(f"DEREF {self.arguments}")
+        return super().write()
     @lru_cache(32, True)
     def _write(self):
         self.builder.cursor.comment("OP::dereference START")
         self.arguments = self.get_variables()
+        
         res = self.arguments[0].load()
         
         self.builder.cursor.comment("OP::dereference END")
         deref = not self.arguments[0].function_argument if hasattr(self.arguments[0], "function_argument") else True
-        return vari.Value(self.arguments[0].type.create_deref(), res, True, deref = deref)
+        return vari.Value(CompilerType.create_from(res.type, self.builder.module, self.builder.function), res, True, deref = deref)

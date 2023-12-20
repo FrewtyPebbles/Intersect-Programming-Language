@@ -60,7 +60,7 @@ class CallOperation(Operation):
 
                 
                 if isinstance(arg, vari.Value):
-                    if arg.is_literal:
+                    if arg.is_literal and a_n < len(f_to_c.args):
                         #print(argument)
                         arg.type = CompilerType.create_from(
                             f_to_c.args[a_n].type,

@@ -79,8 +79,8 @@ class StructDefinition:
         mangled_name = self.name
         if len(template_types) == 0:
             return mangled_name
-        
-        mangled_name += f"_struct_tmp_{self.module.mangle_salt}_{f'_{self.module.mangle_salt}_'.join([tt.value._to_string() for tt in template_types])}"
+        mangled_name += f"_struct_tmp_{self.module.mangle_salt}_{f'_{self.module.mangle_salt}_'.join([tt.value._to_string() for tt in template_types])}".replace(f'\\22', '').replace(f'"', '').replace(f'%', '')
+        #print(f"MANG NAME {mangled_name}")
         return mangled_name
 
 
