@@ -12,11 +12,12 @@ class StructDefinition:
     """
     def __init__(self, name:str, attributes:dict[str, ct.CompilerType] = None,
         functions:list[fn.FunctionDefinition] = None, templates:list[str] = None,
-        module:mod.Module = None, packed = False, documentation = None
+        module:mod.Module = None, packed = False, documentation = None, operatorfunctions = None
     ) -> None:
         self.name = name
         self.attributes = {} if attributes == None else attributes
         self.functions = [] if functions == None else functions
+        self.operatorfunctions = [] if operatorfunctions == None else operatorfunctions
         self.templates = [] if templates == None else templates
         self.module = module
         self.packed = packed
@@ -99,6 +100,7 @@ class Struct:
         #print(f"NAME : {self.name}")
 
         self.functions:dict[str, fn.FunctionDefinition] = {}
+        self.operatorfunctions:dict[str, list[fn.FunctionDefinition]] = {}
         """
         This contains all of the `FunctionDefinition`(s) for the struct.
         """
@@ -107,6 +109,17 @@ class Struct:
             func.struct = self
             func.module = self.struct_definition.module
             self.functions[func.name] = func
+            
+            #print(f"{self.name}->{func.name}")
+
+            func.name = f"{self.name}_memberfunction_{func.name}"
+
+        for func in deepcopy(self.struct_definition.operatorfunctions):
+            if func.name not in self.operatorfunctions.keys():
+                self.operatorfunctions[func.name] = []
+            func.struct = self
+            func.module = self.struct_definition.module
+            self.operatorfunctions[func.name].append(func)
             
             #print(f"{self.name}->{func.name}")
 
@@ -207,8 +220,41 @@ class Struct:
             else:
                 return attr
         except KeyError:
-            definition_attrs = {"attributes":self.struct_definition.attributes, "functions":self.struct_definition.functions}
+            definition_attrs = {"attributes":self.struct_definition.attributes, "functions":self.struct_definition.functions, "operators":self.struct_definition.operatorfunctions}
             print(f"Error: {name} is not a valid attribute of {self.struct_definition.name}!\n")
+
+    @lru_cache(32, True)
+    def get_operator(self, operator:str, get_definition = False, arg_type:ct.CompilerType = None) -> fn.Function | vari.Value:
+        """
+        Gets an attribute on the struct.  (Includes member functions.)
+
+        The attribute type is a Value.
+        """
+        template_types = [] if template_types == None else template_types
+
+        try:
+            op = self.operatorfunctions[operator]
+            
+            for func in op:
+                if len(func.arguments) > 2:
+                    print("Error: Operators can only have 1-2 arguments.")
+                elif len(func.arguments) == 0:
+                    print("Error: Operators must have at least 1 self referencing argument.")
+                elif len(func.arguments) == 1:
+                    if get_definition:
+                        return func
+                    else:
+                        return func.get_function(template_types)
+                else:
+                    other = [*func.arguments.keys()].remove("self")[0]
+                    if func.arguments[other] == arg_type:
+                        if get_definition:
+                            return func
+                        else:
+                            return func.get_function(template_types)
+            
+        except KeyError:
+            print(f"Error: The operator {op} is not implemented for {self.struct_definition.name}!\n")
     
 
 class StructType(ct.CompilerType):

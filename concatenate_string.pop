@@ -1,0 +1,181 @@
+func realloc<PtrType>(ptr:$PtrType, new_size:i32) ~> $PtrType {
+    "This is a wrapper arround libc_realloc."
+    return libc_realloc(ptr:$i8, sizeof $PtrType * new_size:i64):$PtrType;
+}
+func malloc<PtrType>(size:i32) ~> $PtrType {
+    "This is a wrapper arround libc_malloc."
+    return libc_malloc(sizeof PtrType * size:i64):$PtrType;
+}
+func free<PtrType>(ptr:$PtrType) {
+    "This is a wrapper arround libc_free."
+    libc_free(ptr:$i8);
+    return;
+}
+
+struct Vector<ItemType> {
+    "This is an implementation of a variable length heterogenious array."
+    data:$ItemType;
+    capacity:i32;
+    length:i32;
+
+    func init(self:$Vector<ItemType>) {
+        "Allocates the vector."
+        self.data = malloc?<ItemType>(1);
+        self.capacity = 1;
+        self.length = 0;
+        return;
+    }
+
+    func push(self:$Vector<ItemType>, item:ItemType) {
+        "Pushes an item to the vector."
+        self.data[self.length] = item;
+        
+        self.length = self.length + 1;
+        
+        if self.length == self.capacity {
+            self.capacity = self.capacity * 2;
+        }
+        
+        self.data = realloc?<ItemType>(self.data, self.capacity);
+        return;
+    }
+
+    func pop(self:$Vector<ItemType>) {
+        "Pops an item from the end of the vector."
+        self.length = self.length - 1;
+        self.capacity = self.length;
+        self.data = realloc?<ItemType>(self.data, self.capacity);
+        return;
+    }
+    
+    func get(self:$Vector<ItemType>, index:i32) ~> ItemType {
+        "Returns an item from the vector."
+        return self.data[index];
+    }
+    func top(self:$Vector<ItemType>) ~> ItemType {
+        "Returns the end item of the vector."
+        return self.data[self.length-1];
+    }
+
+    func del(self:$Vector<ItemType>) {
+        "Frees the vector."
+        free?<ItemType>(self.data);
+        return;
+    }
+
+    func extend(self:$Vector<ItemType>, other:$Vector<ItemType>) ~> $Vector<ItemType> {
+        let i = 0;
+        while i < other.length() {
+            self.push(other.get(i));
+        }
+        return self;
+    }
+}
+
+struct String {
+    "An implementation of a string class with useful string handling methods."
+    data:Vector<c8>;
+    length:i32;
+
+    operator + (self:$String, other:$String) ~> $String {
+        let new_str:String;
+        new_str.data.extend(self.data);
+        new_str.data.extend(other.data);
+        new_str.length = self.length + other.length;
+        return new_str;
+    }
+
+    func new(self:$String, new_str:$c8) {
+        "This creates a new string instance."
+        self.data.init();
+        
+        let character:c8;
+        character = $new_str;
+
+        self.length = 0;
+        
+        while character != '\0' {
+            self.data.push(character);
+            self.length = self.length + 1;
+            character = new_str&[self.length];
+        }
+
+        #self.length = self.length + 1;
+        return;
+    }
+
+    func push(self:$String, char:c8) {
+        "Pushes a new char to the string."
+        self.data.push(char);
+        self.length = self.data.length;
+        return;
+    }
+    func eq(self:$String, other:$String) ~> bool {
+        "Checks if 2 strings are equal."
+        if self.length != other.length {
+            return false;
+        }
+
+        let ind = 0;
+        while ind < self.length {
+            if self.data.get(ind) != other.data.get(ind) {
+                return false;
+            }
+            ind = ind + 1;
+        }
+        return true;
+    }
+    func get_ptr(self:$String) ~> $c8 {
+        "Gets the charpointer to the string."
+        return self.data.data;
+    }
+    func del(self:$String) {
+        "Frees the string data."
+        self.data.del();
+        return;
+    }
+}
+
+func print(msg:$String) {
+    let index = 0;
+    while index != msg.length {
+        libc_putchar(msg.data.get(index));
+        index = index + 1;
+    }
+    libc_putchar(10);
+    return;
+}
+
+func input() ~> String {
+    let char:c8;
+    let _input:String;
+    _input.new("":$c8);
+    while ((char = libc_getchar();) != '\n') {
+        _input.push(char);
+    }
+
+    return _input;
+}
+
+export func test(num: i32) ~> i32 {
+
+    let my_str:String;
+    
+    my_str = input();
+    
+    let other_str:String;
+    
+    other_str.new("world":$c8);
+    
+    let concat_str = my_str + other_str;
+    
+    print(&concat_str);
+
+    concat_str.del();
+    
+    other_str.del();
+    
+    my_str.del();
+    
+    return 0;
+}

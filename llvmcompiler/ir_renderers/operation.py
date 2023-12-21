@@ -12,6 +12,8 @@ from llvmcompiler.compiler_types.types.char import C8PointerType
 if TYPE_CHECKING:
     from .builder_data import BuilderData
 from llvmcompiler.ir_renderers.variable import Variable, Value, HeapValue
+import llvmcompiler.ir_renderers.operations as ops
+import llvmcompiler.ir_renderers.struct as st
 
 
 arg_type = Self | Variable | ct.CompilerType | Value | Tuple[str, Variable]
@@ -24,6 +26,7 @@ class Operation:
         self.builder:BuilderData = None
         self.raw_arguments = [] if arguments == None else arguments
         self.arguments = [] if arguments == None else arguments
+        self.op_token = "+"
     
     
 
@@ -132,7 +135,17 @@ class Operation:
 
     def write(self):
         self.write_arguments()
+        if isinstance(self.arguments[0].type, st.StructType):
+            if len(self.arguments) > 1:
+                return self.call_operator_function(self.op_token, self.arguments[0], self.arguments[1])
+            else:
+                return self.call_operator_function(self.op_token, self.arguments[0])
         return self._write()
+    
+    def call_operator_function(self, op:str, this:ct.CompilerType, other:ct.CompilerType = None):
+        if other == None:
+            return ops.CallOperation(op, [this]).write()
+        return ops.CallOperation(op, [this, other]).write()
 
     def __repr__(self) -> str:
         return f"({self.__class__.__name__} : {{arguments: {self.arguments}}})"
