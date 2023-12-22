@@ -16,7 +16,7 @@ class AddressOperation(Operation):
         self.arguments = self.get_variables()
         res = None
         if isinstance(self.arguments[0], vari.Value):
-            res = self.arguments[0].value
+            res = self.arguments[0].get_value()
             #self.builder.module.dbg_print()
         else:
             res = self.arguments[0].variable

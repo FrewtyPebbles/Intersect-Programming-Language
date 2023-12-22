@@ -27,6 +27,7 @@ class FunctionDefinition:
             self.clean_name = self.name.split("_memberfunction_")[1]
         else:
             self.clean_name = self.name
+
         self.arguments = arguments
         self.return_type = return_type
         self.variable_arguments = variable_arguments
@@ -126,6 +127,7 @@ class FunctionDefinition:
     def get_mangled_name(self, template_types:list[ct.CompilerType] = None):
         template_types = [] if template_types == None else template_types
         mangled_name = f"{self.name}"
+
         if len(template_types) == 0:
             return mangled_name
         

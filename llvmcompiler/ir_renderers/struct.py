@@ -116,13 +116,14 @@ class Struct:
             func.name = f"{self.name}_memberfunction_{func.name}"
 
         for func in deepcopy(self.struct_definition.operatorfunctions):
-            if func.name not in self.operatorfunctions.keys():
-                self.operatorfunctions[func.name] = []
+            clean_name = func.name.split("_arg_")[0]
+            if clean_name not in self.operatorfunctions.keys():
+                self.operatorfunctions[clean_name] = []
             func.struct = self
             func.module = self.struct_definition.module
-            self.operatorfunctions[func.name].append(func)
+            self.operatorfunctions[clean_name].append(func)
             
-            #print(f"{self.name}->{func.name}")
+            #print(f"{self.name}->{clean_name}")
 
             func.name = f"{self.name}_memberfunction_{func.name}"
 

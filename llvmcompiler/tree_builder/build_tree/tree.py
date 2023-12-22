@@ -520,6 +520,7 @@ class TreeBuilder:
 
                     case tb.SyntaxToken.parentheses_start:
                         arguments = self.context_function_statement_definition_arguments([*templates, *template_definition])
+                        
 
                     case tb.SyntaxToken.fn_specifier_op:
                         return_type = self.context_type_trunk([*templates, *template_definition])
@@ -573,6 +574,8 @@ class TreeBuilder:
                     functions.append(mf)
                 case tb.SyntaxToken.operator_func_keyword:
                     omf = self.context_function_statement_definition(templates)
+                    for a_t in omf.arguments.values():
+                        omf.name += f"_arg_{a_t.name}"
                     operators.append(omf)
                 case tb.SyntaxToken.scope_end:
                     break
