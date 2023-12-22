@@ -62,6 +62,10 @@ function TestAll {
 		(
 			"hashmap.pop",
 			"input = 1"
+		),
+		(
+			"operator.pop",
+			"new_store: 3"
 		)
 	)
 	$passed_tests = 0
