@@ -5,6 +5,10 @@ from llvmlite import ir
 import llvmcompiler.ir_renderers.variable as vari
 
 class DereferenceOperation(Operation):
+    def __init__(self, arguments: list = None) -> None:
+        super().__init__(arguments)
+        self.op_token = "$"
+        self.struct_operator = False
     def write(self):
         #print(f"DEREF {self.arguments}")
         return super().write()

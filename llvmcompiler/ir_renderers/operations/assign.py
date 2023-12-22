@@ -1,9 +1,15 @@
 from functools import lru_cache
+
+from llvmcompiler.ir_renderers.operation import arg_type
 from ..operation import Operation
 from llvmlite import ir
 import llvmcompiler.ir_renderers.variable as vari
 
 class AssignOperation(Operation):
+    def __init__(self, arguments: list[arg_type] = None) -> None:
+        super().__init__(arguments)
+        self.op_token = "="
+        #self.struct_operator = False # BUG: FOR NOW KEEP THIS HERE BUT DELETE ONCE A SOLUTION IS FOUND FOR POINTER/MEMORY ASSIGNMENT
     def _write(self):
         # self.arguments: 0 = variable, 1 = value
         self.builder.cursor.comment("OP::assign START")

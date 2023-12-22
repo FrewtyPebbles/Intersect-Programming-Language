@@ -1,5 +1,6 @@
 from functools import lru_cache
 from llvmcompiler.compiler_types import CompilerType, I64Type
+from llvmcompiler.ir_renderers.operation import arg_type
 from ..operation import Operation
 from llvmlite import ir
 import llvmcompiler.ir_renderers.variable as vari
@@ -8,6 +9,9 @@ class TypeSizeOperation(Operation):
     """
     Returns the size of a type as an llvm ir constant
     """
+    def __init__(self, arguments: list[arg_type] = None) -> None:
+        super().__init__(arguments)
+        self.struct_operator = False
     @lru_cache(32, True)
     def _write(self):
         self.builder.cursor.comment("OP::dereference START")

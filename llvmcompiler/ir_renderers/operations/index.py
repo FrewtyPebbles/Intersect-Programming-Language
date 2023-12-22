@@ -9,15 +9,12 @@ from enum import Enum
 
 indexes_type = list[ir.LoadInstr | ir.GEPInstr | ir.AllocaInstr | str | ir.Constant | ct.CompilerType | tuple[str, vari.Variable]]
 
-#TODO:
-#
-# - This needs to be reworked badly to be less bug prone.
-#
         
 class IndexOperation(Operation):
     def __init__(self, arguments: list[arg_type] = []) -> None:
         super().__init__(arguments)
         self.type = None
+        self.op_token = "[]"
         
     def process_indexes(self):
 
@@ -81,6 +78,7 @@ class AccessOperation(Operation):
         super().__init__(arguments)
         self.ret_func:fn.FunctionDefinition = None
         self.type = None
+        self.struct_operator = False
         
         
     def process_indexes(self):
@@ -133,7 +131,7 @@ class AccessOperation(Operation):
         res = self.process_indexes()
         self.builder.cursor.comment("OP::index END")
 
-        #print(f"acc_type = {self.type}")
+        #print(f"acc_type = {self.type} {{{self.arguments}}}")
         if self.ret_func == None:
             return vari.Value(self.type, res, True, self.arguments[0].heap, deref=True)
         else:

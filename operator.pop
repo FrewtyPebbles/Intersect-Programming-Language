@@ -1,0 +1,30 @@
+struct Store {
+    
+    data:i32;
+
+    operator + (self:$Store, other:$Store) ~> $Store{
+        let new_store:Store;
+        new_store.data = self.data + other.data;
+        return &new_store;
+    }
+
+    operator = (self:$Store, other:$Store) ~> $Store{
+        self.data = other.data;
+        return &self;
+    }
+}
+
+export func test(num: i32) ~> i32 {
+
+    let new_store:Store;
+    let store1:Store;
+    let store2:Store;
+    store1.data = 1;
+    store2.data = 2;
+    
+    new_store = store1 + store2;
+
+    libc_printf("new_store: %i\n":$c8, new_store.data);
+    
+    return 0;
+}

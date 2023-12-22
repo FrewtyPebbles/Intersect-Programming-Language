@@ -1,10 +1,14 @@
 from llvmcompiler.compiler_types import CompilerType, IntegerType
+from llvmcompiler.ir_renderers.operation import arg_type
 from ..operation import Operation
 from llvmlite import ir
 import llvmcompiler.ir_renderers.variable as vari
 import llvmcompiler.ir_renderers.struct as st
 
 class CastOperation(Operation):
+    def __init__(self, arguments: list[arg_type] = None) -> None:
+        super().__init__(arguments)
+        self.struct_operator = False
     def _write(self):
         arg1, arg2 = None, None
             

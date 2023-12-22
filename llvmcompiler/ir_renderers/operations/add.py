@@ -1,10 +1,15 @@
 from functools import lru_cache
 from llvmcompiler.compiler_types.type import CompilerType
+from llvmcompiler.ir_renderers.operation import arg_type
 from ..operation import Operation
 from llvmlite import ir
 import llvmcompiler.ir_renderers.variable as vari
 
 class AddOperation(Operation):
+    def __init__(self, arguments: list[arg_type] = None) -> None:
+        super().__init__(arguments)
+        self.op_token = "+"
+    
     @lru_cache(32, True)
     def _write(self):
         self.builder.cursor.comment("OP::add START")
@@ -20,4 +25,4 @@ class AddOperation(Operation):
 
         self.builder.cursor.comment("OP::add END")
 
-        return vari.Value(CompilerType.create_from(arg1.type, self.builder.module, self.builder.function), res, True, dbg_tag="OP::ADD")
+        return vari.Value(CompilerType.create_from(arg1.type, self.builder.module, self.builder.function), res, True)

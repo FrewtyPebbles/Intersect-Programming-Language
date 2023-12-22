@@ -92,7 +92,7 @@ struct String {
         self.length = self.data.length;
         return;
     }
-    func eq(self:$String, other:$String) ~> bool {
+    operator == (self:$String, other:$String) ~> bool {
         "Checks if 2 strings are equal."
         if self.length != other.length {
             return false;
@@ -146,9 +146,12 @@ export func test(num: i32) ~> i32 {
     my_str = input();
     
     print(&my_str);
+    
     let match_string:String;
+
     match_string.new("hello":$c8);
-    if my_str.eq(&match_string) {
+
+    if my_str == match_string {
         libc_printf("Match\n":$c8);
     }
     else {

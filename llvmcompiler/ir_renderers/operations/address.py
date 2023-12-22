@@ -1,13 +1,15 @@
 from functools import lru_cache
 from llvmcompiler.compiler_types.type import CompilerType
+from llvmcompiler.ir_renderers.operation import arg_type
 from ..operation import Operation
 from llvmlite import ir
 import llvmcompiler.ir_renderers.variable as vari
 
 class AddressOperation(Operation):
-    def write(self):
-        #print(f"ADDRESS OP {self.arguments}")
-        return super().write()
+    def __init__(self, arguments: list[arg_type] = None) -> None:
+        super().__init__(arguments)
+        self.struct_operator = False
+    
     @lru_cache(32, True)
     def _write(self):
         self.builder.cursor.comment("OP::address START")

@@ -1,7 +1,7 @@
 function testfile {
 	param (
 		[string]$file,
-		[string]$input_str,
+		[string]$inputstr,
 		[switch]$time,
 		[switch]$ir
 	)
@@ -12,17 +12,17 @@ function testfile {
 	}
 	if ($time) {
 		$m = ""
-		if ([string]::IsNullOrEmpty($input_str)) {
-			$m = Measure-Command {$out = ( $input_str | & py main.py -s $file --run $show_ir)}
-		} else {
+		if ([string]::IsNullOrEmpty($inputstr)) {
 			$m = Measure-Command {$out = (& py main.py -s $file --run $show_ir)}
+		} else {
+			$m = Measure-Command {$out = ( $inputstr | & py main.py -s $file --run $show_ir)}
 		}
 		$out
 		"Time:"
 		$m.TotalSeconds
 	} else {
 		if ([string]::IsNullOrEmpty($input)) {
-			$out = ( $input_str | & py main.py -s $file --run $show_ir)
+			$out = ( $inputstr | & py main.py -s $file --run $show_ir)
 		} else {
 			$out = (& py main.py -s $file --run $show_ir)
 		}
@@ -68,7 +68,7 @@ function TestAll {
 	$char_width = $(Get-Host).UI.RawUI.WindowSize.Width
 	foreach ($currtest in $files) {
 		if ($currtest.Length -eq 3) {
-			$out = (testfile -file $currtest[0] -input_str $currtest[2]) -join "`n"
+			$out = (testfile -file $currtest[0] -inputstr $currtest[2]) -join "`n"
 			if ($out -eq $currtest[1]) {
 				"`nTest [" + $currtest[0] + "] passed"
 				$passed_tests += 1

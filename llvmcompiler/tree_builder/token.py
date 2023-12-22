@@ -10,7 +10,7 @@ class SyntaxToken(Enum):
     elif_keyword = "elif"
     else_keyword = "else"
     func_keyword = "func"
-    operator_func_keyword = "OPERATOR"
+    operator_func_keyword = "operator"
     for_keyword = "for"
     while_keyword = "while"
     let_keyword = "let"

@@ -507,33 +507,37 @@ class TreeBuilder:
         arguments:dict[str,CompilerType] = {}
         documentation = {"purpose":None,"implementation": None,"args": {}}
         for tok in self.token_list:
-            
-            match tok.type:
-                case tb.SyntaxToken.label:
-                    name = tok.value
+            if (tok.type.is_lhs_rhs_operator or tok.type.is_single_arg_operator) and not tok.type in {tb.SyntaxToken.less_than_op, tb.SyntaxToken.greater_than_op}:
+                name += tok.value
+                #print(name)
+            else:
+                match tok.type:
+                    case tb.SyntaxToken.label:
+                        name = tok.value
 
-                case tb.SyntaxToken.less_than_op:
-                    template_definition = self.context_template_definition()
+                    case tb.SyntaxToken.less_than_op:
+                        template_definition = self.context_template_definition()
 
-                case tb.SyntaxToken.parentheses_start:
-                    arguments = self.context_function_statement_definition_arguments([*templates, *template_definition])
+                    case tb.SyntaxToken.parentheses_start:
+                        arguments = self.context_function_statement_definition_arguments([*templates, *template_definition])
 
-                case tb.SyntaxToken.fn_specifier_op:
-                    return_type = self.context_type_trunk([*templates, *template_definition])
+                    case tb.SyntaxToken.fn_specifier_op:
+                        return_type = self.context_type_trunk([*templates, *template_definition])
 
-                case tb.SyntaxToken.scope_start:
-                    scope = self.context_scope_trunk([*templates, *template_definition], documentation)
-                    #print(name)
-                    #print(scope)
-                    break
+                    case tb.SyntaxToken.scope_start:
+                        scope = self.context_scope_trunk([*templates, *template_definition], documentation)
+                        #print(name)
+                        #print(scope)
+                        break
         
-        # print(f"{'extern ' if extern else ''}func {name}<{template_definition}>({arguments}) ~> {return_type} {{{scope}}}")
+        #print(f"{'extern ' if extern else ''}func {name}<{template_definition}>({arguments}) ~> {return_type} {{{scope}}}")
         return FunctionDefinition(name, arguments, return_type, False, template_definition, scope, extern=extern, documentation=documentation)
     
     def context_struct_definition(self):
         name = ""
         attributes = {}
         functions = []
+        operators = []
         templates:list[str] = []
         documentation = {"purpose":""}
 
@@ -567,13 +571,16 @@ class TreeBuilder:
                 case tb.SyntaxToken.func_keyword:
                     mf = self.context_function_statement_definition(templates)
                     functions.append(mf)
+                case tb.SyntaxToken.operator_func_keyword:
+                    omf = self.context_function_statement_definition(templates)
+                    operators.append(omf)
                 case tb.SyntaxToken.scope_end:
                     break
                 case tb.SyntaxToken.string_literal:
                     documentation["purpose"] = tok.value
-        #print(f"STRUCT := name: {name}<{', '.join(templates)}> attrs:{attributes}")
-        #print(functions)
-        return StructDefinition(name, attributes, functions, templates, documentation=documentation)
+        
+
+        return StructDefinition(name, attributes, functions, templates, documentation=documentation, operatorfunctions=operators)
 
 
     def context_type_list(self, templates:list[str]) -> CompilerType:

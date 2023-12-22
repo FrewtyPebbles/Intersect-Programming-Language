@@ -27,10 +27,12 @@ class Operation:
         self.raw_arguments = [] if arguments == None else arguments
         self.arguments = [] if arguments == None else arguments
         self.op_token = "+"
+        self.struct_operator = True
     
     
 
-    def get_variables(self, arguments: list[arg_type] = [], no_default_action = False):
+    def get_variables(self, arguments: list[arg_type] = None, no_default_action = False):
+        arguments = [] if arguments == None else arguments
         if len(arguments) == 0 and not no_default_action:
             arguments = self.arguments
         new_args = [*arguments]
@@ -135,17 +137,35 @@ class Operation:
 
     def write(self):
         self.write_arguments()
-        if isinstance(self.arguments[0].type, st.StructType):
-            if len(self.arguments) > 1:
-                return self.call_operator_function(self.op_token, self.arguments[0], self.arguments[1])
-            else:
-                return self.call_operator_function(self.op_token, self.arguments[0])
+        if self.struct_operator:
+            op_arguments = self.get_variables()
+            #print(self.__class__.__name__)
+            if isinstance(op_arguments[0].type, st.StructType):
+                if len(op_arguments) > 1:
+                    op_func = self.call_operator_function(op_arguments[0], op_arguments[1])
+                    if op_func != None:
+                        return op_func
+                else:
+                    op_func = self.call_operator_function(op_arguments[0])
+                    if op_func != None:
+                        return op_func
         return self._write()
     
-    def call_operator_function(self, op:str, this:ct.CompilerType, other:ct.CompilerType = None):
+    def call_operator_function(self, this: arg_type, other: arg_type = None):
         if other == None:
-            return ops.CallOperation(op, [this]).write()
-        return ops.CallOperation(op, [this, other]).write()
+
+            func = this.type.struct.get_operator(self.op_token, True)
+            if func == None: return None
+            #print(func)
+            call = ops.CallOperation(func, [this], is_operator=True)
+            call.builder = self.builder
+            return call.write()
+        func = this.type.struct.get_operator(self.op_token, True, arg_type=other.type)
+        if func == None: return None
+        #print(func)
+        call = ops.CallOperation(func, [this, other], is_operator=True)
+        call.builder = self.builder
+        return call.write()
 
     def __repr__(self) -> str:
         return f"({self.__class__.__name__} : {{arguments: {self.arguments}}})"

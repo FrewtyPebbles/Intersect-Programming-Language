@@ -5,6 +5,9 @@ from llvmlite import ir
 import llvmcompiler.ir_renderers.variable as vari
 
 class MultiplyOperation(Operation):
+    def __init__(self, arguments: list = None) -> None:
+        super().__init__(arguments)
+        self.op_token = "*"
     @lru_cache(32, True)
     def _write(self):
         self.builder.cursor.comment("OP::multiply START")

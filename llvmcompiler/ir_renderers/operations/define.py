@@ -7,6 +7,7 @@ class DefineOperation(Operation):
     def __init__(self, arguments: list[arg_type] = None, force_type:ct.CompilerType = None) -> None:
         super().__init__(arguments)
         self.force_type = force_type
+        self.struct_operator = False
     def _write(self):
         self.builder.cursor.comment("OP::define(stack) START")
         

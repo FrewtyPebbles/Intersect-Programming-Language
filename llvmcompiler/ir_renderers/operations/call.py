@@ -7,13 +7,21 @@ from .cast import CastOperation
 from typing import TYPE_CHECKING, Any
 if TYPE_CHECKING:
     from llvmcompiler.ir_renderers.function import FunctionDefinition
+import llvmcompiler.ir_renderers.operations as ops
 
 class CallOperation(Operation):
-    def __init__(self, function:str | Operation | Any, arguments: list[arg_type] = None, template_arguments:list[CompilerType] = None) -> None:
+    def __init__(self, function:str | Operation | Any, arguments: list[arg_type] = None, template_arguments:list[CompilerType] = None, is_operator = False) -> None:
         super().__init__(arguments)
         self.template_arguments = [] if template_arguments == None else template_arguments
         self.function:str | FunctionDefinition | Operation = function
         self.is_member_function = False
+        self.struct_operator = False
+        self.is_operator = is_operator
+    def write(self):
+        if self.is_operator:
+            for i in range(len(self.arguments)):
+                self.arguments[i] = ops.AddressOperation([self.arguments[i]])
+        return super().write()
     
     @lru_cache(32, True)
     def get_function(self):
@@ -84,7 +92,8 @@ class CallOperation(Operation):
 
         self.builder.cursor.comment("OP::call end")
 
-        return vari.Value(CompilerType.create_from(func_call.type, self.builder.module, self.builder.function), func_call, True, is_call=True)
+
+        return vari.Value(CompilerType.create_from(func_call.type, self.builder.module, self.builder.function), func_call, True, is_call=True, address=self.is_operator)
     
     def __repr__(self) -> str:
         return f"({self.__class__.__name__} : {{function: {self.function}, arguments: {self.arguments}}})"
