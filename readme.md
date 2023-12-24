@@ -1,10 +1,10 @@
-# **Tarantula**
+# **Intersect**
 
-A compiled language that is **simple, strict, and without compromise.**
+A compiled language that is **explicit and versatile**.
 
 ## How it works
 
-**Tarantula** compiles utilizing the *LLVMLite* python module by *Numba*.  It utilizes a complex concrete syntax tree to handle it's compile time mechanisms such as it's garbage collector, minimal function/struct emmitter and mangler, automatic typing, and much more.
+**Intersect** compiles utilizing the *LLVMLite* python module by *Numba*.  It utilizes a complex concrete syntax tree to handle it's compile time mechanisms such as it's garbage collector, minimal function/struct emmitter and mangler, automatic typing, and much more.
 
 ## Language Conventions
 
@@ -18,33 +18,20 @@ A compiled language that is **simple, strict, and without compromise.**
 
 ### Capitalization
 
-In **Tarantula**, keywords that are used solely for implementation details such as *struct operators* or *error throwing* are fully capitalized.  Ex:
-
-```rust
-ERROR {
-    show_line_number: false;
-    show_file: false;
-    show_parent_scope: true;
-    "Variable value I would like to see durring my error": my_variable;
-};
-```
-
-or
+In **Tarantula**, keywords are explicitly named.  Ex:
 
 ```rust
 struct StructName<TemplateType> {
 
-    heap_allocated_attribute: $TemplateType;
+    attribute:TemplateType;
 
-    # This right here!
-    OPERATOR destructor(self) {
-        delete self.heap_allocated_attribute;
-        return
+    operator == (self:$StructName<TemplateType>, other:$StructName<TemplateType>) {
+        return self.attribute == self.attribute;
     }
 }
 ```
 
-### Automatic And Manual Memory Management
+### Automatic And Manual Memory Management (Work in progress)
 
 **Tarantula**'s automatic memory allocation is confined strictly to scope (more specifically to curly braces). `$` prefixes a *type* as a pointer type.  `heap` prefixes a *value* as a heap allocated value and allocates it on the heap.
 
@@ -92,6 +79,33 @@ delete outer_md_array
 ```
 
 ***Keep in mind:*** freeing the entire array will call delete on every item of the array.  For structs, deleting the entire struct will call the `OPERATOR destructor` if it is implemented, if not it will free all heap members of the struct.
+
+### Operator Macros (Work in progress)
+
+Operator macros let you implement extra operators with explicit names for classes.  This allows for a more declarative syntax.
+
+```rust
+macro operator binary equals;
+
+struct StructName<TemplateType> {
+
+    data:TemplateType;
+
+    operator equals (self:$StructName<TemplateType>, other:$StructName<TemplateType>) ~> bool {
+        return self.data == self.data;
+    }
+}
+
+func main() {
+    let s1:StructName<i32>;
+    let s2:StructName<i32>;
+    s1.data = 1;
+    s2.data = 1;
+
+    libc_printf("equal operator result %i\n":$c8, s1 equals s2);
+    return;
+}
+```
 
 ## Updates
 
