@@ -27,8 +27,7 @@ export func test(num: i32) ~> i32 {
     store1.data = 1;
     store2.data = 2;
     
-    new_store = 3;
-    new_store = store1 + store2;
+    new_store = store1 + store2; #BUG: Something is being read as a pointer integer or mutating pointers is not working.
     
 
     libc_printf("new_store: %i\n":$c8, new_store.data);

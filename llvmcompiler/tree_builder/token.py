@@ -11,6 +11,7 @@ class SyntaxToken(Enum):
     else_keyword = "else"
     func_keyword = "func"
     operator_func_keyword = "operator"
+    macro = "macro"
     for_keyword = "for"
     while_keyword = "while"
     let_keyword = "let"

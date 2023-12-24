@@ -264,10 +264,10 @@ class StructType(ct.CompilerType):
     """
     This is the type reference to the struct.
     """
-    def __init__(self, name:str, template_types:list[ct.CompilerType] = [], module:mod.Module = None) -> None:
+    def __init__(self, name:str, template_types:list[ct.CompilerType] = None, module:mod.Module = None) -> None:
         self.module:mod.Module = module
         self.name = name
-        self.template_types = template_types
+        self.template_types = [] if template_types == None else template_types
         self.templates_linked = False
         self._struct = None
         self._value = None

@@ -20,8 +20,8 @@ from llvmcompiler.ir_renderers.scopes import IfBlock, ElseIfBlock, ElseBlock, Sc
 
 class FunctionDefinition:
     def __init__(self, name:str, arguments:Dict[str, ct.CompilerType],
-            return_type:ct.CompilerType, variable_arguments:bool = False, template_args:list[str] = [],
-            scope:list[Scope | op.Operation] = [], struct:st.Struct = None, module:Module = None, extern = False, documentation = None):
+            return_type:ct.CompilerType, variable_arguments:bool = False, template_args:list[str] = None,
+            scope:list[Scope | op.Operation] = None, struct:st.Struct = None, module:Module = None, extern = False, documentation = None):
         self.name = name
         if "_memberfunction_" in self.name:
             self.clean_name = self.name.split("_memberfunction_")[1]
@@ -31,8 +31,8 @@ class FunctionDefinition:
         self.arguments = arguments
         self.return_type = return_type
         self.variable_arguments = variable_arguments
-        self.scope = scope
-        self.template_args = template_args
+        self.scope = [] if scope == None else scope
+        self.template_args = [] if template_args == None else template_args
         self.struct = struct
         self.module = module
         self.extern = extern
