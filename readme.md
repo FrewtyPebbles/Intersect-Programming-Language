@@ -10,15 +10,23 @@ A compiled language that is **explicit and versatile**.
 
 ### Comments
 
-**Tarantula** uses cPython style comments:
+**Intersect** uses cPython style comments:
 
 ```py
-# This is a comment
+# This is a comment.
+```
+
+For multiline comments use:
+
+```py
+#:
+    This is a multiline/closed comment.
+:#
 ```
 
 ### Capitalization
 
-In **Tarantula**, keywords are explicitly named.  Ex:
+In **Intersect**, keywords are explicitly named.  Ex:
 
 ```rust
 struct StructName<TemplateType> {
@@ -30,55 +38,6 @@ struct StructName<TemplateType> {
     }
 }
 ```
-
-### Automatic And Manual Memory Management (Work in progress)
-
-**Tarantula**'s automatic memory allocation is confined strictly to scope (more specifically to curly braces). `$` prefixes a *type* as a pointer type.  `heap` prefixes a *value* as a heap allocated value and allocates it on the heap.
-
-```py
-{
-    let md_array: [$[i32]] = [
-        heap [0,1,2],
-        heap [0,1,2],
-        heap [0,1,2]
-    ];
-
-
-    # md_array's heap allocated items are freed here
-}
-```
-
-With the `persist` keyword, heap values can escape their scope, as exemplified below, but will need to be deleted manually eventually.
-
-```py
-# Create an array full of null pointers:
-let outer_md_array: [$[i32 x 3] x 3] = []
-
-{
-    let md_array: [$[i32]] persist = [
-        heap [0,1,2],
-        heap [0,1,2],
-        heap [0,1,2],
-    ];
-
-    outer_md_array[0] = md_array[0]
-    outer_md_array[1] = md_array[1]
-    outer_md_array[2] = md_array[2]
-}
-
-# All heap allocated items are freed here.
-for (let i = 0; i < 3; i++) {
-    delete outer_md_array[i]
-}
-```
-
-You can either free each item of an object *manually as shown above*, or free the *entire object as shown below*:
-
-```py
-delete outer_md_array
-```
-
-***Keep in mind:*** freeing the entire array will call delete on every item of the array.  For structs, deleting the entire struct will call the `OPERATOR destructor` if it is implemented, if not it will free all heap members of the struct.
 
 ### Operator Macros (Work in progress)
 
@@ -107,11 +66,67 @@ func main() {
 }
 ```
 
+### Automatic Memory Management (Work in progress)
+
+**Intersect**'s automatic memory allocation is confined to scope.  `manage` prefixes a *type* as a managed heap allocated type.  `allocate` then returns an instance of something equivalent to this struct:
+
+```rust
+macro operator unary clone;
+
+struct HeapMemory<Type>{
+    data:$Type;
+    has_data:bool;
+
+    operator delete (self:$HeapMemory<Type>) {
+        if self.points_to_memory {
+            free?<Type>(self.data);
+        }
+        return;
+    }
+
+    operator clone (self:$HeapMemory<Type>) ~> $HeapMemory<Type> {
+        # clone self.data
+        return #: Clone of self.data :#;
+    }
+
+    operator = (self:$HeapMemory<Type>, rhs:$HeapMemory<Type>) ~> $HeapMemory<Type> {
+        if self.points_to_memory {
+            free?<Type>(self.data);
+        }
+        # point to new heap memory
+        return &self;
+    }
+}
+```
+
+This if a type has a `manage` prefix, then retrieval of `HeapMemory_instance.data` is done automatically and freeing is done automatically once that memory goes out of scope.  If an "allocate" variable's type does *not* have a `manage` prefix, then you must free the memory via:
+
+```rust
+delete HeapMemory_instance
+```
+
+When heap memory is returned from a function, it passes ownership to its caller:
+
+```rust
+func ret_heap_memory() ~> manage $i32 {
+    return allocate 1; #allocate creates an instance of a heap wrapper which frees all elements on destruction.
+}
+
+func main() {
+    let item:manage $i32;
+    item = ret_heap_memory();
+    # Here!!!
+    return 0;
+}
+```
+
+This means that the `HeapMemory_instance.has_data` is set to `true`.
+
 ## Updates
 
-### First Ever Tarantula Program Compiled!
+### First Ever Intersect Program Compiled!
 
-The first ever **Tarantula** program was compiled today on `Saturday, November 18, 2023 at 8:20 P.M.`.  It doesnt do much, but it is *something!*
+The first ever **Intersect** program was compiled today on `Saturday, November 18, 2023 at 8:20 P.M.`.  It doesnt do much, but it is *something!*
 
 ```rust
 # test.pop
