@@ -195,8 +195,8 @@ class Function:
 
         
         self.function_type = ir.FunctionType(func_ret.value, [stype.value for stype in func_args.values()], var_arg=self.function_definition.variable_arguments)
-        
-        self.function = ir.Function(self.module.module, self.function_type, self.name)
+
+        self.function:ir.Function = ir.Function(self.module.module, self.function_type, self.name)
         
         # name the function arguments
         for arg_num, arg in enumerate(func_args.keys()):

@@ -1,12 +1,13 @@
 from __future__ import annotations
 from functools import lru_cache
+
+from llvmlite.ir.context import global_context
 import llvmcompiler.ir_renderers.function as fn
 from llvmlite import ir
 import llvmcompiler.compiler_types as ty
 import llvmcompiler.ir_renderers.builder_data as bd
 import llvmcompiler.ir_renderers.struct as st
 from typing import Dict, List, Union
-
 
 class Module:
     def __init__(self, name:str = '', scope:list[fn.FunctionDefinition | st.StructDefinition] = None, mangle_salt = "MMAANNGGLLEE") -> None:

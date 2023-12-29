@@ -99,12 +99,6 @@ struct HeapMemory<Type>{
 }
 ```
 
-This if a type has a `manage` prefix, then retrieval of `HeapMemory_instance.data` is done automatically and freeing is done automatically once that memory goes out of scope.  If an "allocate" variable's type does *not* have a `manage` prefix, then you must free the memory via:
-
-```rust
-delete HeapMemory_instance
-```
-
 When heap memory is returned from a function, it passes ownership to its caller:
 
 ```rust

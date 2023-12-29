@@ -9,7 +9,7 @@ class CLI:
             "output":"./program",
             "salt": "MMAANNGGLLEE",
             "show_ir": False,
-            "optimize": 3,
+            "optimize": 1,
             "document": False,
             "run": False,
             "compile": False,
