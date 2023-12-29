@@ -4,7 +4,7 @@ from functools import lru_cache
 from llvmlite.ir.context import global_context
 import llvmcompiler.ir_renderers.function as fn
 from llvmlite import ir
-import llvmcompiler.compiler_types as ty
+import llvmcompiler.compiler_types as ct
 import llvmcompiler.ir_renderers.builder_data as bd
 import llvmcompiler.ir_renderers.struct as st
 from typing import Dict, List, Union
@@ -16,13 +16,13 @@ class Module:
         self.functions:Dict[str, ir.Function | fn.FunctionDefinition] = {
             # The key is the name that is parsed from source code,
             # the value is the llvm function.
-            "libc_printf": fn.CFunctionDefinition(self._std_printf()),
-            "libc_malloc": fn.CFunctionDefinition(self._std_malloc()),
-            "libc_realloc": fn.CFunctionDefinition(self._std_realloc()),
-            "libc_memcpy": fn.CFunctionDefinition(self._std_memcpy()),
-            "libc_free": fn.CFunctionDefinition(self._std_free()),
-            "libc_putchar": fn.CFunctionDefinition(self._std_putchar()),
-            "libc_getchar": fn.CFunctionDefinition(self._std_getchar())
+            "libc_printf": fn.CFunctionDefinition(self._std_printf(), ct.I8Type().cast_ptr()),
+            "libc_malloc": fn.CFunctionDefinition(self._std_malloc(), ct.I8Type().cast_ptr()),
+            "libc_realloc": fn.CFunctionDefinition(self._std_realloc(), ct.I8Type().cast_ptr()),
+            "libc_memcpy": fn.CFunctionDefinition(self._std_memcpy(), ct.I8Type().cast_ptr()),
+            "libc_free": fn.CFunctionDefinition(self._std_free(), ct.I8Type().cast_ptr()),
+            "libc_putchar": fn.CFunctionDefinition(self._std_putchar(), ct.C8Type()),
+            "libc_getchar": fn.CFunctionDefinition(self._std_getchar(), ct.C8Type())
             #"input":"input" # will be getting input function from c dll/so file via this method https://stackoverflow.com/questions/36658726/link-c-in-llvmlite
         }
         self.structs:dict[str, st.StructDefinition] = {}

@@ -3,32 +3,36 @@ struct Store {
     data:i32;
 
     operator + (self:$Store, other:$Store) ~> $Store{
+        "Handles adding Store to another Store."
         let new_store:Store;
         new_store.data = self.data + other.data;
         return &new_store;
     }
 
     operator = (self:$Store, other:$Store) ~> $Store{
+        "Handles assigning Store to another Store."
         self.data = other.data;
         return &self;
     }
 
     operator = (self:$Store, other:i32) ~> $Store{
+        "Handles assigning Store to an i32."
         self.data = other;
         return &self;
     }
 }
 
 export func test(num: i32) ~> i32 {
-
+    "This acts as the main function."
     let new_store:Store;
     let store1:Store;
     let store2:Store;
+
     store1 = 1;
+    
     store2 = 2;
 
     new_store = store1 + store2;
-    
 
     libc_printf("new_store: %i\n":$c8, new_store.data);
     

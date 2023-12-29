@@ -69,7 +69,7 @@ class CLI:
 
         if self.arguments["document"]:
             with open("./docs.html", "w") as fp:
-                fp.write(module.get_documentation())
+                fp.write(module.get_documentation().replace("\0", ""))
         
         if self.arguments["compile"] or self.arguments["run"]:
             if self.arguments["debug"]:print("Emitting LLVM IR...")

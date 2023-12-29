@@ -135,9 +135,10 @@ class FunctionDefinition:
         return mangled_name
     
 class CFunctionDefinition(FunctionDefinition):
-    def __init__(self, ir_function:ir.Function):
+    def __init__(self, ir_function:ir.Function, return_type = None):
         self.ir_function = ir_function
         self.name = self.ir_function.name
+        self.return_type = return_type
     
     def get_function(self, template_types:list[ct.CompilerType] = None):
         template_types = [] if template_types == None else template_types
@@ -259,9 +260,10 @@ class Function:
     
         
 class CFunction(Function):
-    def __init__(self, function_definition:FunctionDefinition):
+    def __init__(self, function_definition:CFunctionDefinition):
         self.function_definition = function_definition
         self.function = self.function_definition.ir_function
         self.name = self.function_definition.name
+        self.return_type = self.function_definition.return_type
 
 

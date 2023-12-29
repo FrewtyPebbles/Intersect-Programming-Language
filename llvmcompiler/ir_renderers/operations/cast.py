@@ -1,4 +1,4 @@
-from llvmcompiler.compiler_types import CompilerType, IntegerType
+from llvmcompiler.compiler_types import ct
 from llvmcompiler.ir_renderers.operation import arg_type
 from ..operation import Operation
 from llvmlite import ir
@@ -36,14 +36,21 @@ class CastOperation(Operation):
             # if type is passed
             arg2 = self.arguments[1]
         cast = None
-
-        if not isinstance(self.arguments[0].type, IntegerType) or self.arguments[0].type.is_pointer:
+        a0_type = self.arguments[0].type
+        if isinstance(a0_type, ct.Template):
+            #print(self.arguments[0], " ", self.arguments[1])
+            a0_type = a0_type.get_template_type()
+            
+        if (isinstance(a0_type, ct.I8Type) and isinstance(self.arguments[1], ct.C8Type) or isinstance(a0_type, ct.C8Type) and isinstance(self.arguments[1], ct.I8Type)) and  not a0_type.is_pointer:
+            return vari.Value(arg2, arg1, True)
+        elif  arg1.type.is_pointer or (not isinstance(a0_type, ct.IntegerType) and not isinstance(a0_type, ct.C8Type)):
             cast = self.builder.cursor.bitcast(arg1, arg2.value)
-        elif self.arguments[0].type.size > self.arguments[1].size:
+        elif a0_type.size > self.arguments[1].size:
             # downcast
+            
             cast = self.builder.cursor.trunc(arg1, arg2.value)
             #print("Downcast")
-        elif self.arguments[0].type.size < self.arguments[1].size:
+        elif a0_type.size < self.arguments[1].size:
             # upcast
             cast = self.builder.cursor.sext(arg1, arg2.value)
             #print("Upcast")

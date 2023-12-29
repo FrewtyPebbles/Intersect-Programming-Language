@@ -49,13 +49,13 @@ class IndexOperation(Operation):
         if all([s in ptr.type._to_string() for s in "[x]"]):
             #print(f"\n\nARRAY INDS:\n\t{ptr}\nINDS:\n\t{indexes}")
             gep = self.builder.cursor.gep(ptr, [ir.IntType(32)(0), *indexes])
-            self.type = ct.CompilerType.create_from(gep.type, self.builder.module, self.builder.function)
+            self.type = ct.CompilerType.create_from(gep.type, self.builder.module, self.builder.function)# BUG
             #print(f"\nARRAY GEP SUCCESS, TYP: {self.type}")
             return gep
         else:
             #print(f"\nPTR INDS:\n\t{ptr}\nINDS:\n\t{indexes}")
             gep = self.builder.cursor.gep(ptr, [*indexes])
-            self.type = ct.CompilerType.create_from(gep.type, self.builder.module, self.builder.function)
+            self.type = ct.CompilerType.create_from(gep.type, self.builder.module, self.builder.function)# BUG
             #print(f"\nPTR GEP SUCCESS, TYP: {self.type}")
             return gep
             
@@ -119,7 +119,7 @@ class AccessOperation(Operation):
     
     def gep(self, ptr:ir.Instruction, indexes:list):
         gep = self.builder.cursor.gep(ptr, [ir.IntType(32)(0), *indexes])
-        self.type = ct.CompilerType.create_from(gep.type, self.builder.module, self.builder.function)
+        self.type = ct.CompilerType.create_from(gep.type, self.builder.module, self.builder.function)# BUG
         return gep
         
             

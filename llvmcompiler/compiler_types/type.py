@@ -15,11 +15,14 @@ class CompilerType:
     value:ir.Type
     parent: None
     module: None
+    ptr_count:int
     name: str
     "This is the name used in the original source file."
     @staticmethod
     def create_from(ir_type:ir.Type | ir.IdentifiedStructType, module:md.Module = None, func = None):
         """
+         - IMPORTANT: DOES NOT WORK WITH TEMPLATED TYPES
+
         Create an instance of the type from the llvm IR type.
         This is not inherited and is used to create the correct
         compiler type from an llvmlite.ir Type instance.
@@ -72,8 +75,7 @@ class CompilerType:
                         break
                 if found: break
                             
-        for _ in range(ptr_count):
-            chosen_type = chosen_type.cast_ptr()
+        chosen_type.ptr_count = ptr_count
 
         
         #print(f"CTYPE {chosen_type}")
@@ -105,7 +107,8 @@ class CompilerType:
 
     def create_deref(self):
         self_cpy = deepcopy(self)
-        self_cpy.value = self_cpy.value.pointee
+        if hasattr(self_cpy.value, "pointee"):
+            self_cpy.value = self_cpy.value.pointee
         return self_cpy
 
     def __deepcopy__(self, memo):

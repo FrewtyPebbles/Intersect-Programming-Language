@@ -118,11 +118,11 @@ class Value:
         self.type.module = self._builder.module
 
     @lru_cache(32, True)  
-    def get_value(self):
+    def get_value(self, noload = False):
         
         if self.address or self.is_call:
             return self.value
-        if self.deref:
+        if self.deref and not noload:
             #print(f"GET VALUE {self}")
             return self.load()
         if self.is_instruction and not isinstance(self.value, str):

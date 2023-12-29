@@ -13,6 +13,7 @@ class IntegerType(ct.CompilerType):
         self._size = size
         self.value = ir.IntType(self._size)
         self.name = name
+        self.ptr_count = 0
 
 
     
@@ -24,6 +25,7 @@ class I32Type(IntegerType):
         self._size = 32
         self.value = ir.IntType(self._size)
         self.name = "i32"
+        self.ptr_count = 0
 
     
 
@@ -33,6 +35,7 @@ class I8Type(IntegerType):
         self._size = 8
         self.value = ir.IntType(self._size)
         self.name = "i8"
+        self.ptr_count = 0
 
     
 
@@ -42,6 +45,7 @@ class I64Type(IntegerType):
         self._size = 64
         self.value = ir.IntType(self._size)
         self.name = "i64"
+        self.ptr_count = 0
 
 
 

@@ -61,7 +61,7 @@ function TestAll {
 		),
 		(
 			"hashmap.pop",
-			"input = 1"
+			"thing one = 100`nthing two = 200"
 		),
 		(
 			"operator.pop",

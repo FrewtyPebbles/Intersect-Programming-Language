@@ -12,22 +12,27 @@ if TYPE_CHECKING:
 # I32
 class Template(ct.CompilerType):
     
-    def __init__(self, name = "", parent: fn.Function | st.Struct = None) -> None:
+    def __init__(self, name = "", parent: fn.Function | st.Struct = None, ptr_count = 0) -> None:
         self.name = name
         self._value = None
         self.parent: fn.Function | st.Struct = parent
         self._size = None
         self._count = None
+        self.ptr_count = ptr_count
 
     def __hash__(self) -> int:
-        return hash(f"{self.name}{self._value}")
+        return hash(f"{self.name}{self._value}{self.ptr_count}")
+    
 
     def get_template_type(self):
         return self.parent.get_template_type(self.name)
 
     @property
     def value(self):
-        return self.get_template_type().value
+        self._value = self.get_template_type().value
+        for _ in range(self.ptr_count):
+            self._value = self._value.as_pointer()
+        return self._value
     
     @value.setter
     def value(self, value):
@@ -52,31 +57,5 @@ class Template(ct.CompilerType):
             return self.value == __value
     
     def __repr__(self) -> str:
-        return self.name
-    
-class TemplatePointer(Template):
-    
-    def __init__(self, name="", parent: fn.Function | st.Struct = None, ptr_count = 0) -> None:
-        super().__init__(name, parent)
-        self.ptr_count = ptr_count
-
-    def __hash__(self) -> int:
-        return hash(f"{self.name}{self._value}{self.ptr_count}")
-    
-    def get_template_type(self):
-        ptr = super().get_template_type()
-        return ptr
-    
-    @property
-    def value(self):
-        self._value = self.get_template_type().value
-        for _ in range(self.ptr_count):
-            self._value = self._value.as_pointer()
-        return self._value
-    
-    @value.setter
-    def value(self, value):
-        self._value = value
-
-    def __repr__(self) -> str:
         return f"{'$'*self.ptr_count}{self.name}"
+    

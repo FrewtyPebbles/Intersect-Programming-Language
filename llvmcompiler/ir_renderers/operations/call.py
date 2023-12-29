@@ -1,5 +1,5 @@
 from functools import lru_cache
-from llvmcompiler.compiler_types.type import CompilerType
+import llvmcompiler.compiler_types as ct
 from ..operation import Operation, arg_type
 from llvmlite import ir
 import llvmcompiler.ir_renderers.variable as vari
@@ -10,13 +10,15 @@ if TYPE_CHECKING:
 import llvmcompiler.ir_renderers.operations as ops
 
 class CallOperation(Operation):
-    def __init__(self, function:str | Operation | Any, arguments: list[arg_type] = None, template_arguments:list[CompilerType] = None, is_operator = False) -> None:
+    def __init__(self, function:str | Operation | Any, arguments: list[arg_type] = None, template_arguments:list[ct.CompilerType] = None, is_operator = False) -> None:
         super().__init__(arguments)
         self.template_arguments = [] if template_arguments == None else template_arguments
         self.function:str | FunctionDefinition | Operation = function
         self.is_member_function = False
         self.struct_operator = False
         self.is_operator = is_operator
+        self.ret_type = None
+
     def write(self):
         if self.is_operator:
             for i in range(len(self.arguments)):
@@ -37,6 +39,7 @@ class CallOperation(Operation):
         f_to_c = None
         if isinstance(self.function, str):
             function_obj = self.builder.module.functions[self.function].get_function(self.template_arguments)
+            self.ret_type = function_obj.return_type
         elif isinstance(self.function, vari.Value):
             """
             This means that it is a member function.  The value of the Value should be a tuple containing (ir.Instruction, FunctionDefinition)
@@ -44,9 +47,14 @@ class CallOperation(Operation):
             self.arguments.insert(0, self.function.get_value()[0])
             function_obj = self.function.get_value()[1].get_function(self.template_arguments)
             self.is_member_function = True
+            self.ret_type = function_obj.return_type
         else:
             function_obj = self.function.get_function(self.template_arguments)
+            self.ret_type = function_obj.return_type
 
+
+        while isinstance(self.ret_type, ct.Template):
+            self.ret_type = self.ret_type.get_template_type()
 
         f_to_c = function_obj.function
         return f_to_c
@@ -70,7 +78,7 @@ class CallOperation(Operation):
                 if isinstance(arg, vari.Value):
                     if arg.is_literal and a_n < len(f_to_c.args):
                         #print(argument)
-                        arg.type = CompilerType.create_from(
+                        arg.type = ct.CompilerType.create_from(
                             f_to_c.args[a_n].type,
                             self.builder.module,
                             self.builder.function
@@ -92,8 +100,9 @@ class CallOperation(Operation):
 
         self.builder.cursor.comment("OP::call end")
 
-
-        return vari.Value(CompilerType.create_from(func_call.type, self.builder.module, self.builder.function), func_call, True, is_call=True, address=self.is_operator)
+        #print(self.function)
+        
+        return vari.Value(self.ret_type, func_call, True, is_call=True, address=self.is_operator)
     
     def __repr__(self) -> str:
         return f"({self.__class__.__name__} : {{function: {self.function}, arguments: {self.arguments}}})"

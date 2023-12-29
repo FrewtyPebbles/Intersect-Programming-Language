@@ -8,13 +8,7 @@ class BoolType(ct.CompilerType):
         self._size = 1
         self.value = ir.IntType(1)
         self.name = "bool"
+        self.ptr_count = 0
 
     
 
-class BoolPointerType(ct.CompilerType):
-    def __init__(self) -> None:
-        self.count = 1
-        self._size = 1
-        self.value = ir.IntType(1).as_pointer()
-        self.name = "bool"
-    

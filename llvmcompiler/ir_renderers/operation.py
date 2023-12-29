@@ -8,7 +8,6 @@ from llvmlite import ir
 
 
 import llvmcompiler.compiler_types as ct
-from llvmcompiler.compiler_types.types.char import C8PointerType
 if TYPE_CHECKING:
     from .builder_data import BuilderData
 from llvmcompiler.ir_renderers.variable import Variable, Value, HeapValue
@@ -137,29 +136,36 @@ class Operation:
 
     def write(self):
         self.write_arguments()
+        #print(self.__class__.__name__)
         if self.struct_operator:
             op_arguments = self.get_variables()
-            #print(self.__class__.__name__)
+            #print("\tIS VALID CLASS OP")
+            #print(self.op_token, "  ", op_arguments[0].type)
             if isinstance(op_arguments[0].type, st.StructType):
-                if len(op_arguments) > 1:
-                    op_func = self.call_operator_function(op_arguments[0], op_arguments[1])
-                    if op_func != None:
-                        return op_func
-                else:
-                    op_func = self.call_operator_function(op_arguments[0])
-                    if op_func != None:
-                        return op_func
+                
+                if op_arguments[0].type.ptr_count <= 1:
+                    
+                    if len(op_arguments) > 1:
+                        op_func = self.call_operator_function(op_arguments[0], op_arguments[1])
+                        if op_func != None:
+                            return op_func
+                    else:
+                        op_func = self.call_operator_function(op_arguments[0])
+                        if op_func != None:
+                            return op_func
         return self._write()
     
     def call_operator_function(self, this: arg_type, other: arg_type = None):
         if other == None:
-
+            
             func = this.type.struct.get_operator(self.op_token, True)
             if func == None: return None
             #print(func)
             call = ops.CallOperation(func, [this], is_operator=True)
             call.builder = self.builder
             return call.write()
+        #print(this.type)
+        #print(self.op_token)
         func = this.type.struct.get_operator(self.op_token, True, arg_type=other.type)
         if func == None: return None
         #print(func)
@@ -178,4 +184,4 @@ def dbg_llvm_print(builder:BuilderData, var):
     srcstr = "%i\n\00"
     string = builder.alloca(ir.ArrayType(ir.IntType(8), len(srcstr)))
     builder.cursor.store(ir.Constant(ir.ArrayType(ir.IntType(8), len(srcstr)), bytearray(srcstr.encode("utf8"))), string)
-    builder.cursor.call(builder.functions["print"].get_function().function, [builder.cursor.bitcast(string, C8PointerType().value), var])
+    builder.cursor.call(builder.functions["print"].get_function().function, [builder.cursor.bitcast(string, ct.C8Type().cast_ptr()), var])

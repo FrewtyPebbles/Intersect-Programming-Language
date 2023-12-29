@@ -4,9 +4,9 @@ from llvmcompiler import StructDefinition, CompilerType,\
     I8Type, I32Type, C8Type,\
     F32Type, D64Type, I64Type,\
     BoolType, ArrayType, StructType,\
-    StructPointerType, VoidType, Template, Module, FunctionDefinition,\
+    VoidType, Template, Module, FunctionDefinition,\
     FunctionReturnOperation, DefineOperation, Value, Operation, CallOperation,\
-    AssignOperation, IndexOperation, TemplatePointer, CastOperation, DereferenceOperation,\
+    AssignOperation, IndexOperation, CastOperation, DereferenceOperation,\
     TypeSizeOperation, FreeOperation, BreakOperation, IfBlock, ElseIfBlock, ElseBlock, WhileLoop,\
     BreakOperation, AddressOperation
 from llvmcompiler.ir_renderers.operations import *
@@ -640,7 +640,7 @@ class TreeBuilder:
 
         if not struct_option.has_templates:
             if pointer > 0:
-                return StructPointerType(name, ptr_count=pointer)
+                return StructType(name, ptr_count=pointer)
             else:
                 return StructType(name)
         
@@ -648,14 +648,14 @@ class TreeBuilder:
             if tok.type == tb.SyntaxToken.less_than_op:
                 temps = self.context_template(templates)
                 if pointer > 0:
-                    return StructPointerType(name, temps, ptr_count=pointer)
+                    return StructType(name, temps, ptr_count=pointer)
                 else:
                     return StructType(name, temps)
             else:
                 if tok.type == tb.SyntaxToken.greater_than_op:
                     self.token_list.prepend(tok)
                 if pointer > 0:
-                    return StructPointerType(name, ptr_count=pointer)
+                    return StructType(name, ptr_count=pointer)
                 else:
                     return StructType(name)
 
@@ -697,7 +697,7 @@ class TreeBuilder:
                     return struc
                 elif tok.value in templates:
                     if pointer > 0:
-                        return TemplatePointer(tok.value, ptr_count=pointer)
+                        return Template(tok.value, ptr_count=pointer)
                     else:
                         return Template(tok.value)
             

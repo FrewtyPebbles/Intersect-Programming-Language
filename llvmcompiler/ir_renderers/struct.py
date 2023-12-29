@@ -44,6 +44,13 @@ class StructDefinition:
             ret_val += f"<li id=\"GOTO-STRUCT-{self.name}-ATTR-{name}\">{name}: {type_str}</li>"
         ret_val += "</ul>"
 
+        if len(self.operatorfunctions):
+            ret_val += "<h3>Operators</h3>"
+            ret_val += "<ul>"
+            for func in self.operatorfunctions:
+                ret_val += f"<li>{func.get_documentation()}</li>"
+            ret_val += "</ul>"
+
         if len(self.functions):
             ret_val += "<h3>Methods</h3>"
             ret_val += "<ul>"
@@ -73,6 +80,7 @@ class StructDefinition:
 
     @lru_cache(32, True)
     def get_template_index(self, name:str):
+        #print(name)
         #print(self.templates)
         return self.templates.index(name)    
 
@@ -81,6 +89,7 @@ class StructDefinition:
         mangled_name = self.name
         if len(template_types) == 0:
             return mangled_name
+        
         mangled_name += f"_struct_tmp_{self.module.mangle_salt}_{f'_{self.module.mangle_salt}_'.join([tt.value._to_string() for tt in template_types])}".replace(f'\\22', '').replace(f'"', '').replace(f'%', '')
         #print(f"MANG NAME {mangled_name}")
         return mangled_name
@@ -198,6 +207,7 @@ class Struct:
     def get_type(self, func:fn.Function):
         struct = StructType(self.struct_definition.name, self.template_types, self.module)
         struct.parent = func
+        struct.ptr_count = 0
         return struct
 
     @lru_cache(32, True)
@@ -233,8 +243,10 @@ class Struct:
         The attribute type is a Value.
         """
         template_types = [] if template_types == None else template_types
+        
         try:
             op = self.operatorfunctions[operator]
+            
             for func in op:
                 if len(func.arguments) > 2:
                     print("Error: Operators can only have 1-2 arguments.")
@@ -264,14 +276,14 @@ class StructType(ct.CompilerType):
     """
     This is the type reference to the struct.
     """
-    def __init__(self, name:str, template_types:list[ct.CompilerType] = None, module:mod.Module = None) -> None:
+    def __init__(self, name:str, template_types:list[ct.CompilerType] = None, module:mod.Module = None, ptr_count = 0) -> None:
         self.module:mod.Module = module
         self.name = name
         self.template_types = [] if template_types == None else template_types
         self.templates_linked = False
         self._struct = None
         self._value = None
-        self.ptr_count = 0
+        self.ptr_count = ptr_count
 
     def __deepcopy__(self, memo):
         cls = self.__class__
@@ -302,7 +314,7 @@ class StructType(ct.CompilerType):
             for tt in self.template_types:
                 tt.module = self.module
                 tt.parent = self.parent
-                self.templates_linked = True
+            self.templates_linked = True
         return self.struct.size
     
     @property
@@ -312,8 +324,9 @@ class StructType(ct.CompilerType):
                 tt.module = self.module
                 tt.parent = self.parent
                 self.templates_linked = True
-        if not self._value:
-            self._value = self.struct.ir_struct
+        self._value = self.struct.ir_struct
+        for pn in range(self.ptr_count):
+            self._value = self._value.as_pointer()
         return self._value
     
     @value.setter
@@ -321,9 +334,13 @@ class StructType(ct.CompilerType):
         self._value = val
 
     def cast_ptr(self):
-        struct = StructPointerType(self.name, self.template_types, self.module, 1)
-        struct.parent = self.parent
-        return struct
+        self.ptr_count += 1
+        return self
+
+    def create_ptr(self):
+        self_cpy = deepcopy(self)
+        self_cpy.ptr_count += 1
+        return self_cpy
 
     def create_deref(self):
         self_cpy = deepcopy(self)
@@ -332,39 +349,8 @@ class StructType(ct.CompilerType):
     
     
     def __repr__(self) -> str:
-        ret_str = self.name
-        if self.template_types != []:
-            ret_str += f"&lt;{', '.join([f'{t_t}' for t_t in self.template_types])}&gt;"
-        return ret_str
-    
-class StructPointerType(StructType):
-    """
-    This is the type reference to the struct.
-    """
-    def __init__(self, name: str, template_types: list[ct.CompilerType] = [], module: mod.Module = None, ptr_count = 0) -> None:
-        super().__init__(name, template_types, module)
-        self.ptr_count = ptr_count
-        self._value = None
-    
-    @property
-    def value(self):
-        self._value = self.struct.ir_struct
-        for pn in range(self.ptr_count):
-            self._value = self._value.as_pointer()
-        return self._value
-    
-    @value.setter
-    def value(self, value):
-        self._value = value
-
-    def cast_ptr(self):
-        self.ptr_count += 1
-        return self
-    
-    def __repr__(self) -> str:
         ret_str = "$" * self.ptr_count
         ret_str += self.name
         if self.template_types != []:
             ret_str += f"&lt;{', '.join([f'{t_t}' for t_t in self.template_types])}&gt;"
         return ret_str
-        

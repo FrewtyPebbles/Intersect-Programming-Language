@@ -21,4 +21,4 @@ class DereferenceOperation(Operation):
         
         self.builder.cursor.comment("OP::dereference END")
         deref = not self.arguments[0].function_argument if hasattr(self.arguments[0], "function_argument") else True
-        return vari.Value(CompilerType.create_from(res.type, self.builder.module, self.builder.function), res, True, deref = deref)
+        return vari.Value(self.arguments[0].type.create_deref(), res, True, deref = deref)
