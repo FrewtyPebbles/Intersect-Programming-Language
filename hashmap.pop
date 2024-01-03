@@ -187,7 +187,7 @@ struct HashMap<KeyType, ValueType> {
         let item:KVPair<KeyType, ValueType>;
         item.key = $key;
         item.value = value;
-        self.data&[h_index].push(item); # BUG IS HERE  Issue with index return type derived from  ct.CompilerType.create_from(...)
+        self.data&[h_index].push(item);
         return;
     }
 
@@ -197,7 +197,9 @@ struct HashMap<KeyType, ValueType> {
         let collision_list = self.data&[h_key];
         let index = 0;
         let current_kv:KVPair<KeyType, ValueType>;
+        
         while index < collision_list.length {
+            
             current_kv = collision_list.get(index);
             if current_kv.key == key {
                 return current_kv.value;
@@ -235,11 +237,11 @@ export func test(num: i32) ~> i32 {
     map.insert(&key, 100); # BUG IN INSERT FUNCTION
     
     map.insert(&key2, 200);
-    #:
+    
     libc_printf("thing one = %i\n":$c8, map.get(&key));
 
     libc_printf("thing two = %i\n":$c8, map.get(&key2));
-    
+    #:
     key2.del();
     key.del();
 

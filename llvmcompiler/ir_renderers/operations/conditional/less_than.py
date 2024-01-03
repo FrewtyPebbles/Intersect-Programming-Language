@@ -1,4 +1,4 @@
-from llvmcompiler.compiler_types.type import CompilerType
+import llvmcompiler.compiler_types as ct
 from ...operation import Operation
 from llvmlite import ir
 import llvmcompiler.ir_renderers.variable as vari
@@ -17,4 +17,4 @@ class LessThanOperation(Operation):
         
         self.builder.cursor.comment("OP::less_than END")
 
-        return vari.Value(CompilerType.create_from(res.type, self.builder.module, self.builder.function), res, True)
+        return vari.Value(ct.BoolType(), res, True)

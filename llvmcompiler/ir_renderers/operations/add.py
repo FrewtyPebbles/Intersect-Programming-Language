@@ -25,4 +25,4 @@ class AddOperation(Operation):
 
         self.builder.cursor.comment("OP::add END")
 
-        return vari.Value(CompilerType.create_from(arg1.type, self.builder.module, self.builder.function), res, True)
+        return vari.Value(self.arguments[0].type, res, True)

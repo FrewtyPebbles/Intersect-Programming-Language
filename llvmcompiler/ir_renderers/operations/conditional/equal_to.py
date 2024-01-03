@@ -1,4 +1,4 @@
-import llvmcompiler.compiler_types.type as ct
+import llvmcompiler.compiler_types as ct
 import llvmcompiler.ir_renderers.operation as op
 from llvmlite import ir
 import llvmcompiler.ir_renderers.variable as vari
@@ -15,8 +15,8 @@ class EqualToOperation(op.Operation):
         
         #process args
         arg1, arg2 = self.process_lhs_rhs_args()
-
+        #self.builder.module.dbg_print()
         res:ir.Instruction = self.builder.cursor.icmp_signed('==', arg1, arg2)
         self.builder.cursor.comment("OP::equal_to END")
 
-        return vari.Value(ct.CompilerType.create_from(res.type, self.builder.module, self.builder.function), res, True)
+        return vari.Value(ct.BoolType(), res, True)

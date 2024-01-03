@@ -131,7 +131,9 @@ class FunctionDefinition:
         if len(template_types) == 0:
             return mangled_name
         
-        mangled_name += f"_tmp_{self.module.mangle_salt}_{f'_{self.module.mangle_salt}_'.join([tt.value._to_string() for tt in template_types])}".replace(f'\\22', '').replace(f'"', '').replace(f'%', '')
+        mangled_name += f"_tmp_{self.module.mangle_salt}_{f'_{self.module.mangle_salt}_'.join([tt.value._to_string() for tt in template_types])}"\
+            .replace(f'\\22', '').replace(f'"', '')\
+            .replace(f'%', '').replace(f'*', '')
         return mangled_name
     
 class CFunctionDefinition(FunctionDefinition):

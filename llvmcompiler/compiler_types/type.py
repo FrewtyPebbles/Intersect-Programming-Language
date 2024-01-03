@@ -29,7 +29,7 @@ class CompilerType:
         """
         from .types import ArrayType, VoidType, BoolType, I32Type, I8Type, I64Type, F32Type, D64Type
         
-        #print(f"ORIG TYPE {ir_type}")
+        #raise RuntimeError("DEPRECIATING")
 
         ptr_count = ir_type._to_string().count("*")
         
@@ -98,6 +98,8 @@ class CompilerType:
     
     def deref_ptr(self):
         self.value = self.value.pointee
+        if self.ptr_count > 0:
+            self.ptr_count -= 1
         return self
     
     def create_ptr(self):
@@ -107,6 +109,8 @@ class CompilerType:
 
     def create_deref(self):
         self_cpy = deepcopy(self)
+        if self_cpy.ptr_count > 0:
+            self_cpy.ptr_count -= 1
         if hasattr(self_cpy.value, "pointee"):
             self_cpy.value = self_cpy.value.pointee
         return self_cpy

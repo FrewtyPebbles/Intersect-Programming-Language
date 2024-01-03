@@ -2,7 +2,7 @@ from __future__ import annotations
 from functools import lru_cache
 
 from llvmlite import ir
-
+import llvmcompiler.ir_renderers.struct as st
 import llvmcompiler.compiler_types as ct
 from typing import TYPE_CHECKING, Union
 if TYPE_CHECKING:
@@ -119,8 +119,14 @@ class Value:
 
     @lru_cache(32, True)  
     def get_value(self, noload = False):
-        
+        # try:
+        #     # set ptr count
+        #     self.type.ptr_count = str(self.value.type).count("*")
+        # except:pass
         if self.address or self.is_call:
+            # try:
+            #     print(self.value.type)
+            # except:pass
             return self.value
         if self.deref and not noload:
             #print(f"GET VALUE {self}")

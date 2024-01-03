@@ -90,7 +90,9 @@ class StructDefinition:
         if len(template_types) == 0:
             return mangled_name
         
-        mangled_name += f"_struct_tmp_{self.module.mangle_salt}_{f'_{self.module.mangle_salt}_'.join([tt.value._to_string() for tt in template_types])}".replace(f'\\22', '').replace(f'"', '').replace(f'%', '')
+        mangled_name += f"_struct_tmp_{self.module.mangle_salt}_{f'_{self.module.mangle_salt}_'.join([tt.value._to_string() for tt in template_types])}"\
+            .replace(f'\\22', '').replace(f'"', '')\
+            .replace(f'%', '').replace(f'*', '')
         #print(f"MANG NAME {mangled_name}")
         return mangled_name
 
@@ -172,6 +174,7 @@ class Struct:
             typ = typ.get_template_type()
         return typ
 
+    @lru_cache(32, True)
     def write(self):
         mangled_name = self.struct_definition.get_mangled_name(self.template_types)
 
@@ -344,7 +347,8 @@ class StructType(ct.CompilerType):
 
     def create_deref(self):
         self_cpy = deepcopy(self)
-        self_cpy.ptr_count -= 1
+        if self_cpy.ptr_count > 0:
+            self_cpy.ptr_count -= 1
         return self_cpy
     
     

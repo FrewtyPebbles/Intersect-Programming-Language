@@ -76,10 +76,10 @@ class Operation:
     @lru_cache(32, True)
     def process_lhs_rhs_args(self, dont_load = False):
         #process arg1
-        arg1 = self.process_arg(self.arguments[0])
+        arg1 = self.process_arg(self.arguments[0], dont_load)
         
         #process arg2
-        arg2 = self.process_arg(self.arguments[1])
+        arg2 = self.process_arg(self.arguments[1], dont_load)
 
         return arg1, arg2
     
@@ -140,11 +140,17 @@ class Operation:
         if self.struct_operator:
             op_arguments = self.get_variables()
             #print("\tIS VALID CLASS OP")
-            #print(self.op_token, "  ", op_arguments[0].type)
+            for i in range(len(op_arguments)):
+                while isinstance(op_arguments[i].type, ct.Template):
+                    op_arguments[1].type = op_arguments[1].type.get_template_type()
+            
+            #print(self.op_token, "  ", op_arguments[1].type)
             if isinstance(op_arguments[0].type, st.StructType):
                 
                 if op_arguments[0].type.ptr_count <= 1:
-                    
+                    # try:
+                    #     print(op_arguments[1].type)
+                    # except: pass
                     if len(op_arguments) > 1:
                         op_func = self.call_operator_function(op_arguments[0], op_arguments[1])
                         if op_func != None:
@@ -153,6 +159,7 @@ class Operation:
                         op_func = self.call_operator_function(op_arguments[0])
                         if op_func != None:
                             return op_func
+        
         return self._write()
     
     def call_operator_function(self, this: arg_type, other: arg_type = None):

@@ -1,4 +1,4 @@
-from llvmcompiler.compiler_types.type import CompilerType
+import llvmcompiler.compiler_types as ct
 from ...operation import Operation
 from llvmlite import ir
 import llvmcompiler.ir_renderers.variable as vari
@@ -14,4 +14,4 @@ class NotOperation(Operation):
         res:ir.Instruction = self.builder.cursor.icmp_unsigned("==", ir.IntType(1)(0), arg)
         self.builder.cursor.comment("OP::and END")
 
-        return vari.Value(CompilerType.create_from(res.type, self.builder.module, self.builder.function), res, True)
+        return vari.Value(ct.BoolType(), res, True)

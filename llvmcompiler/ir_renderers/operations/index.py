@@ -27,9 +27,16 @@ class IndexOperation(Operation):
         else:
             pointer = self.arguments[0].value
 
+        self.type = self.arguments[0].type
+
         for argument in self.arguments[1:]:
             processed_arg = self.process_arg(argument)
             indexes.append(processed_arg)
+            if self.type.ptr_count > 1:
+                self.type = self.type.create_deref()
+            elif isinstance(self.type, ct.ArrayType):
+                self.type = self.type.type
+            
 
 
         
@@ -49,14 +56,12 @@ class IndexOperation(Operation):
         if all([s in ptr.type._to_string() for s in "[x]"]):
             #print(f"\n\nARRAY INDS:\n\t{ptr}\nINDS:\n\t{indexes}")
             gep = self.builder.cursor.gep(ptr, [ir.IntType(32)(0), *indexes])
-            self.type = ct.CompilerType.create_from(gep.type, self.builder.module, self.builder.function)# BUG
-            #print(f"\nARRAY GEP SUCCESS, TYP: {self.type}")
+            #print(f"\noriginal: {self.arguments[0].type}\nARRAY GEP SUCCESS, TYP: {self.type}")
             return gep
         else:
             #print(f"\nPTR INDS:\n\t{ptr}\nINDS:\n\t{indexes}")
             gep = self.builder.cursor.gep(ptr, [*indexes])
-            self.type = ct.CompilerType.create_from(gep.type, self.builder.module, self.builder.function)# BUG
-            #print(f"\nPTR GEP SUCCESS, TYP: {self.type}")
+            #print(f"\noriginal: {self.arguments[0].type}\nPTR GEP SUCCESS, TYP: {self.type}")
             return gep
             
         
@@ -82,8 +87,7 @@ class AccessOperation(Operation):
         
         
     def process_indexes(self):
-
-        #print(f"\nACCESS = {self.arguments}")
+        
         indexes:indexes_type = []
         # process all arguments to get indexes
         pointer = None
@@ -91,23 +95,30 @@ class AccessOperation(Operation):
             pointer = self.arguments[0].variable
         else:
             pointer = self.arguments[0].value
+        self.type = self.arguments[0].type
         prev_struct:st.StructType = self.arguments[0].type
         for argument in self.arguments[1:]:
-            if isinstance(prev_struct, ct.Template):
+            while isinstance(prev_struct, ct.Template):
                 prev_struct = prev_struct.get_template_type()
             nxt = prev_struct.struct.get_attribute(argument.value, get_definition=True)
+            
             
             
             if isinstance(nxt, fn.FunctionDefinition):
                 self.ret_func = nxt
                 break
             else:
+                #print(type(prev_struct))
                 indexes.append(nxt.get_value())
                 prev_struct = prev_struct.struct.raw_attributes[argument.value]
-                
-
+                while isinstance(prev_struct, ct.Template):
+                    prev_struct = prev_struct.get_template_type()
+        
+            
+        self.type = prev_struct.create_ptr()
         pointer = self.gep(pointer, indexes)
 
+        
         
         self.type.parent = self.builder.function
         self.type.module = self.builder.module
@@ -119,7 +130,7 @@ class AccessOperation(Operation):
     
     def gep(self, ptr:ir.Instruction, indexes:list):
         gep = self.builder.cursor.gep(ptr, [ir.IntType(32)(0), *indexes])
-        self.type = ct.CompilerType.create_from(gep.type, self.builder.module, self.builder.function)# BUG
+        
         return gep
         
             

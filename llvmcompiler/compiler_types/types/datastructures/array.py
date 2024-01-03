@@ -59,7 +59,8 @@ class ArrayType(ct.CompilerType):
 
     def create_deref(self):
         self_cpy = deepcopy(self)
-        self_cpy.ptr_count -= 1
+        if self_cpy.ptr_count > 0:
+            self_cpy.ptr_count -= 1
         return self_cpy
 
     def __repr__(self) -> str:
