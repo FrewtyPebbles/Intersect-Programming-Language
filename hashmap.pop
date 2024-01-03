@@ -234,18 +234,18 @@ export func test(num: i32) ~> i32 {
 
     key2.new("thing two":$c8);
     
-    map.insert(&key, 100); # BUG IN INSERT FUNCTION
+    map.insert(&key, 100);
     
     map.insert(&key2, 200);
     
     libc_printf("thing one = %i\n":$c8, map.get(&key));
 
     libc_printf("thing two = %i\n":$c8, map.get(&key2));
-    #:
+
     key2.del();
     key.del();
 
     map.del();
-    :#
+
     return 0;
 }
