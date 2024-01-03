@@ -51,13 +51,15 @@ class FunctionDefinition:
         This dict contains the mangled aliases.
         Use `get_function` to retrieve/write and retrieve functions from/to this variable
         """
+    def __hash__(self) -> int:
+        return hash(repr(self))
 
     def __deepcopy__(self, memo):
         cls = self.__class__
         result = cls.__new__(cls)
         memo[id(self)] = result
         for k, v in self.__dict__.items():
-            if k in {"module", "doc_data", "builder"}:
+            if k in {"module", "doc_data", "builder", "template_args", "scope", "function_aliases"}:
                 setattr(result, k, v)
                 continue
             setattr(result, k, deepcopy(v, memo))
@@ -99,7 +101,7 @@ class FunctionDefinition:
 
 
     def __repr__(self) -> str:
-        return f"(FUNC : [{self.name}]{self.arguments})"
+        return f"(FUNC : [{self.name}]<{self.template_args}>{self.arguments} ~> {self.return_type})"
 
     
     def get_function(self, template_types:list[ct.CompilerType] = None):

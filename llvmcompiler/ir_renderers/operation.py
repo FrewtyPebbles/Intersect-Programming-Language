@@ -28,6 +28,16 @@ class Operation:
         self.op_token = "+"
         self.struct_operator = True
     
+    def __deepcopy__(self, memo):
+        cls = self.__class__
+        result = cls.__new__(cls)
+        memo[id(self)] = result
+        for k, v in self.__dict__.items():
+            if k in {"builder"}:
+                setattr(result, k, v)
+                continue
+            setattr(result, k, deepcopy(v, memo))
+        return result
     
 
     def get_variables(self, arguments: list[arg_type] = None, no_default_action = False):
@@ -179,6 +189,9 @@ class Operation:
         call = ops.CallOperation(func, [this, other], is_operator=True)
         call.builder = self.builder
         return call.write()
+    
+    def __hash__(self) -> int:
+        return hash(repr(self))
 
     def __repr__(self) -> str:
         return f"({self.__class__.__name__} : {{arguments: {self.arguments}}})"

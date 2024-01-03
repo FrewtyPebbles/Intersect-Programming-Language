@@ -33,7 +33,7 @@ class IndexOperation(Operation):
             processed_arg = self.process_arg(argument)
             indexes.append(processed_arg)
             if self.type.ptr_count > 1:
-                self.type = self.type.create_deref()
+                self.type = self.type.deref_ptr()
             elif isinstance(self.type, ct.ArrayType):
                 self.type = self.type.type
             

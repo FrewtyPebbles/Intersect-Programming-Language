@@ -60,8 +60,8 @@ class ConstructStructOperation(Operation):
             temp_type.builder = self.builder
             temp_type.module = self.builder.module
 
-            malloc_call = self.builder.cursor.call(self.builder.functions["libc_malloc"].get_function().function, [vari.SIZE_T(temp_type.create_ptr().size)])
-            bc = self.builder.cursor.bitcast(malloc_call, temp_type.create_ptr().value)
+            malloc_call = self.builder.cursor.call(self.builder.functions["libc_malloc"].get_function().function, [vari.SIZE_T(temp_type.cast_ptr().size)])
+            bc = self.builder.cursor.bitcast(malloc_call, temp_type.cast_ptr().value)
             for key, val in self.attributes.items():
                 pointer = self.builder.cursor.gep(bc, [ir.IntType(32)(0), struct.get_attribute(key).get_value()], inbounds=True)
                 self.builder.cursor.store(val, pointer)
@@ -71,7 +71,7 @@ class ConstructStructOperation(Operation):
             self.builder.cursor.comment("OP::construct:struct end")
 
             self.builder.push_value_heap(pointer)
-            ret = vari.HeapValue(temp_type.create_ptr(), pointer, True)
+            ret = vari.HeapValue(temp_type.cast_ptr(), pointer, True)
             return ret
         else:
             struct_alloca = self.builder.alloca(struct.ir_struct)

@@ -21,4 +21,4 @@ class AddressOperation(Operation):
         else:
             res = self.arguments[0].variable
         self.builder.cursor.comment("OP::address END")
-        return vari.Value(self.arguments[0].type.create_ptr(), res, True, address = True)
+        return vari.Value(self.arguments[0].type.cast_ptr(), res, True, address = True)

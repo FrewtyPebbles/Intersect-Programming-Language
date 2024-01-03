@@ -1,4 +1,5 @@
 from __future__ import annotations
+from copy import deepcopy
 from functools import lru_cache
 
 from llvmlite.ir.context import global_context
@@ -36,6 +37,17 @@ class Module:
         self.null.initializer = ir.IntType(8)(ord("\0"))
 
         self.mangled_members:set[str] = set()
+
+    def __deepcopy__(self, memo):
+        cls = self.__class__
+        result = cls.__new__(cls)
+        memo[id(self)] = result
+        for k, v in self.__dict__.items():
+            if k in {"functions", "module", "scope", "structs", "null", "mangled_members"}:
+                setattr(result, k, v)
+                continue
+            setattr(result, k, deepcopy(v, memo))
+        return result
 
     def get_documentation(self):
         ret_val = f"<div><h1>{self.name}</h1>"

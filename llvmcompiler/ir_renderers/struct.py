@@ -31,6 +31,20 @@ class StructDefinition:
 
         #print(self.get_documentation())
 
+    def __hash__(self) -> int:
+        return hash(repr(self))
+
+    def __deepcopy__(self, memo):
+        cls = self.__class__
+        result = cls.__new__(cls)
+        memo[id(self)] = result
+        for k, v in self.__dict__.items():
+            if k in {"functions", "operatorfunctions", "templates", "module", "attributes", "struct_aliases", "documentation"}:
+                setattr(result, k, v)
+                continue
+            setattr(result, k, deepcopy(v, memo))
+        return result
+
     def get_documentation(self) -> str:
         ret_val = f"<div><h1 id=\"GOTO-STRUCT-{self.name}\">{self.name}"
         if self.templates != []:
@@ -155,6 +169,9 @@ class Struct:
         self.template_types = template_types
         self.ir_struct = None
 
+    def __hash__(self) -> int:
+        return hash(repr(self))
+
     def __deepcopy__(self, memo):
         cls = self.__class__
         result = cls.__new__(cls)
@@ -201,10 +218,6 @@ class Struct:
             self.raw_attributes[key].module = self.module
             self.raw_attributes[key].parent = self
 
-            # attr = self.raw_attributes[key]
-            # if isinstance(attr, StructType):
-            #     if attr.struct.struct_definition.name == self.struct_definition.name:
-            #         self.raw_attributes[key] = self.raw_attributes[key].create_ptr()
 
     @lru_cache(32, True)
     def get_type(self, func:fn.Function):
@@ -287,6 +300,9 @@ class StructType(ct.CompilerType):
         self._struct = None
         self._value = None
         self.ptr_count = ptr_count
+
+    def __hash__(self) -> int:
+        return hash(repr(self))
 
     def __deepcopy__(self, memo):
         cls = self.__class__

@@ -1,4 +1,5 @@
 from __future__ import annotations
+from copy import deepcopy
 from functools import lru_cache
 
 from llvmlite import ir
@@ -29,7 +30,7 @@ class Variable:
         self.value.module = self.builder.module
         self.heap = heap # wether a variable is stored on the heap or not
         self.function_argument = function_argument # wether or not the variable represents a function argument
-        self.type = self.value.type.create_ptr() if self.heap else self.value.type
+        self.type = self.value.type.cast_ptr() if self.heap else self.value.type
         self.is_instruction = True
         self.module = self.builder.module
 
@@ -44,6 +45,20 @@ class Variable:
         if not self.function_argument:# and not self.value.is_instruction:
             if self.value.value != None:
                 self.set(self.value)
+        
+    def __hash__(self) -> int:
+        return hash(repr(self))
+
+    def __deepcopy__(self, memo):
+        cls = self.__class__
+        result = cls.__new__(cls)
+        memo[id(self)] = result
+        for k, v in self.__dict__.items():
+            if k in {"builder", "value", "type", "module", "variable"}:
+                setattr(result, k, v)
+                continue
+            setattr(result, k, deepcopy(v, memo))
+        return result
         
     def allocate(self):
         if isinstance(self.value, HeapValue):
@@ -92,6 +107,20 @@ class Value:
         self.is_call = is_call
         self.deref = deref
 
+    def __deepcopy__(self, memo):
+        cls = self.__class__
+        result = cls.__new__(cls)
+        memo[id(self)] = result
+        for k, v in self.__dict__.items():
+            if k in {"_builder", "value", "type", "module", "_parent"}:
+                setattr(result, k, v)
+                continue
+            setattr(result, k, deepcopy(v, memo))
+        return result
+    
+    def __hash__(self) -> int:
+        return hash(repr(self))
+
     @property
     def parent(self):
         self.type.parent = self._parent
@@ -117,7 +146,7 @@ class Value:
         self.type.parent = self._builder.function
         self.type.module = self._builder.module
 
-    @lru_cache(32, True)  
+    @lru_cache(32, True)
     def get_value(self, noload = False):
         # try:
         #     # set ptr count
@@ -185,7 +214,7 @@ class HeapValue(Value):
         self.builder.push_value_heap(self.value)
 
         # Cast to pointer and link
-        self.type = self.type.create_ptr()
+        self.type = self.type.cast_ptr()
         self.type.parent = self.parent
         self.type.builder = self.builder
         self.type.module = self.module

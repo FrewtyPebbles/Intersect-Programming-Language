@@ -42,12 +42,15 @@ class BuilderData:
         # this is where all function names/labels are defined
         self.functions = self.module.functions
 
+    def __hash__(self) -> int:
+        return hash(f"{self.function}.BUILDERDATA")
+
     def __deepcopy__(self, memo):
         cls = self.__class__
         result = cls.__new__(cls)
         memo[id(self)] = result
         for k, v in self.__dict__.items():
-            if k in {"module"}:
+            if k in {"module", "cursor", "variables_stack", "value_heap_stack", "llvm_function", "scope_block_stack", "memory_stack", "functions", "function"}:
                 setattr(result, k, v)
                 continue
             setattr(result, k, deepcopy(v, memo))
@@ -174,6 +177,7 @@ class MemoryStackFrame:
         self.value_heap_stack:list[list[ir.Instruction]] = [[]]
         self.exit:ir.Block = exit_block
         self.function = function
+        
 
     @property
     def variable_top(self):
