@@ -13,18 +13,18 @@ function testfile {
 	if ($time) {
 		$m = ""
 		if ([string]::IsNullOrEmpty($inputstr)) {
-			$m = Measure-Command {$out = (& py main.py -s $file --run $show_ir)}
+			$m = Measure-Command {$out = (& py main.py -s "./test/$($file)" --run $show_ir)}
 		} else {
-			$m = Measure-Command {$out = ( $inputstr | & py main.py -s $file --run $show_ir)}
+			$m = Measure-Command {$out = ( $inputstr | & py main.py -s "./test/$($file)" --run $show_ir)}
 		}
 		$out
 		"Time:"
 		$m.TotalSeconds
 	} else {
 		if ([string]::IsNullOrEmpty($input)) {
-			$out = ( $inputstr | & py main.py -s $file --run $show_ir)
+			$out = ( $inputstr | & py main.py -s "./test/$($file)" --run $show_ir)
 		} else {
-			$out = (& py main.py -s $file --run $show_ir)
+			$out = (& py main.py -s "./test/$($file)" --run $show_ir)
 		}
 		return $out
 	}
@@ -115,3 +115,4 @@ function TestAll {
 	$passed_tests_str
 	"-" * $passed_tests_str.Length
 }
+
