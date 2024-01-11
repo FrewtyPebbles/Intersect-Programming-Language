@@ -211,6 +211,7 @@ class Struct:
 
     @lru_cache(32, True)
     def write(self):
+        
         mangled_name = self.struct_definition.get_mangled_name(self.template_types)
 
         self.ir_struct = self.module.module.context.get_identified_type(mangled_name)
@@ -249,6 +250,7 @@ class Struct:
 
         self.vtable_type.set_body(*self.vtable_pointers)
         # add size of vtable to struct
+        
         if IS_64BIT:
             self.size += len(self.vtable_pointers) * 64
         else:
@@ -260,11 +262,13 @@ class Struct:
         
         for f_ind, func in enumerate(self.vtable_functions.values()):
             self.attributes[func.clean_name] = vari.Value(ct.I32Type(), f_ind)
-            
+        
+        
         # add vtable to struct ir
         
-
         self.ir_struct.elements += (self.vtable_type.as_pointer(),)
+
+        
         
         #vtable end BUG
 

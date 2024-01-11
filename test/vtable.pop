@@ -21,10 +21,10 @@ struct VirtualClass {
     }
 }
 
-export func main(num: i32) ~> i32 {
+export func main() ~> i32 {
     let vclass:VirtualClass;
 
-    vclass.init(num);
+    vclass.init(5);
 
     vclass.display();
 

@@ -7,68 +7,63 @@ function testfile {
 	)
 	$out = ""
 	$show_ir = ""
+	$cmd = "py main.py -s `"./test/$($file).pop`" -o `"./test_binaries/$($file)`" --run $($show_ir)"
 	if ($ir) {
 		$show_ir = "--ir"
 	}
+	if (![string]::IsNullOrEmpty($inputstr)) {
+		$cmd = "`"$($inputstr)`" | $($cmd)"
+	}
 	if ($time) {
-		$m = ""
-		if ([string]::IsNullOrEmpty($inputstr)) {
-			$m = Measure-Command {& py main.py -s "./test/$($file)" --run $show_ir}
-		} else {
-			$m = Measure-Command {$inputstr | & py main.py -s "./test/$($file)" --run $show_ir}
-		}
+		$m = Measure-Command {$out = iex $cmd }
 		$out
 		"Time:"
 		$m.TotalSeconds
 	} else {
-		if ([string]::IsNullOrEmpty($input)) {
-			$out = ( $inputstr | & py main.py -s "./test/$($file)" --run $show_ir)
-		} else {
-			$out = (& py main.py -s "./test/$($file)" --run $show_ir)
-		}
-		return $out
+		$out = iex $cmd
+		$out
 	}
 }
 
-function TestAll {
+function testall {
 	
 	# (file name, expected output, optional input string)
 	$files = (
 		(
-			"string.pop",
+			"string",
 			"hello`nMatch",
 			"hello"
 		),
 		(
-			"vector.pop",
+			"vector",
 			"Init called.`npushed data: 0, 1, 2`nvector top: 9999998`ncapacity: 16777216`nend."
 		),
 		(
-			"realloc.pop",
+			"realloc",
 			"malloc 100`nrealloc1 200`nrealloc2 300`nvector data: 100, 200, 300`nend"
 		),
 		(
-			"node.pop",
+			"node",
 			"node_value: 1`nnode_value: 2"
 		),
 		(
-			"nested_struct.pop",
+			"nested_struct",
 			"Init called.`nget 0: 10`nget 0 and 1: 10 and 20`nend."
 		),
 		(
-			"struct.pop",
+			"struct",
 			"value: 5"
 		),
 		(
-			"hashmap.pop",
+			"hashmap",
 			"thing one = 100`nthing two = 200"
 		),
 		(
-			"operator.pop",
+			"operator",
 			"new_store: 3"
 		),
 		(
-			"vtable.pop",
+			"vtable",
 			"data: 5`ndata: 7"
 		)
 	)
@@ -76,7 +71,7 @@ function TestAll {
 	$char_width = $(Get-Host).UI.RawUI.WindowSize.Width
 	foreach ($currtest in $files) {
 		if ($currtest.Length -eq 3) {
-			$out = (testfile -file $currtest[0] -inputstr $currtest[2]) -join "`n"
+			$out = (& testfile -file $currtest[0] -inputstr $currtest[2]) -join "`n"
 			if ($out -eq $currtest[1]) {
 				"`nTest [" + $currtest[0] + "] passed"
 				$passed_tests += 1
@@ -92,7 +87,7 @@ function TestAll {
 				"=" * $char_width
 			}
 		} else {
-			$out = (testfile -file $currtest[0]) -join "`n"
+			$out = (& testfile -file $currtest[0]) -join "`n"
 			if ($out -eq $currtest[1]) {
 				"`nTest [" + $currtest[0] + "] passed"
 				$passed_tests += 1
