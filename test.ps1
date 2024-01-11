@@ -25,6 +25,22 @@ function testfile {
 	}
 }
 
+function to_green ($msg) {
+	return "$([char]0x1b)[92m$msg$([char]0x1b)[0m"
+}
+
+function to_red ($msg) {
+	return "$([char]0x1b)[31m$msg$([char]0x1b)[0m"
+}
+
+function to_yellow ($msg) {
+	return "$([char]0x1b)[33m$msg$([char]0x1b)[0m"
+}
+
+function to_cyan ($msg) {
+	return "$([char]0x1b)[36m$msg$([char]0x1b)[0m"
+}
+
 function testall {
 	
 	# (file name, expected output, optional input string)
@@ -73,11 +89,11 @@ function testall {
 		if ($currtest.Length -eq 3) {
 			$out = (& testfile -file $currtest[0] -inputstr $currtest[2]) -join "`n"
 			if ($out -eq $currtest[1]) {
-				"`nTest [" + $currtest[0] + "] passed"
+				"`nTest [$(to_cyan($currtest[0]))] $(to_green("passed"))" 
 				$passed_tests += 1
 			} else {
 				"_" * $char_width
-				"Test [" + $currtest[0] + "] failed"
+				"Test [$(to_cyan($currtest[0]))] $(to_red("failed"))"
 				"=" * $char_width
 				"Expected:"
 				$currtest[1]
@@ -89,29 +105,30 @@ function testall {
 		} else {
 			$out = (& testfile -file $currtest[0]) -join "`n"
 			if ($out -eq $currtest[1]) {
-				"`nTest [" + $currtest[0] + "] passed"
+				"`nTest [$(to_cyan($currtest[0]))] $(to_green("passed"))"
 				$passed_tests += 1
 			} else {
 				""
-				"X" * $char_width
-				"X" * $char_width
-				"Test [" + $currtest[0] + "] failed"
-				"=" * $char_width
-				"Expected:"
+				to_red("X" * $char_width)
+				to_red("X" * $char_width)
+				"$(to_yellow("Test")) [$(to_cyan($currtest[0]))] $(to_red("failed"))"
+				to_red("=" * $char_width)
+				to_yellow("Expected:")
 				$currtest[1]
-				"~" * $char_width
-				"Recieved:"
+				to_yellow("~" * $char_width)
+				to_yellow("Recieved:")
 				$out
-				"=" * $char_width
-				"X" * $char_width
-				"X" * $char_width
+				to_red("=" * $char_width)
+				to_red("X" * $char_width)
+				to_red("X" * $char_width)
 			}
 		}
 	}
 	""
-	$passed_tests_str = "| Passed Tests: " + $passed_tests + " / " + $files.Length + " |"
-	"-" * $passed_tests_str.Length
-	$passed_tests_str
-	"-" * $passed_tests_str.Length
+	$passed_tests_str = " Passed Tests: " + $passed_tests + " / " + $files.Length + " "
+	$tlen = $passed_tests_str.Length + 2
+	to_yellow("-" * $tlen)
+	"$(to_yellow("|"))" + $passed_tests_str + "$(to_yellow("|"))"
+	to_yellow("-" * $tlen)
 }
 
