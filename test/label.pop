@@ -25,7 +25,7 @@ struct PStatement<Test> {
 
 }
 
-export func test(num: i32) ~> i32 {
+export func main(num: i32) ~> i32 {
     let ps:PStatement<c8>;
     ps.string[0] = "hello 0 and 3\n":$c8;
     ps.string[1] = "hello 1\n":$c8;

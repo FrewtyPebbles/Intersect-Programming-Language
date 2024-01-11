@@ -1,10 +1,15 @@
 from __future__ import annotations
+from collections import OrderedDict
 from copy import deepcopy
 from functools import lru_cache
+import sys
 import llvmcompiler.compiler_types as ct
 import llvmcompiler.ir_renderers.function as fn
 import llvmcompiler.ir_renderers.variable as vari
 import llvmcompiler.modules as mod
+from llvmlite import ir
+
+IS_64BIT = sys.maxsize > 2**32
 
 class StructDefinition:
     """
@@ -118,6 +123,7 @@ class Struct:
     The struct is rendered separately for name mangling purposes.
     """
     def __init__(self, template_types:list[ct.CompilerType], struct_definition:StructDefinition = None) -> None:
+        
         self.struct_definition = struct_definition
         self.name = self.struct_definition.get_mangled_name(template_types)
         """
@@ -125,16 +131,29 @@ class Struct:
         """
         #print(f"NAME : {self.name}")
 
+
+
         self.functions:dict[str, fn.FunctionDefinition] = {}
         self.operatorfunctions:dict[str, list[fn.FunctionDefinition]] = {}
         """
         This contains all of the `FunctionDefinition`(s) for the struct.
         """
-        # TODO: BUG: Figure out how to mangle name without mangling original function definition, yet still retain information 
+
+        
+
+        self.vtable_type:ir.IdentifiedStructType = None
+        self.vtable_pointers:list[ir.PointerType] = []
+        self.vtable_functions:OrderedDict[str, fn.FunctionDefinition | list[fn.FunctionDefinition]] = OrderedDict()
+        self.vtable_global:ir.GlobalVariable = None
+
         for func in deepcopy(self.struct_definition.functions):
             func.struct = self
             func.module = self.struct_definition.module
-            self.functions[func.name] = func
+            # handle virtual function
+            if func.virtual:
+                self.vtable_functions[func.name] = func
+            else:
+                self.functions[func.name] = func
             
             #print(f"{self.name}->{func.name}")
 
@@ -152,22 +171,21 @@ class Struct:
 
             func.name = f"{self.name}_memberfunction_{func.name}"
 
-            
-
-        
-
         self.raw_attributes:dict[str, ct.CompilerType] = deepcopy(self.struct_definition.attributes)
         """
         These are the attributes and their compiler types.
         """
 
-
         self.attributes:dict[str, vari.Value] = {}
         self.module = self.struct_definition.module
         
         self.size = 0
+        "size in bits"
         self.template_types = template_types
         self.ir_struct = None
+
+    def get_vtable_name(self):
+        return f"{self.struct_definition.get_mangled_name(self.template_types)}__VTABLE"
 
     def __hash__(self) -> int:
         return hash(repr(self))
@@ -196,16 +214,59 @@ class Struct:
         mangled_name = self.struct_definition.get_mangled_name(self.template_types)
 
         self.ir_struct = self.module.module.context.get_identified_type(mangled_name)
+
+       
         
         self.link_raw_attributes()
+
         
+        # add attributes to struct
         types = []
         for at_type_ind, (at_key, at_type) in enumerate(self.raw_attributes.items()):
             self.attributes[at_key] = vari.Value(ct.I32Type(), at_type_ind)
             types.append(at_type.value)
             self.size += at_type.size
+
+
         self.ir_struct.packed = self.struct_definition.packed
+        # add attributes to struct ir
         self.ir_struct.set_body(*types)
+
+        #vtable BUG
+        self.vtable_type = self.module.module.context.get_identified_type(self.get_vtable_name())
+
+        # get vtable pointers
+        vt_global = []
+        for func in self.vtable_functions.values():
+            fun = func.get_function()
+            vtfunc = fun.function_type.as_pointer()
+            self.vtable_pointers.append(vtfunc)
+            vt_global.append(fun.function)
+
+        self.vtable_global = ir.GlobalVariable(self.module.module, self.vtable_type, f"{self.get_vtable_name()}_GLOBAL")
+
+        self.vtable_global.initializer = ir.Constant(self.vtable_type, ir.LiteralStructType(vt_global))
+
+        self.vtable_type.set_body(*self.vtable_pointers)
+        # add size of vtable to struct
+        if IS_64BIT:
+            self.size += len(self.vtable_pointers) * 64
+        else:
+            self.size += len(self.vtable_pointers) * 32
+
+        # add vtable functions to attributes
+        at_type_ind += 1
+        self.attributes["META__VTABLE"] = vari.Value(ct.I32Type(), at_type_ind)
+        
+        for f_ind, func in enumerate(self.vtable_functions.values()):
+            self.attributes[func.clean_name] = vari.Value(ct.I32Type(), f_ind)
+            
+        # add vtable to struct ir
+        
+
+        self.ir_struct.elements += (self.vtable_type.as_pointer(),)
+        
+        #vtable end BUG
 
         return self
     
@@ -236,17 +297,24 @@ class Struct:
         template_types = [] if template_types == None else template_types
 
         
-        attrs = {**self.attributes, **self.functions}
+        
         # print(f"STRUCT METHS {self.functions.keys()}")
         try:
-            attr = attrs[name]
-            if isinstance(attr, fn.FunctionDefinition):
-                if get_definition:
-                    return attr
-                else:
-                    return attr.get_function(template_types)
+            #this is where virtual functions are called
+            attrs = {**self.attributes, **self.functions}
+            if name in self.vtable_functions.keys():
+                attr = attrs[name]
+                return (self.attributes["META__VTABLE"], attr)
             else:
-                return attr
+                attr = attrs[name]
+                if isinstance(attr, fn.FunctionDefinition):
+                    if get_definition:
+                        return attr
+                    else:
+                        return attr.get_function(template_types)
+                else:
+                    return attr
+            
         except KeyError:
             definition_attrs = {"attributes":self.struct_definition.attributes, "functions":self.struct_definition.functions, "operators":self.struct_definition.operatorfunctions}
             print(f"Error: {name} is not a valid attribute of {self.struct_definition.name}!\n")

@@ -1,0 +1,36 @@
+struct VirtualClass {
+    "This is a class that utilizes a vtable for its functions and operators."
+    data:i32;
+    
+    virtual func init(self:$VirtualClass, data:i32) {
+        "Creates a new instance of VirtualClass"
+        self.data = data;
+        return;
+    }
+
+    virtual func display(self:$VirtualClass) {
+        "Prints a representation of the class to stdout."
+        libc_printf("data: %i\n":$c8, self.data);
+        return;
+    }
+
+    virtual func add(self:$VirtualClass, data:i32) ~> i32 {
+        "Adds an i32 to the value of the class instance."
+        self.data = self.data + data;
+        return self.data;
+    }
+}
+
+export func main(num: i32) ~> i32 {
+    let vclass:VirtualClass;
+
+    vclass.init(num);
+
+    vclass.display();
+
+    vclass.add(2);
+
+    vclass.display();
+
+    return 0;
+}

@@ -69,6 +69,9 @@ class SyntaxToken(Enum):
     function_call_template_op = "?"
     sizeof_op = "sizeof"
     address_op = "&"
+    virtual_keyword = "virtual"
+    macro_keyword = "macro" #labels that come after this act as declarative keywords.
+    new_keyword = "construct"
 
     @property
     def is_type(self):

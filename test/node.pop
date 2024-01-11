@@ -22,7 +22,7 @@ struct Node<DType>{
     }
 }
 
-export func test(num: i32) ~> i32 {
+export func main(num: i32) ~> i32 {
     
     let first:Node<i32>;
 

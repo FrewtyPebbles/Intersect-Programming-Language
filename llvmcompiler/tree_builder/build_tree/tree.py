@@ -11,7 +11,6 @@ from llvmcompiler import StructDefinition, CompilerType,\
     BreakOperation, AddressOperation
 from llvmcompiler.ir_renderers.operations import *
 
-# TODO BUG: FIX BUG WITH `None`s showing up in scopes
 
 class TokenIterator:
     def __init__(self, tokens:list[tb.Token]):
@@ -494,7 +493,7 @@ class TreeBuilder:
             
         return arguments
 
-    def context_function_statement_definition(self, templates:list[str], extern = False):
+    def context_function_statement_definition(self, templates:list[str], extern = False, virtual = False):
         """
         This defines the statement part of the function.
         
@@ -532,7 +531,8 @@ class TreeBuilder:
                         break
         
         #print(f"{'extern ' if extern else ''}func {name}<{template_definition}>({arguments}) ~> {return_type} {{{scope}}}")
-        return FunctionDefinition(name, arguments, return_type, False, template_definition, scope, extern=extern, documentation=documentation)
+        #print("\n".join([repr(line) for line in scope]))
+        return FunctionDefinition(name, arguments, return_type, False, template_definition, scope, extern=extern, documentation=documentation, virtual=virtual)
     
     def context_struct_definition(self):
         name = ""
@@ -560,7 +560,7 @@ class TreeBuilder:
         self.struct_namespace.append(StructOption(name, templates))
         
         # then parse the definition of the struct within the curly braces
-
+        virtual = False
         attribute_label_buffer = ""
         for tok in self.token_list:
             match tok.type:
@@ -569,20 +569,23 @@ class TreeBuilder:
                 case tb.SyntaxToken.cast_op:
                     attributes[attribute_label_buffer] = self.context_type_trunk(templates)
                     attribute_label_buffer = ""
+                case tb.SyntaxToken.virtual_keyword:
+                    virtual = True
                 case tb.SyntaxToken.func_keyword:
-                    mf = self.context_function_statement_definition(templates)
+                    mf = self.context_function_statement_definition(templates, virtual=virtual)
                     functions.append(mf)
+                    virtual = False
                 case tb.SyntaxToken.operator_func_keyword:
-                    omf = self.context_function_statement_definition(templates)
+                    omf = self.context_function_statement_definition(templates, virtual=virtual)
                     for a_t in omf.arguments.values():
                         omf.name += f"_arg_{a_t.name}"
                     operators.append(omf)
+                    virtual = False
                 case tb.SyntaxToken.scope_end:
                     break
                 case tb.SyntaxToken.string_literal:
                     documentation["purpose"] = tok.value
         
-
         return StructDefinition(name, attributes, functions, templates, documentation=documentation, operatorfunctions=operators)
 
 

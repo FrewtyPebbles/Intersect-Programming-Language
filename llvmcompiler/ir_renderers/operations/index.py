@@ -7,6 +7,8 @@ import llvmcompiler.ir_renderers.function as fn
 import llvmcompiler.ir_renderers.struct as st
 from enum import Enum
 
+
+
 indexes_type = list[ir.LoadInstr | ir.GEPInstr | ir.AllocaInstr | str | ir.Constant | ct.CompilerType | tuple[str, vari.Variable]]
 
         
@@ -84,6 +86,7 @@ class AccessOperation(Operation):
         self.ret_func:fn.FunctionDefinition = None
         self.type = None
         self.struct_operator = False
+
         
         
     def process_indexes(self):
@@ -97,15 +100,28 @@ class AccessOperation(Operation):
             pointer = self.arguments[0].value
         self.type = self.arguments[0].type
         prev_struct:st.StructType = self.arguments[0].type
+        #print(self.arguments[1:])
+        virtual = False
         for argument in self.arguments[1:]:
             while isinstance(prev_struct, ct.Template):
                 prev_struct = prev_struct.get_template_type()
             nxt = prev_struct.struct.get_attribute(argument.value, get_definition=True)
-            
-            
-            
+
+
             if isinstance(nxt, fn.FunctionDefinition):
                 self.ret_func = nxt
+                break
+            elif isinstance(nxt, tuple):
+                # VTABLE
+                if len(indexes) >= 1:
+                    pointer = self.gep(pointer, indexes)
+                indexes.append(nxt[0].get_value())
+
+                vtable = self.builder.cursor.load(self.gep(pointer, indexes))
+
+                self.ret_func = self.gep(vtable, [nxt[1].get_value()])
+
+                virtual = True
                 break
             else:
                 #print(type(prev_struct))
@@ -116,9 +132,9 @@ class AccessOperation(Operation):
         
             
         self.type = prev_struct.create_ptr()
-        pointer = self.gep(pointer, indexes)
+        if not virtual:
+            pointer = self.gep(pointer, indexes)
 
-        
         
         self.type.parent = self.builder.function
         self.type.module = self.builder.module
@@ -129,8 +145,10 @@ class AccessOperation(Operation):
     
     
     def gep(self, ptr:ir.Instruction, indexes:list):
+        
         gep = self.builder.cursor.gep(ptr, [ir.IntType(32)(0), *indexes])
         
+
         return gep
         
             
@@ -142,7 +160,7 @@ class AccessOperation(Operation):
         res = self.process_indexes()
         self.builder.cursor.comment("OP::index END")
 
-        #print(f"acc_type = {self.type} {{{self.arguments}}}")
+        #print(f"index = {res} {{{self.ret_func}}}")
         if self.ret_func == None:
             return vari.Value(self.type, res, True, self.arguments[0].heap, deref=True)
         else:

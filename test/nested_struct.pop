@@ -49,7 +49,7 @@ struct Vector<ItemType> {
 }
 
 
-export func test(num: i32) ~> i32 {
+export func main(num: i32) ~> i32 {
     let vec:Vector<I32Store>;
 
     vec.init();

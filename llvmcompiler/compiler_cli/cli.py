@@ -3,6 +3,7 @@ from llvmcompiler.tree_builder import Tokenizer, SyntaxToken, TreeBuilder
 
 class CLI:
     def __init__(self) -> None:
+        
         self.arguments:dict[str,str|bool] = {
             "debug":False,
             "source":"./main.pop",
@@ -111,7 +112,7 @@ class CLI:
         if self.arguments["debug"]:print("PROGRAM RUNNING:")
         with llvm.create_mcjit_compiler(llvm_module, tm) as ee:
             ee.finalize_object()
-            fptr = ee.get_function_address("test")
+            fptr = ee.get_function_address("main")
             py_func = CFUNCTYPE(c_int, c_int)(fptr)
             import time
             parameter = 5

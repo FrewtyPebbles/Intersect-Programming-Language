@@ -9,7 +9,7 @@ func free<PtrType>(ptr:$PtrType) {
     return;
 }
 
-export func test(num: i32) ~> i32 {
+export func main(num: i32) ~> i32 {
     let pointer:$i32 = malloc?<i32>(1);
     pointer[0] = 100;
     libc_printf("malloc %i\n":$c8, pointer[0])

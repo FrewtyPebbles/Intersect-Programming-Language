@@ -220,7 +220,7 @@ struct HashMap<KeyType, ValueType> {
     }
 }
 
-export func test(num: i32) ~> i32 {
+export func main(num: i32) ~> i32 {
 
     let map:HashMap<String, i32>;
 

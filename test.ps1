@@ -13,9 +13,9 @@ function testfile {
 	if ($time) {
 		$m = ""
 		if ([string]::IsNullOrEmpty($inputstr)) {
-			$m = Measure-Command {$out = (& py main.py -s "./test/$($file)" --run $show_ir)}
+			$m = Measure-Command {& py main.py -s "./test/$($file)" --run $show_ir}
 		} else {
-			$m = Measure-Command {$out = ( $inputstr | & py main.py -s "./test/$($file)" --run $show_ir)}
+			$m = Measure-Command {$inputstr | & py main.py -s "./test/$($file)" --run $show_ir}
 		}
 		$out
 		"Time:"
@@ -66,6 +66,10 @@ function TestAll {
 		(
 			"operator.pop",
 			"new_store: 3"
+		),
+		(
+			"vtable.pop",
+			"data: 5`ndata: 7"
 		)
 	)
 	$passed_tests = 0

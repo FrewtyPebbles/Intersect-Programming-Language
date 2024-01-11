@@ -12,7 +12,7 @@ struct Storage<ItemType> {
 }
 
 
-export func test(num: i32) ~> i32 {
+export func main(num: i32) ~> i32 {
     let store:Storage<i32>;
 
     store.set(5);

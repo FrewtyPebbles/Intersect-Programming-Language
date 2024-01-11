@@ -22,7 +22,7 @@ struct Store {
     }
 }
 
-export func test(num: i32) ~> i32 {
+export func main(num: i32) ~> i32 {
     "This acts as the main function."
     let new_store:Store;
     let store1:Store;
