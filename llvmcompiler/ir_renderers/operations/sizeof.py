@@ -7,7 +7,7 @@ import llvmcompiler.ir_renderers.variable as vari
 
 class TypeSizeOperation(Operation):
     """
-    Returns the size of a type as an llvm ir constant
+    Returns the size of a type as an llvm ir constant in bytes
     """
     def __init__(self, arguments: list[arg_type] = None) -> None:
         super().__init__(arguments)
@@ -17,16 +17,16 @@ class TypeSizeOperation(Operation):
         self.builder.cursor.comment("OP::dereference START")
         self.arguments = self.get_variables()
         self.set_arguments_parent()
-        
+        #print(type(self.arguments[0]))
         res = 0
         #process arg1
         if isinstance(self.arguments[0], vari.Variable):
-            res = int(self.arguments[0].type.size/4)
+            res = int(self.arguments[0].type.size/8)
         elif isinstance(self.arguments[0], vari.Value):
-            res = int(self.arguments[0].type.size/4)
+            res = int(self.arguments[0].type.size/8)
         elif isinstance(self.arguments[0], CompilerType):
-            res = int(self.arguments[0].size/4)
-        
+            res = int(self.arguments[0].size/8)
+        #print(self.arguments[0], res)
         self.builder.cursor.comment("OP::dereference END")
 
         return vari.Value(I64Type(), ir.IntType(64)(res), True)

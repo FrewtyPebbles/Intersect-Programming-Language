@@ -1,11 +1,11 @@
 func realloc<PtrType>(ptr:$PtrType, new_size:i32) ~> $PtrType {
     "This is a wrapper arround libc_realloc."
-    return libc_realloc(ptr:$i8, sizeof $PtrType * new_size:i64):$PtrType;
+    return libc_realloc(ptr:$i8, sizeof ? $PtrType * new_size:i64):$PtrType;
 }
 
 func malloc<PtrType>(size:i32) ~> $PtrType {
     "This is a wrapper arround libc_malloc."
-    return libc_malloc(sizeof PtrType * size:i64):$PtrType;
+    return libc_malloc(sizeof ? PtrType * size:i64):$PtrType;
 }
 
 func free<PtrType>(ptr:$PtrType) {
@@ -31,7 +31,6 @@ struct Vector<ItemType> {
     func push(self:$Vector<ItemType>, item:ItemType) {
         "Pushes an item to the vector."
         self.data[self.length] = item;
-        
         self.length = self.length + 1;
         
         if self.length == self.capacity {
@@ -86,7 +85,6 @@ struct String {
             self.length = self.length + 1;
             character = new_str&[self.length];
         }
-
         
         return;
     }
@@ -128,11 +126,13 @@ struct String {
 
 func print(msg:$String) {
     let index = 0;
+    
     while index != msg.length {
         libc_putchar(msg.data.get(index));
         index = index + 1;
     }
-    libc_putchar(10);
+    libc_putchar('\n');
+
     return;
 }
 
@@ -178,6 +178,7 @@ struct HashMap<KeyType, ValueType> {
             hashindex = hashindex + (key.data.get(c_n):i32) + c_n;
             c_n = c_n + 1;
         }
+        
         return hashindex % self.capacity;
     }
 
@@ -199,11 +200,12 @@ struct HashMap<KeyType, ValueType> {
         let current_kv:KVPair<KeyType, ValueType>;
         
         while index < collision_list.length {
-            
             current_kv = collision_list.get(index);
             if current_kv.key == key {
+                
                 return current_kv.value;
             }
+            index = index + 1;
         }
         return 999;
     }
@@ -237,7 +239,7 @@ export func main(num: i32) ~> i32 {
     map.insert(&key, 100);
     
     map.insert(&key2, 200);
-    
+
     libc_printf("thing one = %i\n":$c8, map.get(&key));
 
     libc_printf("thing two = %i\n":$c8, map.get(&key2));

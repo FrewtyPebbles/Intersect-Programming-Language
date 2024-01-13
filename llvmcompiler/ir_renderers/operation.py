@@ -27,7 +27,9 @@ class Operation:
         self.arguments = [] if arguments == None else arguments
         self.op_token = "+"
         self.struct_operator = True
-    
+        self.line_number = None
+        self.column_number = None
+
     def __deepcopy__(self, memo):
         cls = self.__class__
         result = cls.__new__(cls)

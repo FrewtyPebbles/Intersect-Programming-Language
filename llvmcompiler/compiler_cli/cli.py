@@ -56,7 +56,7 @@ class CLI:
         if self.arguments["source"] != None:
             with open(self.arguments["source"], "r") as file:
                 src = file.read()
-                self.tokenizer = Tokenizer(src, self.arguments["output"])
+                self.tokenizer = Tokenizer(src, self.arguments["output"], self.arguments["source"])
 
     def display_help(self):
         term_size = os.get_terminal_size().columns
@@ -87,12 +87,12 @@ class CLI:
         
         tree = TreeBuilder(token_list, self.arguments["source"], self.arguments["salt"])
 
-        # if self.arguments["debug"]:
-        #     for token in token_list:
-        #         tw = ""
-        #         if token.type == SyntaxToken.string_literal:
-        #             tw = "\""
-        #         sys.stdout.write(f"{tw}{token.value}{tw}{' ' * (30 - len(str(token.value)))}{token.type.name}\n")
+        if self.arguments["debug"]:
+            for token in token_list:
+                tw = ""
+                if token.type == SyntaxToken.string_literal:
+                    tw = "\""
+                sys.stdout.write(f"{tw}{token.value}{tw}{' ' * (30 - len(str(token.value)))}{token.type.name}\n")
         if self.arguments["debug"]:print("Building Concrete Tree...")
         
         tree.parse_trunk()
@@ -108,8 +108,7 @@ class CLI:
             if self.arguments["debug"]:print("Emitting LLVM IR...")
             module.write()
 
-            if self.arguments["show_ir"]:
-                module.dbg_print()
+            
             if self.arguments["run"] or self.arguments["output"] != None:
                 self.compile(module)
 
@@ -134,6 +133,8 @@ class CLI:
 
             # optimize
             pm.run(llvm_module)
+
+        
         
 
         tm = llvm.Target.from_default_triple().create_target_machine(codemodel='default')
@@ -144,9 +145,14 @@ class CLI:
         try:
             subprocess.run(["clang", f"{self.arguments['output']}.o", "-o", f"{self.arguments['output']}{'.exe' if platform.system() == 'Windows' else ''}"])
         except FileNotFoundError as e:
-            print("Error: Intersect requires a working instalation of clang.  You can fix this by installing the Visual Studio C/C++ build tools found here: https://visualstudio.microsoft.com/downloads/#build-tools-for-visual-studio-2017")
+            print("ERROR:\n\tCompiling a program with Intersect requires a working instalation of clang.\n\nYou can fix this by installing the Visual Studio C/C++ build tools found here: https://visualstudio.microsoft.com/downloads/#build-tools-for-visual-studio-2017")
+            exit()
+
         os.remove(f"{self.arguments['output']}.o")
 
+        if self.arguments["show_ir"]:
+            print(llvm_module)
+        
         if self.arguments["run"]:
             if self.arguments["debug"]:print("PROGRAM RUNNING:")
             

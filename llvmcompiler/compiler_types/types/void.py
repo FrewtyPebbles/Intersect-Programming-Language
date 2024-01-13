@@ -4,7 +4,7 @@ import llvmcompiler.compiler_types.type as ct
 
 class VoidType(ct.CompilerType):
     def __init__(self) -> None:
-        self._size = 0
+        self._size = 8
         self.value = ir.VoidType()
         self.name = "void"
 

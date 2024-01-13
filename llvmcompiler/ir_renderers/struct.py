@@ -228,13 +228,17 @@ class Struct:
             types.append(at_type.value)
             self.size += at_type.size
 
-
-        self.ir_struct.packed = self.struct_definition.packed
-        # add attributes to struct ir
-        self.ir_struct.set_body(*types)
-
         #vtable BUG
         self.vtable_type = self.module.module.context.get_identified_type(self.get_vtable_name())
+        
+        self.ir_struct.packed = self.struct_definition.packed
+        # add attributes to struct ir
+        
+
+        self.ir_struct.set_body(*types, self.vtable_type.as_pointer())
+
+        
+        
 
         # get vtable pointers
         vt_global = []
@@ -262,12 +266,6 @@ class Struct:
         
         for f_ind, func in enumerate(self.vtable_functions.values()):
             self.attributes[func.clean_name] = vari.Value(ct.I32Type(), f_ind)
-        
-        
-        # add vtable to struct ir
-        
-        self.ir_struct.elements += (self.vtable_type.as_pointer(),)
-
         
         
         #vtable end BUG
@@ -406,6 +404,11 @@ class StructType(ct.CompilerType):
                 tt.module = self.module
                 tt.parent = self.parent
             self.templates_linked = True
+        if self.ptr_count > 0:
+            if IS_64BIT:
+                return self.struct.size + 64
+            else:
+                return self.struct.size + 32
         return self.struct.size
     
     @property

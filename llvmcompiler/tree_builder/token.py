@@ -66,7 +66,7 @@ class SyntaxToken(Enum):
     persist_keyword = "persist"
     delete_keyword = "delete"
     export_keyword = "export" # this is the same as extern "c"
-    function_call_template_op = "?"
+    macro_delimiter_op = "?"
     sizeof_op = "sizeof"
     address_op = "&"
     virtual_keyword = "virtual"
@@ -174,9 +174,12 @@ class SyntaxToken(Enum):
 class Token:
     value:any
     type:SyntaxToken
-    def __init__(self, value:str = None, syntax_type:SyntaxToken = None) -> None:
+    def __init__(self, value:str = None, syntax_type:SyntaxToken = None, cn:int = None, ln:int = None, file = "unknown") -> None:
         self.value = value
         self.type = syntax_type
+        self.line_number = ln
+        self.column_number = cn
+        self.file = file
 
     @property
     def priority(self):
@@ -230,20 +233,20 @@ class Token:
         return None
 
     @staticmethod
-    def new(value:str = None, syntax_type:SyntaxToken = None):
+    def new(value:str = None, syntax_type:SyntaxToken = None, cn:int = None, ln:int = None, file = "unknown"):
         if value != None and syntax_type != None:
-            return Token(value, syntax_type)
+            return Token(value, syntax_type, cn, ln, file)
         elif value == "true" or value == "false":# bool
             if value == "true":
-                return Token(True, SyntaxToken.bool_literal)
+                return Token(True, SyntaxToken.bool_literal, cn, ln, file)
             elif value == "false":
-                return Token(False, SyntaxToken.bool_literal)
+                return Token(False, SyntaxToken.bool_literal, cn, ln, file)
         elif value.isdecimal():# u32
-            return Token(int(value), SyntaxToken.integer_literal)
+            return Token(int(value), SyntaxToken.integer_literal, cn, ln, file)
         elif value.startswith("-") and value.lstrip("-").lstrip().isdecimal():# i32
-            return Token(int(value), SyntaxToken.integer_literal)
+            return Token(int(value), SyntaxToken.integer_literal, cn, ln, file)
         elif "." in value and value.replace(".", "").lstrip("-").isdecimal():# f32
-            return Token(float(value), SyntaxToken.precision_literal)
+            return Token(float(value), SyntaxToken.precision_literal, cn, ln, file)
         else:
             print("Error: Unable to determine type of token.")
 

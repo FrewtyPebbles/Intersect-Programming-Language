@@ -1,9 +1,11 @@
 from __future__ import annotations
+import sys
 from llvmlite import ir
 from copy import deepcopy
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     import llvmcompiler.modules.module as md
+IS_64BIT = sys.maxsize > 2**32
 
 class CompilerType:
     """
@@ -90,6 +92,11 @@ class CompilerType:
 
     @property
     def size(self):
+        if self.ptr_count > 0:
+            if IS_64BIT:
+                return self._size + 64
+            else:
+                return self._size + 32
         return self._size
     
     def cast_ptr(self):

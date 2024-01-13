@@ -1,5 +1,5 @@
 func realloc<PtrType>(ptr:$PtrType, new_size:i32) ~> $PtrType {
-    return libc_realloc(ptr:$i8, sizeof $PtrType * new_size:i64):$PtrType;
+    return libc_realloc(ptr:$i8, sizeof ? $PtrType * new_size:i64):$PtrType;
 }
 
 struct I32Store {
@@ -12,7 +12,7 @@ struct Vector<ItemType> {
     length:i32;
 
     func init(self:$Vector<ItemType>) {
-        self.data = libc_malloc(sizeof $ItemType):$ItemType;
+        self.data = libc_malloc(sizeof ? $ItemType):$ItemType;
         self.capacity = 1;
         self.length = 0;
         return;

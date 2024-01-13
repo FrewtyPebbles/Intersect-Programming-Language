@@ -27,15 +27,27 @@ from .token import SyntaxToken, Token
 #_________________________________________________________________________________________________________________________|
 
 class Tokenizer:
-    def __init__(self, src:str, output = "") -> None:
+    def __init__(self, src:str, output = "", file_name = "unknown") -> None:
         self.src = get_str_itterator(src)
         self.output = output
         self.token_list:list[Token] = []
+        self.line_num = 1
+        self.column_num = 0
+        self.file_name = file_name
+
+    def inc_c(self, char:str):
+        "increment the column number"
+        if char in {'\n','\r'}:
+            self.column_num = 0
+            self.line_num += 1
+        else:
+            self.column_num += 1
 
     def tokenize(self):
         # this is where the code gets tokenized
         self.keyword = ""
         for char in self.src:
+            self.inc_c(char)
             self.parse_char(char)
 
         return self.token_list
@@ -80,6 +92,7 @@ class Tokenizer:
         escape = False
         string = ""
         for char in self.src:
+            self.inc_c(char)
             if not escape:
                 if char == "\\":
                     escape = True
@@ -108,6 +121,7 @@ class Tokenizer:
 
     def operator_context(self):
         for char in self.src:
+            self.inc_c(char)
             if regex_in(char) == r"[~<>=\*-/+_]":
                 self.keyword += char
             else:
@@ -117,6 +131,7 @@ class Tokenizer:
 
     def label_context(self):
         for char in self.src:
+            self.inc_c(char)
             if regex_in(char) == r"[A-Za-z0-9_]":
                 self.keyword += char
             else:
@@ -126,6 +141,7 @@ class Tokenizer:
     
     def number_context(self):
         for char in self.src:
+            self.inc_c(char)
             if regex_in(char) == r"[0-9.]":
                 self.keyword += char
             else:
@@ -143,6 +159,7 @@ class Tokenizer:
         multiline = False
         last_char = ""
         for c_n, char in enumerate(self.src):
+            self.inc_c(char)
             if (char == "\n" and not multiline) or last_char + char == ":#":
                 return
             elif char == ":" and c_n == 0:
@@ -188,10 +205,10 @@ class Tokenizer:
 
                 
     def append_token(self, token:SyntaxToken, value = ""):
-        self.token_list.append(Token(value, token))
+        self.token_list.append(Token(value, token, self.column_num, self.line_num, self.file_name))
 
     def append_token_only(self, token:SyntaxToken):
-        self.token_list.append(Token(token.value, token))
+        self.token_list.append(Token(token.value, token, self.column_num, self.line_num, self.file_name))
 
     
 def get_str_itterator(string:str):

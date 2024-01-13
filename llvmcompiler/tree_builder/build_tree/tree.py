@@ -11,6 +11,7 @@ from llvmcompiler import StructDefinition, CompilerType,\
     BreakOperation, AddressOperation
 from llvmcompiler.ir_renderers.operations import *
 
+from llvmcompiler.compiler_errors import *
 
 class TokenIterator:
     def __init__(self, tokens:list[tb.Token]):
@@ -215,13 +216,20 @@ class TreeBuilder:
                     return AddressOperation([arg])
         
         if op.type == tb.SyntaxToken.sizeof_op:
-            return TypeSizeOperation([self.context_type_trunk(templates)])
+            
+            if self.token_list.current().type == tb.SyntaxToken.macro_delimiter_op:
+                next(self.token_list)
+                return TypeSizeOperation([self.context_type_trunk(templates)])
+            else:
+                ooo = self.context_order_of_operations(templates)[0]
+                self.token_list.prepend(self.token_list.prev())
+                return TypeSizeOperation([ooo])
 
         for tok in self.token_list:
             if tok.type.is_single_arg_operator:
                 return ret_operation(self.context_single_argument_op(tok, templates))
             elif tok.type.is_lhs_rhs_operator:
-                print("Error: Expected argument after single argument operation, not LHS/RHS operator.")
+                CompilerError(tok.column_number, tok.line_number, tok.file, "Expected argument after unary operation, not binary operator.").throw()
             elif tok.type == tb.SyntaxToken.label:
                 return ret_operation(self.context_label_trunk(tok.value, templates))
             elif tok.type == tb.SyntaxToken.parentheses_start:
@@ -267,7 +275,7 @@ class TreeBuilder:
                 return self.context_index(AddressOperation([AccessOperation(indexes)]), templates, dereferences)
             elif tok.type == tb.SyntaxToken.label:
                 indexes.append(LookupLabel(tok.value))
-            elif tok.type == tb.SyntaxToken.function_call_template_op:
+            elif tok.type == tb.SyntaxToken.macro_delimiter_op:
                 self.token_list.prepend(tok)
                 indexes = [self.context_call(AccessOperation(indexes), templates, dereferences)]
             elif tok.type == tb.SyntaxToken.parentheses_start:
@@ -285,7 +293,7 @@ class TreeBuilder:
     def context_call(self, function:Operation | str, templates:list[str], dereferences = 0):
         "This is for the `label?<templates...>(args...)` operator."
         #print(f"\n\nCONTEXT_CALL {self.token_list.current()}\n")
-        is_template_function = self.token_list.current().type == tb.SyntaxToken.function_call_template_op
+        is_template_function = self.token_list.current().type == tb.SyntaxToken.macro_delimiter_op
         
         template_args = []
         if is_template_function:
@@ -297,7 +305,7 @@ class TreeBuilder:
                         template_args = self.context_template(templates)
                         break
                     case _:
-                        print("Error: Expected template argument types in call.")
+                        CompilerError(tok.column_number, tok.line_number, tok.file, "Expected template type arguments in call following `?` token.").throw()
         function_args = []
         #print(f"FUNC ARGS STARTING TOK {self.token_list.current()}")
         if self.token_list.current().type == tb.SyntaxToken.parentheses_start:
@@ -311,7 +319,7 @@ class TreeBuilder:
                 break
             else:
                 self.token_list.prepend(tok)
-                self.dbg_print(f"FA TOK {self.token_list.current()} : {function}")
+                #self.dbg_print(f"FA TOK {self.token_list.current()} : {function}")
                 ooo_ret = self.context_order_of_operations(templates)
                 if ooo_ret[0] != None:
                     function_args.append(ooo_ret[0])
@@ -327,7 +335,7 @@ class TreeBuilder:
     def context_label_trunk(self, label:str, templates:list[str], dereferences = 0):
         ret_val = label
         for tok in self.token_list:
-            if tok.type == tb.SyntaxToken.function_call_template_op:
+            if tok.type == tb.SyntaxToken.macro_delimiter_op:
                 # is a template function
                 self.token_list.prepend(tok)
                 self.dbg_print(f"TF {ret_val}, {templates}, {dereferences}")
@@ -350,7 +358,7 @@ class TreeBuilder:
                 if tok.type == tb.SyntaxToken.assign_op:
                     
                     ooo_ret = self.context_order_of_operations(templates)
-                    self.dbg_print(f"ASSIGN OP {[ret_val, ooo_ret[0]]}")
+                    #self.dbg_print(f"ASSIGN OP {[ret_val, ooo_ret[0]]}")
                     self.token_list.prepend(ooo_ret[1])
                     return AssignOperation([prepend_derefs(ret_val, dereferences), ooo_ret[0]])
                 else:

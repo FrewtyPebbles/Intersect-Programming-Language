@@ -1,11 +1,11 @@
 func realloc<PtrType>(ptr:$PtrType, new_size:i32) ~> $PtrType {
     "This is a wrapper arround libc_realloc."
-    return libc_realloc(ptr:$i8, sizeof $PtrType * new_size:i64):$PtrType;
+    return libc_realloc(ptr:$i8, sizeof ? $PtrType * new_size:i64):$PtrType;
 }
 
 func malloc<PtrType>(size:i32) ~> $PtrType {
     "This is a wrapper arround libc_malloc."
-    return libc_malloc(sizeof PtrType * size:i64):$PtrType;
+    return libc_malloc(sizeof ? PtrType * size:i64):$PtrType;
 }
 
 func free<PtrType>(ptr:$PtrType) {

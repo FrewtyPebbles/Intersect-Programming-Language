@@ -100,7 +100,7 @@ class AccessOperation(Operation):
             pointer = self.arguments[0].value
         self.type = self.arguments[0].type
         prev_struct:st.StructType = self.arguments[0].type
-        #print(self.arguments[1:])
+
         virtual = False
         for argument in self.arguments[1:]:
             while isinstance(prev_struct, ct.Template):
@@ -126,7 +126,9 @@ class AccessOperation(Operation):
             else:
                 #print(type(prev_struct))
                 indexes.append(nxt.get_value())
+                
                 prev_struct = prev_struct.struct.raw_attributes[argument.value]
+                
                 while isinstance(prev_struct, ct.Template):
                     prev_struct = prev_struct.get_template_type()
         
@@ -147,7 +149,6 @@ class AccessOperation(Operation):
     def gep(self, ptr:ir.Instruction, indexes:list):
         
         gep = self.builder.cursor.gep(ptr, [ir.IntType(32)(0), *indexes])
-        
 
         return gep
         

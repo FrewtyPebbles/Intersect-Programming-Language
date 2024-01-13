@@ -17,9 +17,11 @@ class DefineOperation(Operation):
         self.arguments[1].module = self.builder.module
         typ = self.arguments[1].type
         if self.force_type != None:
-            self.arguments[1].type = self.force_type
+            typ = self.arguments[1].type = self.force_type
         elif typ.is_pointer:
-            self.arguments[1].type = typ.deref_ptr()
+            self.force_type = typ
+            self.arguments[1].type = typ.create_deref()
+            
         
         #print(self.arguments)
         var = self.builder.declare_variable(vari.Variable(self.builder, *self.arguments))
