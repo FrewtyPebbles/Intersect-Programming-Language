@@ -60,7 +60,7 @@ func main() ~> i32{
 
 Output:
 
-![alt text](readme_files/CompileTimeErrorExample.png)
+![alt text](readme_files/CompileTimeError.png)
 
 Compile time error feedback provides you with a detailed annotated view of the error in your source code.
 
