@@ -51,8 +51,8 @@ class CompilerError:
         return (
             firstline +
             f"{bord_col}╭────┄┈{Color.RED} {self.msg}\n" +
-            (f"{bord_col}│{num_color}{self.line_number-1}{bord_col}┊{def_col}{Color.FAINT}{self.prev_line}{Color.END}\n" if self.prev_line != None else "") + 
-            f"{bord_col}│{num_color}{self.line_number}{bord_col}│{def_col}{self.line}\n" +
+            (f"{bord_col}│{num_color}{' ' * (len(str(self.line_number+1)) - len(str(self.line_number-1)))}{self.line_number-1}{bord_col}┊{def_col}{Color.FAINT}{self.prev_line}{Color.END}\n" if self.prev_line != None else "") + 
+            f"{bord_col}│{num_color}{' ' * (len(str(self.line_number+1)) - len(str(self.line_number)))}{self.line_number}{bord_col}│{def_col}{self.line}\n" +
             (f"{bord_col}│{num_color}{' ' * len(str(self.line_number+1))}{bord_col}│{def_col}{' ' * (self.column_number - 1 - len(str(self.token.value)))}{' ' * (len(str(self.token.value))-1)}╰─ {self.hint}\n" if self.hint != None else "") +
             (f"{bord_col}│{num_color}{self.line_number+1}{bord_col}┊{def_col}{Color.FAINT}{self.next_line}{Color.END}\n" if self.next_line != None else "") +
             f"{bord_col}└─┄┈\n{Color.END}"
