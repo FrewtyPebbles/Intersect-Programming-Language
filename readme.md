@@ -41,6 +41,25 @@ struct StructName<TemplateType> {
 
 ### Robust Compile Time Errors
 
+Source Code:
+
+```rust
+struct MyStruct {
+    data:i32;
+    theta:i32;
+    func meta(self:$MyStruct, arg:i32) {
+        return;
+    }
+}
+func main() ~> i32{
+    let my_struct:MyStruct;
+    let my_attr = my_struct.beta;
+    return 0;
+}
+```
+
+Output:
+
 ![alt text](readme_files/CompileTimeErrorExample.png)
 
 Compile time error feedback provides you with a detailed annotated view of the error in your source code.

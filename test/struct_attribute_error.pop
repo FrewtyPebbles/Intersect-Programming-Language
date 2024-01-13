@@ -5,7 +5,6 @@ struct MyStruct {
         return;
     }
 }
-
 func main() ~> i32{
     let my_struct:MyStruct;
     let my_attr = my_struct.beta;
