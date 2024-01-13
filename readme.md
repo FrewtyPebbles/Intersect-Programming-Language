@@ -24,7 +24,7 @@ For multiline comments use:
 :#
 ```
 
-### Capitalization
+### Keywords
 
 In **Intersect**, keywords are explicitly named.  Ex:
 
