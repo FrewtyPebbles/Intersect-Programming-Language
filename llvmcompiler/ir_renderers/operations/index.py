@@ -1,4 +1,5 @@
 from functools import lru_cache
+from llvmcompiler.compiler_errors.comp_error import CompilerError
 import llvmcompiler.compiler_types as ct
 from ..operation import Operation, arg_type
 from llvmlite import ir
@@ -13,8 +14,8 @@ indexes_type = list[ir.LoadInstr | ir.GEPInstr | ir.AllocaInstr | str | ir.Const
 
         
 class IndexOperation(Operation):
-    def __init__(self, arguments: list[arg_type] = []) -> None:
-        super().__init__(arguments)
+    def __init__(self, arguments: list[arg_type] = [], token = None) -> None:
+        super().__init__(arguments, token)
         self.type = None
         self.op_token = "[]"
         
@@ -81,8 +82,8 @@ class IndexOperation(Operation):
         
 class AccessOperation(Operation):
     "This is for indexing structs with the . or -> operator"
-    def __init__(self, arguments: list[arg_type] = []) -> None:
-        super().__init__(arguments)
+    def __init__(self, arguments: list[arg_type] = [], token = None) -> None:
+        super().__init__(arguments, token)
         self.ret_func:fn.FunctionDefinition = None
         self.type = None
         self.struct_operator = False
@@ -105,8 +106,24 @@ class AccessOperation(Operation):
         for argument in self.arguments[1:]:
             while isinstance(prev_struct, ct.Template):
                 prev_struct = prev_struct.get_template_type()
-            nxt = prev_struct.struct.get_attribute(argument.value, get_definition=True)
+            try:
+                nxt = prev_struct.struct.get_attribute(argument.value, get_definition=True)
+            except KeyError:
+                prediction = None
+                attrs = [*prev_struct.struct.attributes.keys(), *[fun.clean_name for fun in prev_struct.struct.struct_definition.functions]]
+                if len(attrs) > 0:
+                    similarity = [] # list of number of matching characters
+                    for attr in attrs:
+                        sim_level = 0
+                        for user_char in argument.value:
+                            sim_level += user_char in attr
+                        similarity.append(sim_level)
+                    prediction = f"did you mean '{attrs[similarity.index(max(similarity))]}'"
 
+                CompilerError( self.token,
+                        f"\"{argument.value}\" is not a valid attribute or function of struct {prev_struct}.",
+                        hint=prediction
+                    ).throw()
 
             if isinstance(nxt, fn.FunctionDefinition):
                 self.ret_func = nxt

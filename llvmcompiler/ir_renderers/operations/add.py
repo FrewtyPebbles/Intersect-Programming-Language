@@ -6,8 +6,8 @@ from llvmlite import ir
 import llvmcompiler.ir_renderers.variable as vari
 
 class AddOperation(Operation):
-    def __init__(self, arguments: list[arg_type] = None) -> None:
-        super().__init__(arguments)
+    def __init__(self, arguments: list[arg_type] = None, token = None) -> None:
+        super().__init__(arguments, token)
         self.op_token = "+"
     
     @lru_cache(32, True)

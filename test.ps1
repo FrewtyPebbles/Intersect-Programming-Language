@@ -92,15 +92,19 @@ function testall {
 				"`nTest [$(to_cyan($currtest[0]))] $(to_green("passed"))" 
 				$passed_tests += 1
 			} else {
-				"_" * $char_width
-				"Test [$(to_cyan($currtest[0]))] $(to_red("failed"))"
-				"=" * $char_width
-				"Expected:"
+				""
+				to_red("X" * $char_width)
+				to_red("X" * $char_width)
+				"$(to_yellow("Test")) [$(to_cyan($currtest[0]))] $(to_red("failed"))"
+				to_red("=" * $char_width)
+				to_yellow("Expected:")
 				$currtest[1]
-				"-" * $char_width
-				"Recieved:"
+				to_yellow("~" * $char_width)
+				to_yellow("Recieved:")
 				$out
-				"=" * $char_width
+				to_red("=" * $char_width)
+				to_red("X" * $char_width)
+				to_red("X" * $char_width)
 			}
 		} else {
 			$out = (& testfile -file $currtest[0]) -join "`n"

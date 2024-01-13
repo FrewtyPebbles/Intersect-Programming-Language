@@ -11,7 +11,7 @@ from llvmcompiler import StructDefinition, CompilerType,\
     BreakOperation, AddressOperation
 from llvmcompiler.ir_renderers.operations import *
 
-from llvmcompiler.compiler_errors import *
+import llvmcompiler.compiler_errors as ce
 
 class TokenIterator:
     def __init__(self, tokens:list[tb.Token]):
@@ -56,9 +56,8 @@ class TokenIterator:
             return self.tokens[self.index]
 
     def prev(self):
-        if self.index-1 < 0:
-            raise IndexError
-        return self.tokens[self.index-1]
+        
+        return self.tokens[self.index-2]
 
     def __iter__(self):
         return self
@@ -202,34 +201,36 @@ class TreeBuilder:
             return (result, last_tok)
         return (None, last_tok)
     
+    
+    
     def context_single_argument_op(self, op:tb.Token, templates:list[str]):
         #print(f"CONTEXT_SINGLE_ARGUMENT {op}")
         def ret_operation(arg):
             match op.type:
                 case tb.SyntaxToken.dereference_op:
-                    return DereferenceOperation([arg])
+                    return DereferenceOperation([arg], token=self.token_list.prev())
                 case tb.SyntaxToken.sizeof_op:
-                    return TypeSizeOperation([arg])
+                    return TypeSizeOperation([arg], token=self.token_list.prev())
                 case tb.SyntaxToken.not_op:
-                    return NotOperation([arg])
+                    return NotOperation([arg], token=self.token_list.prev())
                 case tb.SyntaxToken.address_op:
-                    return AddressOperation([arg])
+                    return AddressOperation([arg], token=self.token_list.prev())
         
         if op.type == tb.SyntaxToken.sizeof_op:
             
             if self.token_list.current().type == tb.SyntaxToken.macro_delimiter_op:
                 next(self.token_list)
-                return TypeSizeOperation([self.context_type_trunk(templates)])
+                return TypeSizeOperation([self.context_type_trunk(templates)], token=self.token_list.prev())
             else:
                 ooo = self.context_order_of_operations(templates)[0]
                 self.token_list.prepend(self.token_list.prev())
-                return TypeSizeOperation([ooo])
+                return TypeSizeOperation([ooo], token=self.token_list.prev())
 
         for tok in self.token_list:
             if tok.type.is_single_arg_operator:
                 return ret_operation(self.context_single_argument_op(tok, templates))
             elif tok.type.is_lhs_rhs_operator:
-                CompilerError(tok.column_number, tok.line_number, tok.file, "Expected argument after unary operation, not binary operator.").throw()
+                ce.CompilerError(self.token_list.prev(), "Expected argument after unary operation, not binary operator.").throw()
             elif tok.type == tb.SyntaxToken.label:
                 return ret_operation(self.context_label_trunk(tok.value, templates))
             elif tok.type == tb.SyntaxToken.parentheses_start:
@@ -246,9 +247,9 @@ class TreeBuilder:
             elif tok.type == tb.SyntaxToken.sqr_bracket_start:
                 continue
             elif tok.type == tb.SyntaxToken.access_op:
-                return self.context_access(IndexOperation(indexes), templates, dereferences)
+                return self.context_access(IndexOperation(indexes, token=self.token_list.prev()), templates, dereferences)
             elif tok.type == tb.SyntaxToken.dereference_access_op:
-                return self.context_access(DereferenceOperation([IndexOperation(indexes)]), templates, dereferences)
+                return self.context_access(DereferenceOperation([IndexOperation(indexes, token=self.token_list.prev())], token=self.token_list.prev()), templates, dereferences)
             elif tok.type.is_ending_token or tok.type.is_lhs_rhs_operator:
                 self.token_list.prepend(tok)
                 break
@@ -259,7 +260,7 @@ class TreeBuilder:
                 if ooo_res[1].type != tb.SyntaxToken.delimiter and ooo_res[1].type.is_ending_token:
                     break
         
-        return IndexOperation(indexes)
+        return IndexOperation(indexes, token=self.token_list.prev())
     
     def context_access(self, beginning:Operation, templates:list[str], dereferences = 0):
         "This is for the `.` operator."
@@ -268,19 +269,19 @@ class TreeBuilder:
             if tok.type == tb.SyntaxToken.access_op:
                 continue
             elif tok.type == tb.SyntaxToken.dereference_access_op:
-                indexes = [DereferenceOperation([AccessOperation(indexes)])]
+                indexes = [DereferenceOperation([AccessOperation(indexes, token=self.token_list.prev())], token=self.token_list.prev())]
             elif tok.type == tb.SyntaxToken.sqr_bracket_start:
-                return self.context_index(DereferenceOperation([AccessOperation(indexes)]), templates, dereferences)
+                return self.context_index(DereferenceOperation([AccessOperation(indexes, token=self.token_list.prev())], token=self.token_list.prev()), templates, dereferences)
             elif tok.type == tb.SyntaxToken.address_op:
-                return self.context_index(AddressOperation([AccessOperation(indexes)]), templates, dereferences)
+                return self.context_index(AddressOperation([AccessOperation(indexes, token=self.token_list.prev())], token=self.token_list.prev()), templates, dereferences)
             elif tok.type == tb.SyntaxToken.label:
                 indexes.append(LookupLabel(tok.value))
             elif tok.type == tb.SyntaxToken.macro_delimiter_op:
                 self.token_list.prepend(tok)
-                indexes = [self.context_call(AccessOperation(indexes), templates, dereferences)]
+                indexes = [self.context_call(AccessOperation(indexes, token=self.token_list.prev()), templates, dereferences)]
             elif tok.type == tb.SyntaxToken.parentheses_start:
                 self.token_list.prepend(tok)
-                indexes = [self.context_call(AccessOperation(indexes), templates, dereferences)]
+                indexes = [self.context_call(AccessOperation(indexes, token=self.token_list.prev()), templates, dereferences)]
             else:
                 self.token_list.prepend(tok)
                 break
@@ -288,7 +289,7 @@ class TreeBuilder:
         if len(indexes) == 1:
             if isinstance(indexes[0], CallOperation):
                 return indexes[0]
-        return AccessOperation(indexes)
+        return AccessOperation(indexes, token=self.token_list.prev())
     
     def context_call(self, function:Operation | str, templates:list[str], dereferences = 0):
         "This is for the `label?<templates...>(args...)` operator."
@@ -305,7 +306,10 @@ class TreeBuilder:
                         template_args = self.context_template(templates)
                         break
                     case _:
-                        CompilerError(tok.column_number, tok.line_number, tok.file, "Expected template type arguments in call following `?` token.").throw()
+                        ce.CompilerError(tok,
+                            "Expected template type arguments in call following `?` token.",
+                            hint="example: func_name?<i32>(argument);"
+                        ).throw()
         function_args = []
         #print(f"FUNC ARGS STARTING TOK {self.token_list.current()}")
         if self.token_list.current().type == tb.SyntaxToken.parentheses_start:
@@ -330,7 +334,8 @@ class TreeBuilder:
         #print(f"END CALL")
         
         #print(f"\nF CLOSE {function}")
-        return CallOperation(function, function_args, template_args)
+        
+        return CallOperation(function, function_args, template_args, token=self.token_list.prev())
 
     def context_label_trunk(self, label:str, templates:list[str], dereferences = 0):
         ret_val = label
@@ -349,18 +354,18 @@ class TreeBuilder:
             elif tok.type == tb.SyntaxToken.access_op:
                 ret_val = self.context_access(ret_val, templates, dereferences)
             elif tok.type == tb.SyntaxToken.dereference_access_op:
-                ret_val = self.context_access(DereferenceOperation([ret_val]), templates, dereferences)
+                ret_val = self.context_access(DereferenceOperation([ret_val], token=self.token_list.prev()), templates, dereferences)
             elif tok.type == tb.SyntaxToken.sqr_bracket_start:
-                ret_val = self.context_index(DereferenceOperation([ret_val]), templates, dereferences)
+                ret_val = self.context_index(DereferenceOperation([ret_val], token=self.token_list.prev()), templates, dereferences)
             elif tok.type == tb.SyntaxToken.address_op:
-                ret_val = self.context_index(AddressOperation([ret_val]), templates, dereferences)
+                ret_val = self.context_index(AddressOperation([ret_val], token=self.token_list.prev()), templates, dereferences)
             else:
                 if tok.type == tb.SyntaxToken.assign_op:
                     
                     ooo_ret = self.context_order_of_operations(templates)
                     #self.dbg_print(f"ASSIGN OP {[ret_val, ooo_ret[0]]}")
                     self.token_list.prepend(ooo_ret[1])
-                    return AssignOperation([prepend_derefs(ret_val, dereferences), ooo_ret[0]])
+                    return AssignOperation([prepend_derefs(ret_val, dereferences), ooo_ret[0]], token=self.token_list.prev())
                 else:
                     self.token_list.prepend(tok)
                 return prepend_derefs(ret_val, dereferences)
@@ -384,13 +389,15 @@ class TreeBuilder:
             elif tok.type == tb.SyntaxToken.assign_op:
                 ooo_ret = self.context_order_of_operations(templates)
                 #print([name, ooo_ret[0]])
-                return DefineOperation([name, ooo_ret[0]], force_type=typ)
+                
+                return DefineOperation([name, ooo_ret[0]], force_type=typ, token=self.token_list.prev())
 
             elif tok.type.is_ending_token:
                 # if there is no assignment operator, then the line_end token will
                 # not be consumed and this block will execute.
                 # This allocates a variable without assigning a value.
-                return DefineOperation([name, Value(typ)])
+                
+                return DefineOperation([name, Value(typ)], token=self.token_list.prev())
 
     def context_conditional_statement(self, statement_type: tb.SyntaxToken, templates:list[str]):
         
@@ -459,11 +466,11 @@ class TreeBuilder:
                 case tb.SyntaxToken.return_op:
                     ret_val = self.context_order_of_operations(templates)
                     if ret_val[0] == None:
-                        scope.append(FunctionReturnOperation())
+                        scope.append(FunctionReturnOperation(token=self.token_list.prev()))
                     else:
-                        scope.append(FunctionReturnOperation([ret_val[0]]))
+                        scope.append(FunctionReturnOperation([ret_val[0]], token=self.token_list.prev()))
                 case tb.SyntaxToken.break_op:
-                    scope.append(BreakOperation())
+                    scope.append(BreakOperation(token=self.token_list.prev()))
                     #skip the ; token
                     next(self.token_list)
                 case tb.SyntaxToken.string_literal:
@@ -733,6 +740,7 @@ class TreeBuilder:
             case tb.SyntaxToken.c8_type:
                 return get_ptr(C8Type())
             
+
 
 def prepend_derefs(instr, derefs:int):
     ret_ins = instr

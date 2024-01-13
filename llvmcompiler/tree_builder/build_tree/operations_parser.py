@@ -92,6 +92,7 @@ class PotentialOperation:
     def __init__(self, values:list[OpValue | PotentialOperation], op:tb.Token):
         self.op = op
         self.values = values
+        self.token = op
 
     def replace_common(self, replacement:PotentialOperation):
         for val_ind, val in enumerate(self.values):
@@ -121,45 +122,43 @@ class PotentialOperation:
             # None means that it is the only value
             return values[0]
 
-
         match self.op.type:
             case tb.SyntaxToken.add_op:
-                return AddOperation(values)
+                return AddOperation(values, token=self.token)
             case tb.SyntaxToken.subtract_op:
-                return SubtractOperation(values)
+                return SubtractOperation(values, token=self.token)
             case tb.SyntaxToken.multiply_op:
-                return MultiplyOperation(values)
+                return MultiplyOperation(values, token=self.token)
             case tb.SyntaxToken.divide_op:
-                return DivideOperation(values)
+                return DivideOperation(values, token=self.token)
             case tb.SyntaxToken.modulo_op:
-                return ModuloOperation(values)
+                return ModuloOperation(values, token=self.token)
             case tb.SyntaxToken.assign_op:
-                return ModuloOperation(values)
+                return ModuloOperation(values, token=self.token)
             case tb.SyntaxToken.less_than_op:
-                return LessThanOperation(values)
+                return LessThanOperation(values, token=self.token)
             case tb.SyntaxToken.greater_than_op:
-                return GreaterThanOperation(values)
+                return GreaterThanOperation(values, token=self.token)
             case tb.SyntaxToken.greater_than_or_equal_to_op:
-                return GreaterThanOrEqualToOperation(values)
+                return GreaterThanOrEqualToOperation(values, token=self.token)
             case tb.SyntaxToken.less_than_or_equal_to_op:
-                return LessThanOrEqualToOperation(values)
+                return LessThanOrEqualToOperation(values, token=self.token)
             case tb.SyntaxToken.equal_to_op:
-                return EqualToOperation(values)
+                return EqualToOperation(values, token=self.token)
             case tb.SyntaxToken.not_equal_to_op:
-                return NotEqualToOperation(values)
+                return NotEqualToOperation(values, token=self.token)
             case tb.SyntaxToken.or_op:
-                return OrOperation(values)
+                return OrOperation(values, token=self.token)
             case tb.SyntaxToken.and_op:
-                return AndOperation(values)
+                return AndOperation(values, token=self.token)
             case tb.SyntaxToken.cast_op:
-                return CastOperation(values)
+                return CastOperation(values, token=self.token)
             case tb.SyntaxToken.dereference_op:
-                return DereferenceOperation(values)
+                return DereferenceOperation(values, token=self.token)
             case tb.SyntaxToken.sizeof_op:
-                #print(f"EMIT SIZEOF OPERATION {values}")
-                return TypeSizeOperation(values)
+                return TypeSizeOperation(values, token=self.token)
             case tb.SyntaxToken.not_op:
-                return NotOperation(values)
+                return NotOperation(values, token=self.token)
             case tb.SyntaxToken.post_increment_op:
                 # not implemented yet
                 pass

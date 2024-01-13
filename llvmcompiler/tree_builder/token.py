@@ -174,12 +174,15 @@ class SyntaxToken(Enum):
 class Token:
     value:any
     type:SyntaxToken
-    def __init__(self, value:str = None, syntax_type:SyntaxToken = None, cn:int = None, ln:int = None, file = "unknown") -> None:
+    def __init__(self, value:str = None, syntax_type:SyntaxToken = None, cn:int = None, ln:int = None, file = "unknown", line = "", prev_line:str = None, next_line:str = None) -> None:
         self.value = value
         self.type = syntax_type
         self.line_number = ln
         self.column_number = cn
         self.file = file
+        self.line = line
+        self.prev_line = prev_line
+        self.next_line = next_line
 
     @property
     def priority(self):
@@ -233,20 +236,20 @@ class Token:
         return None
 
     @staticmethod
-    def new(value:str = None, syntax_type:SyntaxToken = None, cn:int = None, ln:int = None, file = "unknown"):
+    def new(value:str = None, syntax_type:SyntaxToken = None, cn:int = None, ln:int = None, file = "unknown", line = "", prev_line:str = None, next_line:str = None):
         if value != None and syntax_type != None:
-            return Token(value, syntax_type, cn, ln, file)
+            return Token(value, syntax_type, cn, ln, file, line, prev_line, next_line)
         elif value == "true" or value == "false":# bool
             if value == "true":
-                return Token(True, SyntaxToken.bool_literal, cn, ln, file)
+                return Token(True, SyntaxToken.bool_literal, cn, ln, file, line, prev_line, next_line)
             elif value == "false":
-                return Token(False, SyntaxToken.bool_literal, cn, ln, file)
+                return Token(False, SyntaxToken.bool_literal, cn, ln, file, line, prev_line, next_line)
         elif value.isdecimal():# u32
-            return Token(int(value), SyntaxToken.integer_literal, cn, ln, file)
+            return Token(int(value), SyntaxToken.integer_literal, cn, ln, file, line, prev_line, next_line)
         elif value.startswith("-") and value.lstrip("-").lstrip().isdecimal():# i32
-            return Token(int(value), SyntaxToken.integer_literal, cn, ln, file)
+            return Token(int(value), SyntaxToken.integer_literal, cn, ln, file, line, prev_line, next_line)
         elif "." in value and value.replace(".", "").lstrip("-").isdecimal():# f32
-            return Token(float(value), SyntaxToken.precision_literal, cn, ln, file)
+            return Token(float(value), SyntaxToken.precision_literal, cn, ln, file, line, prev_line, next_line)
         else:
             print("Error: Unable to determine type of token.")
 

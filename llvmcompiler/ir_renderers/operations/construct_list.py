@@ -10,8 +10,8 @@ class ConstructListOperation(Operation):
     """
     This is used to construct lists.
     """
-    def __init__(self, item_type:CompilerType, arguments: list[arg_type] = [], heap = False) -> None:
-        super().__init__(arguments)
+    def __init__(self, item_type:CompilerType, arguments: list[arg_type] = [], heap = False, token = None) -> None:
+        super().__init__(arguments, token)
         self.type = item_type
         self.heap = heap
 

@@ -6,7 +6,7 @@ A compiled language that is **explicit and versatile**.
 
 **Intersect** compiles utilizing the *LLVMLite* python module by *Numba*.  It utilizes a complex concrete syntax tree to handle it's compile time mechanisms such as it's garbage collector, minimal function/struct emmitter and mangler, automatic typing, and much more.
 
-## Language Conventions
+## Language Conventions and Features
 
 ### Comments
 
@@ -38,6 +38,12 @@ struct StructName<TemplateType> {
     }
 }
 ```
+
+### Robust Compile Time Errors
+
+![alt text](readme_files/CompileTimeErrorExample.png)
+
+Compile time error feedback provides you with a detailed annotated view of the error in your source code.
 
 ### Operator Macros (Work in progress)
 

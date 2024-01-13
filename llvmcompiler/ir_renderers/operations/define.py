@@ -5,8 +5,8 @@ import llvmcompiler.compiler_types as ct
 import llvmcompiler.ir_renderers.struct as st
 
 class DefineOperation(Operation):
-    def __init__(self, arguments: list[arg_type] = None, force_type:ct.CompilerType = None) -> None:
-        super().__init__(arguments)
+    def __init__(self, arguments: list[arg_type] = None, force_type:ct.CompilerType = None, token = None) -> None:
+        super().__init__(arguments, token)
         self.force_type = force_type
         self.struct_operator = False
     def _write(self):

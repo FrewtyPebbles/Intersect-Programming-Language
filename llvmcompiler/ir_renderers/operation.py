@@ -21,14 +21,13 @@ class Operation:
     """
     All operations inherit from this operation
     """
-    def __init__(self, arguments:list[arg_type] = None) -> None:
+    def __init__(self, arguments:list[arg_type] = None, token = None) -> None:
         self.builder:BuilderData = None
         self.raw_arguments = [] if arguments == None else arguments
         self.arguments = [] if arguments == None else arguments
         self.op_token = "+"
         self.struct_operator = True
-        self.line_number = None
-        self.column_number = None
+        self.token = token
 
     def __deepcopy__(self, memo):
         cls = self.__class__

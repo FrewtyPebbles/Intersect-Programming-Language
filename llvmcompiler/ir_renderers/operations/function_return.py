@@ -3,8 +3,8 @@ from llvmlite import ir
 import llvmcompiler.ir_renderers.variable as vari
 
 class FunctionReturnOperation(Operation):
-    def __init__(self, arguments: list = None) -> None:
-        super().__init__(arguments)
+    def __init__(self, arguments: list = None, token = None) -> None:
+        super().__init__(arguments, token)
         self.struct_operator = False
     def _write(self):
         self.builder.cursor.comment("OP::return START")

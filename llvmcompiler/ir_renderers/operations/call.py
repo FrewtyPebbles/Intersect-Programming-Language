@@ -10,8 +10,8 @@ if TYPE_CHECKING:
 import llvmcompiler.ir_renderers.operations as ops
 
 class CallOperation(Operation):
-    def __init__(self, function:str | Operation | Any, arguments: list[arg_type] = None, template_arguments:list[ct.CompilerType] = None, is_operator = False) -> None:
-        super().__init__(arguments)
+    def __init__(self, function:str | Operation | Any, arguments: list[arg_type] = None, template_arguments:list[ct.CompilerType] = None, is_operator = False, token = None) -> None:
+        super().__init__(arguments, token)
         self.template_arguments = [] if template_arguments == None else template_arguments
         self.function:str | FunctionDefinition | Operation = function
         self.is_member_function = False

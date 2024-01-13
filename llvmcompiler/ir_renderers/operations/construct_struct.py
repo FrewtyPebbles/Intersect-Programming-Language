@@ -11,7 +11,8 @@ class ConstructStructOperation(Operation):
     """
     This is used to construct structs.
     """
-    def __init__(self, name:str, attributes:dict[str, arg_type], template_arguments:list[CompilerType] = [], heap = False) -> None:
+    def __init__(self, name:str, attributes:dict[str, arg_type], template_arguments:list[CompilerType] = [], heap = False, token = None) -> None:
+        super().__init__(token = token)
         self.name = name
         self.attributes:dict[str, ir.Type | ir.Instruction] = attributes
         """

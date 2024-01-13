@@ -26,6 +26,7 @@ from .token import SyntaxToken, Token
 #    - A number parsing context. [Done]                                                                                   |
 #_________________________________________________________________________________________________________________________|
 
+
 class Tokenizer:
     def __init__(self, src:str, output = "", file_name = "unknown") -> None:
         self.src = get_str_itterator(src)
@@ -34,6 +35,7 @@ class Tokenizer:
         self.line_num = 1
         self.column_num = 0
         self.file_name = file_name
+        self.lines = ["", *src.splitlines()]
 
     def inc_c(self, char:str):
         "increment the column number"
@@ -201,14 +203,41 @@ class Tokenizer:
         self.keyword = ""
 
     def parse_literal(self):
-        self.token_list.append(Token.new(self.keyword))
+        # Get prev and next line
+        prev_line = None
+        if self.line_num > 1:
+            prev_line=self.lines[self.line_num-1]
+        next_line = None
+        if len(self.lines) > self.line_num + 1:
+            next_line=self.lines[self.line_num+1]
+
+        # append to token list
+        self.token_list.append(Token.new(self.keyword, cn=self.column_num, ln=self.line_num, file=self.file_name, line=self.lines[self.line_num], prev_line=prev_line, next_line=next_line))
 
                 
     def append_token(self, token:SyntaxToken, value = ""):
-        self.token_list.append(Token(value, token, self.column_num, self.line_num, self.file_name))
+        # Get prev and next line
+        prev_line = None
+        if self.line_num > 1:
+            prev_line=self.lines[self.line_num-1]
+        next_line = None
+        if len(self.lines) > self.line_num + 1:
+            next_line=self.lines[self.line_num+1]
+
+        # append to token list
+        self.token_list.append(Token(value, token, self.column_num, self.line_num, self.file_name, self.lines[self.line_num], prev_line=prev_line, next_line=next_line))
 
     def append_token_only(self, token:SyntaxToken):
-        self.token_list.append(Token(token.value, token, self.column_num, self.line_num, self.file_name))
+        # Get prev and next line
+        prev_line = None
+        if self.line_num > 1:
+            prev_line=self.lines[self.line_num-1]
+        next_line = None
+        if len(self.lines) > self.line_num + 1:
+            next_line=self.lines[self.line_num+1]
+
+        # append to token list
+        self.token_list.append(Token(token.value, token, self.column_num, self.line_num, self.file_name, self.lines[self.line_num], prev_line=prev_line, next_line=next_line))
 
     
 def get_str_itterator(string:str):

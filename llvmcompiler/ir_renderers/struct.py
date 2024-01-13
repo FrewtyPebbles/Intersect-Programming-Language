@@ -301,25 +301,22 @@ class Struct:
         
         
         # print(f"STRUCT METHS {self.functions.keys()}")
-        try:
-            #this is where virtual functions are called
-            attrs = {**self.attributes, **self.functions}
-            if name in self.vtable_functions.keys():
-                attr = attrs[name]
-                return (self.attributes["META__VTABLE"], attr)
-            else:
-                attr = attrs[name]
-                if isinstance(attr, fn.FunctionDefinition):
-                    if get_definition:
-                        return attr
-                    else:
-                        return attr.get_function(template_types)
-                else:
+        
+        attrs = {**self.attributes, **self.functions}
+        if name in self.vtable_functions.keys():
+            # Virtual Functions
+            attr = attrs[name]
+            return (self.attributes["META__VTABLE"], attr)
+        else:
+            # Static functions/attributes
+            attr = attrs[name]
+            if isinstance(attr, fn.FunctionDefinition):
+                if get_definition:
                     return attr
-            
-        except KeyError:
-            definition_attrs = {"attributes":self.struct_definition.attributes, "functions":self.struct_definition.functions, "operators":self.struct_definition.operatorfunctions}
-            print(f"Error: {name} is not a valid attribute of {self.struct_definition.name}!\n")
+                else:
+                    return attr.get_function(template_types)
+            else:
+                return attr
 
     @lru_cache(32, True)
     def get_operator(self, operator:str, get_definition = False, arg_type:ct.CompilerType = None, template_types:list[ct.CompilerType] = None) -> fn.Function | vari.Value:

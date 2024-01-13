@@ -1,0 +1,13 @@
+struct MyStruct {
+    data:i32;
+    theta:i32;
+    func meta(self:$MyStruct, arg:i32) {
+        return;
+    }
+}
+
+func main() ~> i32{
+    let my_struct:MyStruct;
+    let my_attr = my_struct.beta;
+    return 0;
+}

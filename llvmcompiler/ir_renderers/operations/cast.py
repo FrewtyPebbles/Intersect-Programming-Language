@@ -1,3 +1,4 @@
+from llvmcompiler.compiler_errors.comp_error import CompilerError
 from llvmcompiler.compiler_types import ct
 from llvmcompiler.ir_renderers.operation import arg_type
 from ..operation import Operation
@@ -6,8 +7,8 @@ import llvmcompiler.ir_renderers.variable as vari
 import llvmcompiler.ir_renderers.struct as st
 
 class CastOperation(Operation):
-    def __init__(self, arguments: list[arg_type] = None) -> None:
-        super().__init__(arguments)
+    def __init__(self, arguments: list[arg_type] = None, token = None) -> None:
+        super().__init__(arguments, token)
         self.struct_operator = False
     def _write(self):
         arg1, arg2 = None, None
@@ -55,8 +56,9 @@ class CastOperation(Operation):
             cast = self.builder.cursor.sext(arg1, arg2.value)
             #print("Upcast")
         else:
-            print("Error: Invalid cast")
-            raise RuntimeError("invalid cast")
+            CompilerError( self.token,
+                f"Invalid cast from {a0_type} to {arg2}.",
+            ).throw()
         
 
         self.builder.cursor.comment("OP::cast END")
