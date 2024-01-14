@@ -4,6 +4,10 @@ from llvmlite import ir
 import llvmcompiler.ir_renderers.variable as vari
 
 class GreaterThanOrEqualToOperation(Operation):
+    def __init__(self, arguments: list = None, token = None) -> None:
+        super().__init__(arguments, token=token)
+        self.op_token = ">="
+
     def _write(self):
         self.builder.cursor.comment("OP::greater_than_or_equal_to START")
         self.arguments = self.get_variables()

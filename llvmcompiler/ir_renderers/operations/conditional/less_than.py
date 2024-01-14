@@ -4,6 +4,10 @@ from llvmlite import ir
 import llvmcompiler.ir_renderers.variable as vari
 
 class LessThanOperation(Operation):
+    def __init__(self, arguments: list = None, token = None) -> None:
+        super().__init__(arguments, token=token)
+        self.op_token = "<"
+
     def _write(self):
         self.builder.cursor.comment("OP::less_than START")
         self.arguments = self.get_variables()

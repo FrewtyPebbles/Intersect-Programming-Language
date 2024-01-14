@@ -64,7 +64,7 @@ struct Vector<ItemType> {
     }
 }
 
-export func main(num: i32) ~> i32 {
+export func main() ~> i32 {
     let vec:Vector<i32>;
 
     vec.init();

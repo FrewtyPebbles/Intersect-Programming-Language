@@ -6,6 +6,33 @@ from llvmcompiler.tree_builder import Tokenizer, SyntaxToken, TreeBuilder
 
 VERSION = "0.1.0"
 
+class Color:
+    """ ANSI color codes """
+    BLACK = "\033[0;30m"
+    RED = "\033[0;31m"
+    GREEN = "\033[0;32m"
+    BROWN = "\033[0;33m"
+    BLUE = "\033[0;34m"
+    PURPLE = "\033[0;35m"
+    CYAN = "\033[0;36m"
+    LIGHT_GRAY = "\033[0;37m"
+    DARK_GRAY = "\033[1;30m"
+    LIGHT_RED = "\033[1;31m"
+    LIGHT_GREEN = "\033[1;32m"
+    YELLOW = "\033[1;33m"
+    LIGHT_BLUE = "\033[1;34m"
+    LIGHT_PURPLE = "\033[1;35m"
+    LIGHT_CYAN = "\033[1;36m"
+    LIGHT_WHITE = "\033[1;37m"
+    BOLD = "\033[1m"
+    FAINT = "\033[2m"
+    ITALIC = "\033[3m"
+    UNDERLINE = "\033[4m"
+    BLINK = "\033[5m"
+    NEGATIVE = "\033[7m"
+    CROSSED = "\033[9m"
+    END = "\033[0m"
+
 class CLI:
     
     def __init__(self) -> None:
@@ -63,19 +90,59 @@ class CLI:
         indent = ' '*10
         separator = lambda c: f"\n{c * term_size}\n"
         
-        print(f"Intersect Programming Language v{VERSION}:".center(term_size, ":"))
-        print(f"\n - Developed by William L.")
-        print(f"\n\nCompiler Flags:{separator('=')}")
+        def gradient_down():
+            print("▓" * term_size)
+            print("▒" * term_size)
+            print("░" * term_size)
+        def gradient_up():
+            print("░" * term_size)
+            print("▒" * term_size)
+            print("▓" * term_size)
+
+        flag_color = Color.YELLOW
+        def_color = Color.LIGHT_WHITE
+        
+        gradient_up()
+        print("█" * term_size)
+        print(f"{Color.NEGATIVE}Intersect Programming Language v{VERSION}:{Color.END}{def_color}".center(term_size + 15, "█"))
+        print(f"{Color.NEGATIVE} - Developed by William L. - {Color.END}{def_color}".rjust(term_size + 15, "█"))
+        print(f"{'█' * term_size}")
+        print(f"{Color.NEGATIVE}    COMPILER FLAGS:{Color.END}{def_color}".ljust(term_size + 15, "█"))
+        print(f"{'█' * term_size}")
+        gradient_down()
+        print()
+        flag_sep = f"\n{separator('╲')}\n"
         
         print((
-            f"{indent}-source | -s :".ljust(term_size) + f"The path/name of the source file to compile.".rjust(term_size) +
-            separator('-') +
-            f"{indent}-output | -o :".ljust(term_size) + f"The path/name of the binary file the compiler will output.".rjust(term_size) +
-            separator('-') +
-            f"{indent}--document | --d | --doc | --docs | --documentation :".ljust(term_size) + f"Generates HTML documentation for the given project based on docstrings.".rjust(term_size) + 
-            separator('-')
+            f"{indent}{flag_color}-source | -s :".ljust(term_size) +
+            f"{Color.END}The path/name of the source file to compile.".rjust(term_size) +
+            flag_sep +
+            f"{indent}{flag_color}-output | -o :".ljust(term_size) +
+            f"{Color.END}The path/name of the binary file the compiler will output.".rjust(term_size) +
+            flag_sep +
+            f"{indent}{flag_color}--document | --d | --doc | --docs | --documentation :".ljust(term_size) +
+            f"{Color.END}Generates HTML documentation for the given source code based on docstrings.".rjust(term_size) +
+            flag_sep +
+            f"{indent}{flag_color}--run | --r | --execute | --play :".ljust(term_size) +
+            f"{Color.END}Compiles and runs the provided source code.".rjust(term_size) +
+            flag_sep +
+            f"{indent}{flag_color}--time | --t :".ljust(term_size) +
+            f"{Color.END}Times your program's total runtime.".rjust(term_size) +
+            flag_sep +
+            f"{indent}{flag_color}-optimize | -opt | -opt_level :".ljust(term_size) +
+            f"{Color.END}Specifies the llvm optimization level.".rjust(term_size) +
+            flag_sep +
+            f"{indent}{flag_color}-salt | -sal | -mangle | -mang :".ljust(term_size) +
+            f"{Color.END}Specifies the string to use when mangling namespaces in the compiled binary or library.".rjust(term_size) +
+            flag_sep +
+            f"{indent}{flag_color}--show_ir | --ir | --llvm_ir :".ljust(term_size) +
+            f"{Color.END}Shows the llvm ir that your program compiles to.".rjust(term_size) +
+            "\n"
         ))
-        print(":" * term_size)
+        gradient_up()
+        print("█" * term_size)
+        gradient_down()
+        exit()
 
     def run(self):
         if self.arguments["help"]:

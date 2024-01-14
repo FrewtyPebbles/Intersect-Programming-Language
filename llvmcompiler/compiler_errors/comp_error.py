@@ -1,6 +1,8 @@
+import os
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     import llvmcompiler.tree_builder.token as tb
+
 
 class Color:
     """ ANSI color codes """
@@ -34,7 +36,7 @@ class CompilerError:
         self.token:tb.Token = token
         self.column_number = self.token.column_number
         self.line_number = self.token.line_number
-        self.file = self.token.file
+        self.file = os.path.abspath(self.token.file)
         self.msg = msg
         self.line = self.token.line
         self.prev_line = self.token.prev_line
