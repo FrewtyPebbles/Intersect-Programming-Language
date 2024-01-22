@@ -1,0 +1,23 @@
+func realloc<PtrType>(ptr:$PtrType, new_size:i32) ~> $PtrType {
+    "This is a wrapper arround libc_realloc."
+    return libc_realloc(ptr:$i8, sizeof ? $PtrType * new_size:i64):$PtrType;
+}
+
+func malloc<PtrType>(size:i32) ~> $PtrType {
+    "This is a wrapper arround libc_malloc."
+    return libc_malloc(sizeof ? PtrType * size:i64):$PtrType;
+}
+
+func free<PtrType>(ptr:$PtrType) {
+    "This is a wrapper arround libc_free."
+    libc_free(ptr:$i8);
+    return;
+}
+
+export func main(num: i32) ~> i32 {
+    let precision:d64 = 390888.565894;
+
+    libc_printf("float: %.6f\n":$c8, precision);
+    
+    return 0;
+}

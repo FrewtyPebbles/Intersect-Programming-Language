@@ -111,8 +111,7 @@ class CallOperation(Operation):
                             self.builder.function
                             )
 
-
-
+                
                 arg = self.process_arg(arg)
                 arguments.append(arg)
         #print(self.function, self.arguments)

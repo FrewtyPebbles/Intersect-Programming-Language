@@ -81,6 +81,10 @@ function testall {
 		(
 			"vtable",
 			"data: 5`ndata: 7"
+		),
+		(
+			"precision",
+			"float: 390888.565894"
 		)
 	)
 	$passed_tests = 0
