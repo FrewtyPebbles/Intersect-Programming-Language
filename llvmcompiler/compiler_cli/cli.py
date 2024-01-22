@@ -89,27 +89,13 @@ class CLI:
         term_size = os.get_terminal_size().columns
         indent = ' '*10
         separator = lambda c: f"\n{c * term_size}\n"
-        
-        def gradient_down():
-            print("▓" * term_size)
-            print("▒" * term_size)
-            print("░" * term_size)
-        def gradient_up():
-            print("░" * term_size)
-            print("▒" * term_size)
-            print("▓" * term_size)
 
         flag_color = Color.YELLOW
         def_color = Color.LIGHT_WHITE
         
-        gradient_up()
-        print("█" * term_size)
-        print(f"{Color.NEGATIVE}Intersect Programming Language v{VERSION}:{Color.END}{def_color}".center(term_size + 15, "█"))
-        print(f"{Color.NEGATIVE} - Developed by William L. - {Color.END}{def_color}".rjust(term_size + 15, "█"))
-        print(f"{'█' * term_size}")
-        print(f"{Color.NEGATIVE}    COMPILER FLAGS:{Color.END}{def_color}".ljust(term_size + 15, "█"))
-        print(f"{'█' * term_size}")
-        gradient_down()
+        print(f"Intersect Programming Language v{VERSION}")
+        print(f" - Developed by William L.")
+        print(f"COMPILER FLAGS:")
         print()
         flag_sep = f"\n{separator('╲')}\n"
         
@@ -139,9 +125,6 @@ class CLI:
             f"{Color.END}Shows the llvm ir that your program compiles to.".rjust(term_size) +
             "\n"
         ))
-        gradient_up()
-        print("█" * term_size)
-        gradient_down()
         exit()
 
     def run(self):
