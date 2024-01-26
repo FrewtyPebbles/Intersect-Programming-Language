@@ -195,8 +195,11 @@ class CLI:
         try:
             subprocess.run(["clang", f"{self.arguments['output']}.o", "-o", f"{self.arguments['output']}{'.exe' if platform.system() == 'Windows' else ''}"])
         except FileNotFoundError as e:
-            print("ERROR:\n\tCompiling a program with Intersect requires a working instalation of clang.\n\nYou can fix this by installing the Visual Studio C/C++ build tools found here: https://visualstudio.microsoft.com/downloads/#build-tools-for-visual-studio-2017")
-            exit()
+            try:
+                subprocess.run(["g++", f"{self.arguments['output']}.o", "-o", f"{self.arguments['output']}{'.exe' if platform.system() == 'Windows' else ''}"])
+            except FileNotFoundError as e:
+                print("ERROR:\n\tCompiling a program with Intersect requires a working instalation of clang or gcc.\n\nYou can fix this by installing the Visual Studio C/C++ build tools found here: https://visualstudio.microsoft.com/downloads/#build-tools-for-visual-studio-2017")
+                exit()
 
         os.remove(f"{self.arguments['output']}.o")
 

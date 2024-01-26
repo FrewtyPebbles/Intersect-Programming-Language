@@ -1,7 +1,7 @@
 from __future__ import annotations
 from copy import deepcopy
 from functools import lru_cache
-from typing import TYPE_CHECKING, Self
+from typing import TYPE_CHECKING
 from enum import Enum
 from typing import List, Tuple, Union
 from llvmlite import ir
@@ -15,7 +15,7 @@ import llvmcompiler.ir_renderers.operations as ops
 import llvmcompiler.ir_renderers.struct as st
 
 
-arg_type = Self | Variable | ct.CompilerType | Value | Tuple[str, Variable]
+arg_type = Variable | ct.CompilerType | Value | Tuple[str, Variable]
 
 class Operation:
     """

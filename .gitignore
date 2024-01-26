@@ -1,4 +1,5 @@
 /.venv
+/.venv_wsl
 __pycache__/
 *.py[cod]
 /test_binaries/*
