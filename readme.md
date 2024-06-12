@@ -218,7 +218,7 @@ struct StructName {
 }
 ```
 
-### Major Rework of Garbage Collector And How Heap is Allocated (Done):
+### Major Rework of Garbage Collector And How Heap is Allocated (Work In Progress):
 
 ```py
 {
