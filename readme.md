@@ -1,6 +1,8 @@
 # **Intersect**
 
-A compiled language that is **explicit and versatile**.
+A functional yet unfinished compiled language that is **explicit and versatile**.
+
+This project has been discontinued.  I had started this project as an experiment to see if I could make a compiler from (mostly) complete scratch in python.  Turns out python is a much nicer compiler development language than I initially thought it would be.  While I did not complete all of my overambitious plans for the compiler, what was completed is mostly functional. All integration tests are passing, except for the hash map test.  I believe this test started failing with the introduction of virtual functions.  By the time I had finished getting virtual functions functional I was so burnt out on my overly ambitious scope that I slowly abandoned the project (I have since learned from my overly ambitious approach to these kinds of projects and have produced much more complete software and libraries since then).  Feel free to clone and try out the compiler,  I cant promise there wont be any bugs, but from my testing it should work for simple-ish test applications.  This project was a great learning experience in both project and scope management.
 
 ## How it works
 
